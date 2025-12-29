@@ -687,41 +687,445 @@ public class AssetAcceptedByPcAdminEventHandler : INotificationHandler<AssetAcce
 public class AssetReturnedForCorrectionEventHandler : INotificationHandler<AssetReturnedForCorrectionByInfrabaseAdminEvent>
 {
     private readonly INotificationService _notificationService;
+    private readonly IMiddlewareIntegrationService _middlewareService;
+    private readonly ILogger<AssetReturnedForCorrectionEventHandler> _logger;
 
-    public AssetReturnedForCorrectionEventHandler(INotificationService notificationService)
+    public AssetReturnedForCorrectionEventHandler(
+        INotificationService notificationService,
+        IMiddlewareIntegrationService middlewareService,
+        ILogger<AssetReturnedForCorrectionEventHandler> logger)
     {
         _notificationService = notificationService;
+        _middlewareService = middlewareService;
+        _logger = logger;
     }
 
     public async Task Handle(AssetReturnedForCorrectionByInfrabaseAdminEvent notification, CancellationToken cancellationToken)
     {
+        // Send email to PC contributor (creator)
+        await SendEmailToContributor(notification, cancellationToken);
+        
+        // Send email to PC admin (Representative)
+        await SendEmailToPcAdmin(notification, cancellationToken);
+    }
+
+    private async Task SendEmailToContributor(AssetReturnedForCorrectionByInfrabaseAdminEvent notification, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(notification.CreatedBy))
+            {
+                _logger.LogWarning(
+                    "Cannot send email notification to contributor for asset {AssetId} rejection: CreatedBy is empty",
+                    notification.AssetId);
+                
+                // Still send in-app notification
+                await SendInAppNotificationToContributor(notification, cancellationToken);
+                return;
+            }
+
+            // Build email body with HTML
+            var emailBody = BuildRejectionEmailBody(notification);
+            
+            // Send email notification to contributor (creator)
+            await _notificationService.SendEmailAsync(
+                to: notification.CreatedBy,
+                subject: "Request Rejected",
+                body: emailBody,
+                cancellationToken: cancellationToken);
+            
+            _logger.LogInformation(
+                "Email notification sent to contributor {CreatedBy} for asset {AssetId} rejection by Infrabase admin",
+                notification.CreatedBy, notification.AssetId);
+            
+            // Send in-app notification to contributor
+            await SendInAppNotificationToContributor(notification, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error sending notification to contributor for asset {AssetId} rejection: {Message}",
+                notification.AssetId, ex.Message);
+            
+            // Try to send in-app notification even if email fails
+            try
+            {
+                await SendInAppNotificationToContributor(notification, cancellationToken);
+            }
+            catch (Exception inAppEx)
+            {
+                _logger.LogError(inAppEx,
+                    "Failed to send in-app notification for asset {AssetId} rejection: {Message}",
+                    notification.AssetId, inAppEx.Message);
+            }
+        }
+    }
+
+    private async Task SendEmailToPcAdmin(AssetReturnedForCorrectionByInfrabaseAdminEvent notification, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Get company information to find PC admin (Representative)
+            var company = await _middlewareService.GetCompanyByIdAsync(notification.CompanyId);
+            
+            if (company?.Representative == null || string.IsNullOrWhiteSpace(company.Representative.Email))
+            {
+                _logger.LogWarning(
+                    "Cannot send email notification to PC admin for asset {AssetId} rejection: Company {CompanyId} does not have a representative with email",
+                    notification.AssetId, notification.CompanyId);
+                return;
+            }
+
+            var pcAdminEmail = company.Representative.Email;
+            
+            // Build email body with HTML
+            var emailBody = BuildRejectionEmailBody(notification);
+            
+            // Send email notification to PC admin
+            await _notificationService.SendEmailAsync(
+                to: pcAdminEmail,
+                subject: "Request Rejected",
+                body: emailBody,
+                cancellationToken: cancellationToken);
+            
+            _logger.LogInformation(
+                "Email notification sent to PC admin {PcAdminEmail} for asset {AssetId} rejection by Infrabase admin",
+                pcAdminEmail, notification.AssetId);
+            
+            // Send in-app notification to PC admin
+            await SendInAppNotificationToPcAdmin(notification, pcAdminEmail, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error sending notification to PC admin for asset {AssetId} rejection: {Message}",
+                notification.AssetId, ex.Message);
+        }
+    }
+
+    private async Task SendInAppNotificationToContributor(AssetReturnedForCorrectionByInfrabaseAdminEvent notification, CancellationToken cancellationToken)
+    {
         await _notificationService.CreateInAppNotificationAsync(
-            userId: notification.ReturnedBy,
+            userId: notification.CreatedBy,
             title: "Asset Returned for Correction",
             message: $"Asset {notification.AssetCode} needs corrections. Reason: {notification.CorrectionReason}",
             link: $"/assets/{notification.AssetId}",
             notificationType: "AssetCorrection",
             cancellationToken: cancellationToken);
     }
+
+    private async Task SendInAppNotificationToPcAdmin(AssetReturnedForCorrectionByInfrabaseAdminEvent notification, string pcAdminEmail, CancellationToken cancellationToken)
+    {
+        await _notificationService.CreateInAppNotificationAsync(
+            userId: pcAdminEmail,
+            title: "Asset Returned for Correction",
+            message: $"Asset {notification.AssetCode} needs corrections. Reason: {notification.CorrectionReason}",
+            link: $"/assets/{notification.AssetId}",
+            notificationType: "AssetCorrection",
+            cancellationToken: cancellationToken);
+    }
+
+    private string BuildRejectionEmailBody(AssetReturnedForCorrectionByInfrabaseAdminEvent notification)
+    {
+        var assetDetailsUrl = $"/assets/{notification.AssetId}";
+        
+        return $@"
+<!DOCTYPE html>
+<html lang=""en"">
+<head>
+    <meta charset=""UTF-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Request Rejected</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }}
+        .email-container {{
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        .header {{
+            border-bottom: 2px solid #dc3545;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }}
+        .content {{
+            margin: 20px 0;
+        }}
+        .button-container {{
+            text-align: center;
+            margin: 30px 0;
+        }}
+        .button {{
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #007bff;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 16px;
+        }}
+        .button:hover {{
+            background-color: #0056b3;
+        }}
+        .footer {{
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }}
+    </style>
+</head>
+<body>
+    <div class=""email-container"">
+        <div class=""header"">
+            <h1 style=""color: #dc3545; margin: 0;"">Request Rejected</h1>
+        </div>
+        <div class=""content"">
+            <p>Your request has been Rejected</p>
+        </div>
+        <div class=""button-container"">
+            <a href=""{assetDetailsUrl}"" class=""button"">View Request</a>
+        </div>
+        <div class=""footer"">
+            <p>Regards.<br>Infrabase team</p>
+        </div>
+    </div>
+</body>
+</html>";
+    }
 }
 
 public class AssetCheckedByInfrabaseAdminEventHandler : INotificationHandler<AssetCheckedByInfrabaseAdminEvent>
 {
     private readonly INotificationService _notificationService;
+    private readonly IMiddlewareIntegrationService _middlewareService;
+    private readonly ILogger<AssetCheckedByInfrabaseAdminEventHandler> _logger;
 
-    public AssetCheckedByInfrabaseAdminEventHandler(INotificationService notificationService)
+    public AssetCheckedByInfrabaseAdminEventHandler(
+        INotificationService notificationService,
+        IMiddlewareIntegrationService middlewareService,
+        ILogger<AssetCheckedByInfrabaseAdminEventHandler> logger)
     {
         _notificationService = notificationService;
+        _middlewareService = middlewareService;
+        _logger = logger;
     }
 
     public async Task Handle(AssetCheckedByInfrabaseAdminEvent notification, CancellationToken cancellationToken)
     {
+        // Send email to PC contributor (creator)
+        await SendEmailToContributor(notification, cancellationToken);
+        
+        // Send email to PC admin (Representative)
+        await SendEmailToPcAdmin(notification, cancellationToken);
+    }
+
+    private async Task SendEmailToContributor(AssetCheckedByInfrabaseAdminEvent notification, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(notification.CreatedBy))
+            {
+                _logger.LogWarning(
+                    "Cannot send email notification to contributor for asset {AssetId} acceptance: CreatedBy is empty",
+                    notification.AssetId);
+                
+                // Still send in-app notification
+                await SendInAppNotificationToContributor(notification, cancellationToken);
+                return;
+            }
+
+            // Build email body with HTML
+            var emailBody = BuildAcceptanceEmailBody(notification);
+            
+            // Send email notification to contributor (creator)
+            await _notificationService.SendEmailAsync(
+                to: notification.CreatedBy,
+                subject: "Request Accepted",
+                body: emailBody,
+                cancellationToken: cancellationToken);
+            
+            _logger.LogInformation(
+                "Email notification sent to contributor {CreatedBy} for asset {AssetId} acceptance by Infrabase admin",
+                notification.CreatedBy, notification.AssetId);
+            
+            // Send in-app notification to contributor
+            await SendInAppNotificationToContributor(notification, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error sending notification to contributor for asset {AssetId} acceptance: {Message}",
+                notification.AssetId, ex.Message);
+            
+            // Try to send in-app notification even if email fails
+            try
+            {
+                await SendInAppNotificationToContributor(notification, cancellationToken);
+            }
+            catch (Exception inAppEx)
+            {
+                _logger.LogError(inAppEx,
+                    "Failed to send in-app notification for asset {AssetId} acceptance: {Message}",
+                    notification.AssetId, inAppEx.Message);
+            }
+        }
+    }
+
+    private async Task SendEmailToPcAdmin(AssetCheckedByInfrabaseAdminEvent notification, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Get company information to find PC admin (Representative)
+            var company = await _middlewareService.GetCompanyByIdAsync(notification.CompanyId);
+            
+            if (company?.Representative == null || string.IsNullOrWhiteSpace(company.Representative.Email))
+            {
+                _logger.LogWarning(
+                    "Cannot send email notification to PC admin for asset {AssetId} acceptance: Company {CompanyId} does not have a representative with email",
+                    notification.AssetId, notification.CompanyId);
+                return;
+            }
+
+            var pcAdminEmail = company.Representative.Email;
+            
+            // Build email body with HTML
+            var emailBody = BuildAcceptanceEmailBody(notification);
+            
+            // Send email notification to PC admin
+            await _notificationService.SendEmailAsync(
+                to: pcAdminEmail,
+                subject: "Request Accepted",
+                body: emailBody,
+                cancellationToken: cancellationToken);
+            
+            _logger.LogInformation(
+                "Email notification sent to PC admin {PcAdminEmail} for asset {AssetId} acceptance by Infrabase admin",
+                pcAdminEmail, notification.AssetId);
+            
+            // Send in-app notification to PC admin
+            await SendInAppNotificationToPcAdmin(notification, pcAdminEmail, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error sending notification to PC admin for asset {AssetId} acceptance: {Message}",
+                notification.AssetId, ex.Message);
+        }
+    }
+
+    private async Task SendInAppNotificationToContributor(AssetCheckedByInfrabaseAdminEvent notification, CancellationToken cancellationToken)
+    {
         await _notificationService.CreateInAppNotificationAsync(
-            userId: notification.CheckedBy,
+            userId: notification.CreatedBy,
             title: "Asset Approved",
             message: $"Asset {notification.AssetCode} has been approved by Infrabase Admin.",
             link: $"/assets/{notification.AssetId}",
             notificationType: "AssetFinalApproval",
             cancellationToken: cancellationToken);
+    }
+
+    private async Task SendInAppNotificationToPcAdmin(AssetCheckedByInfrabaseAdminEvent notification, string pcAdminEmail, CancellationToken cancellationToken)
+    {
+        await _notificationService.CreateInAppNotificationAsync(
+            userId: pcAdminEmail,
+            title: "Asset Approved",
+            message: $"Asset {notification.AssetCode} has been approved by Infrabase Admin.",
+            link: $"/assets/{notification.AssetId}",
+            notificationType: "AssetFinalApproval",
+            cancellationToken: cancellationToken);
+    }
+
+    private string BuildAcceptanceEmailBody(AssetCheckedByInfrabaseAdminEvent notification)
+    {
+        var assetDetailsUrl = $"/assets/{notification.AssetId}";
+        
+        return $@"
+<!DOCTYPE html>
+<html lang=""en"">
+<head>
+    <meta charset=""UTF-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Request Accepted</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }}
+        .email-container {{
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        .header {{
+            border-bottom: 2px solid #28a745;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }}
+        .content {{
+            margin: 20px 0;
+        }}
+        .button-container {{
+            text-align: center;
+            margin: 30px 0;
+        }}
+        .button {{
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #007bff;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 16px;
+        }}
+        .button:hover {{
+            background-color: #0056b3;
+        }}
+        .footer {{
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }}
+    </style>
+</head>
+<body>
+    <div class=""email-container"">
+        <div class=""header"">
+            <h1 style=""color: #28a745; margin: 0;"">Request Accepted</h1>
+        </div>
+        <div class=""content"">
+            <p>Your request has been Approved</p>
+        </div>
+        <div class=""button-container"">
+            <a href=""{assetDetailsUrl}"" class=""button"">View Request</a>
+        </div>
+        <div class=""footer"">
+            <p>Regards.<br>Infrabase team</p>
+        </div>
+    </div>
+</body>
+</html>";
     }
 }

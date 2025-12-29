@@ -541,7 +541,7 @@ public class Asset : AggregateRoot
         UpdatedBy = userId;
         UpdatedAt = DateTime.Now;
         AddHistory("Checked by Infrabase Admin", !string.IsNullOrWhiteSpace(userId) ? userId : "Admin", "Asset checked and approved - Final approval");
-        AddDomainEvent(new AssetCheckedByInfrabaseAdminEvent(Id, AssetCode, !string.IsNullOrWhiteSpace(userId) ? userId : "Admin"));
+        AddDomainEvent(new AssetCheckedByInfrabaseAdminEvent(Id, AssetCode, !string.IsNullOrWhiteSpace(userId) ? userId : "Admin", CreatedBy ?? userId ?? "Admin", CompanyId));
         return Result<bool>.Success(true);
     }
 
@@ -570,7 +570,7 @@ public class Asset : AggregateRoot
         UpdatedBy = userId;
         UpdatedAt = DateTime.Now;
         AddHistory("Returned for Correction by Infrabase Admin", userId ?? "Admin", correctionReason);
-        AddDomainEvent(new AssetReturnedForCorrectionByInfrabaseAdminEvent(Id, AssetCode, correctionReason, userId ?? "Admin"));
+        AddDomainEvent(new AssetReturnedForCorrectionByInfrabaseAdminEvent(Id, AssetCode, correctionReason, userId ?? "Admin", CreatedBy ?? userId ?? "Admin", CompanyId));
         return Result<bool>.Success(true);
     }
 

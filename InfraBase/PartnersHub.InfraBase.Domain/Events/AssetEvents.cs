@@ -64,12 +64,16 @@ public class AssetCheckedByInfrabaseAdminEvent : DomainEvent
     public Guid AssetId { get; }
     public string AssetCode { get; }
     public string CheckedBy { get; }
+    public string CreatedBy { get; }
+    public Guid CompanyId { get; }
 
-    public AssetCheckedByInfrabaseAdminEvent(Guid assetId, string assetCode, string checkedBy)
+    public AssetCheckedByInfrabaseAdminEvent(Guid assetId, string assetCode, string checkedBy, string createdBy, Guid companyId)
     {
         AssetId = assetId;
         AssetCode = assetCode;
         CheckedBy = checkedBy;
+        CreatedBy = createdBy;
+        CompanyId = companyId;
     }
 }
 
@@ -79,13 +83,17 @@ public class AssetReturnedForCorrectionByInfrabaseAdminEvent : DomainEvent
     public string AssetCode { get; }
     public string CorrectionReason { get; }
     public string ReturnedBy { get; }
+    public string CreatedBy { get; }
+    public Guid CompanyId { get; }
 
     public AssetReturnedForCorrectionByInfrabaseAdminEvent(Guid assetId, string assetCode, 
-        string correctionReason, string returnedBy)
+        string correctionReason, string returnedBy, string createdBy, Guid companyId)
     {
         AssetId = assetId;
         AssetCode = assetCode;
         CorrectionReason = correctionReason;
         ReturnedBy = returnedBy;
+        CreatedBy = createdBy;
+        CompanyId = companyId;
     }
 }
