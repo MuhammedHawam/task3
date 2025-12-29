@@ -730,7 +730,7 @@ public class AssetReturnedForCorrectionEventHandler : INotificationHandler<Asset
             // Send email notification to contributor (creator)
             await _notificationService.SendEmailAsync(
                 to: notification.CreatedBy,
-                subject: "Request Rejected",
+                subject: "Asset Rejected",
                 body: emailBody,
                 cancellationToken: cancellationToken);
             
@@ -784,7 +784,7 @@ public class AssetReturnedForCorrectionEventHandler : INotificationHandler<Asset
             // Send email notification to PC admin
             await _notificationService.SendEmailAsync(
                 to: pcAdminEmail,
-                subject: "Request Rejected",
+                subject: "Asset Rejected",
                 body: emailBody,
                 cancellationToken: cancellationToken);
             
@@ -835,7 +835,7 @@ public class AssetReturnedForCorrectionEventHandler : INotificationHandler<Asset
 <head>
     <meta charset=""UTF-8"">
     <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>Request Rejected</title>
+    <title>Asset Rejected</title>
     <style>
         body {{
             font-family: Arial, sans-serif;
@@ -890,13 +890,13 @@ public class AssetReturnedForCorrectionEventHandler : INotificationHandler<Asset
 <body>
     <div class=""email-container"">
         <div class=""header"">
-            <h1 style=""color: #dc3545; margin: 0;"">Request Rejected</h1>
+            <h1 style=""color: #dc3545; margin: 0;"">Asset Rejected</h1>
         </div>
         <div class=""content"">
-            <p>Your request has been Rejected</p>
+            <p>Your asset has been Rejected</p>
         </div>
         <div class=""button-container"">
-            <a href=""{assetDetailsUrl}"" class=""button"">View Request</a>
+            <a href=""{assetDetailsUrl}"" class=""button"">View Asset</a>
         </div>
         <div class=""footer"">
             <p>Regards.<br>Infrabase team</p>
@@ -953,7 +953,7 @@ public class AssetCheckedByInfrabaseAdminEventHandler : INotificationHandler<Ass
             // Send email notification to contributor (creator)
             await _notificationService.SendEmailAsync(
                 to: notification.CreatedBy,
-                subject: "Request Accepted",
+                subject: "Asset Accepted",
                 body: emailBody,
                 cancellationToken: cancellationToken);
             
@@ -1007,7 +1007,7 @@ public class AssetCheckedByInfrabaseAdminEventHandler : INotificationHandler<Ass
             // Send email notification to PC admin
             await _notificationService.SendEmailAsync(
                 to: pcAdminEmail,
-                subject: "Request Accepted",
+                subject: "Asset Accepted",
                 body: emailBody,
                 cancellationToken: cancellationToken);
             
@@ -1058,7 +1058,7 @@ public class AssetCheckedByInfrabaseAdminEventHandler : INotificationHandler<Ass
 <head>
     <meta charset=""UTF-8"">
     <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>Request Accepted</title>
+    <title>Asset Accepted</title>
     <style>
         body {{
             font-family: Arial, sans-serif;
@@ -1113,13 +1113,13 @@ public class AssetCheckedByInfrabaseAdminEventHandler : INotificationHandler<Ass
 <body>
     <div class=""email-container"">
         <div class=""header"">
-            <h1 style=""color: #28a745; margin: 0;"">Request Accepted</h1>
+            <h1 style=""color: #28a745; margin: 0;"">Asset Accepted</h1>
         </div>
         <div class=""content"">
-            <p>Your request has been Approved</p>
+            <p>Your asset has been Approved</p>
         </div>
         <div class=""button-container"">
-            <a href=""{assetDetailsUrl}"" class=""button"">View Request</a>
+            <a href=""{assetDetailsUrl}"" class=""button"">View Asset</a>
         </div>
         <div class=""footer"">
             <p>Regards.<br>Infrabase team</p>
