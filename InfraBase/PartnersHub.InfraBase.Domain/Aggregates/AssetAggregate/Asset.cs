@@ -467,7 +467,7 @@ public class Asset : AggregateRoot
                 : "Asset resubmitted after addressing rejection reasons";
 
         AddHistory(action, userId ?? "Admin", comments);
-        AddDomainEvent(new AssetSubmittedEvent(Id, AssetCode, userId));
+        AddDomainEvent(new AssetSubmittedEvent(Id, AssetCode, userId ?? "Admin", CompanyId, CreatedBy ?? userId ?? "Admin", !isPcAdmin));
         return Result<bool>.Success(true);
     }
 
@@ -490,7 +490,7 @@ public class Asset : AggregateRoot
         UpdatedBy = userId;
         UpdatedAt = DateTime.Now;
         AddHistory("Accepted by PC Admin", userId, "Asset accepted and forwarded to Infrabase admin");
-        AddDomainEvent(new AssetAcceptedByPcAdminEvent(Id, AssetCode, userId ?? "Admin"));
+        AddDomainEvent(new AssetAcceptedByPcAdminEvent(Id, AssetCode, userId ?? "Admin", CreatedBy ?? userId ?? "Admin", CompanyId));
         return Result<bool>.Success(true);
     }
 
@@ -519,7 +519,7 @@ public class Asset : AggregateRoot
         UpdatedBy = userId;
         UpdatedAt = DateTime.Now;
         AddHistory("Rejected by PC Admin", !string.IsNullOrWhiteSpace(userId) ? userId: "Admin", rejectionReason);
-        AddDomainEvent(new AssetRejectedByPcAdminEvent(Id, AssetCode, rejectionReason, !string.IsNullOrWhiteSpace(userId) ? userId : "Admin"));
+        AddDomainEvent(new AssetRejectedByPcAdminEvent(Id, AssetCode, rejectionReason, !string.IsNullOrWhiteSpace(userId) ? userId : "Admin", CreatedBy ?? userId ?? "Admin"));
         return Result<bool>.Success(true);
     }
 
@@ -541,7 +541,7 @@ public class Asset : AggregateRoot
         UpdatedBy = userId;
         UpdatedAt = DateTime.Now;
         AddHistory("Checked by Infrabase Admin", !string.IsNullOrWhiteSpace(userId) ? userId : "Admin", "Asset checked and approved - Final approval");
-        AddDomainEvent(new AssetCheckedByInfrabaseAdminEvent(Id, AssetCode, !string.IsNullOrWhiteSpace(userId) ? userId : "Admin"));
+        AddDomainEvent(new AssetCheckedByInfrabaseAdminEvent(Id, AssetCode, !string.IsNullOrWhiteSpace(userId) ? userId : "Admin", CreatedBy ?? userId ?? "Admin", CompanyId));
         return Result<bool>.Success(true);
     }
 
@@ -570,7 +570,7 @@ public class Asset : AggregateRoot
         UpdatedBy = userId;
         UpdatedAt = DateTime.Now;
         AddHistory("Returned for Correction by Infrabase Admin", userId ?? "Admin", correctionReason);
-        AddDomainEvent(new AssetReturnedForCorrectionByInfrabaseAdminEvent(Id, AssetCode, correctionReason, userId ?? "Admin"));
+        AddDomainEvent(new AssetReturnedForCorrectionByInfrabaseAdminEvent(Id, AssetCode, correctionReason, userId ?? "Admin", CreatedBy ?? userId ?? "Admin", CompanyId));
         return Result<bool>.Success(true);
     }
 
