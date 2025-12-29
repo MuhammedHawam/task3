@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
+using PartnersHub.InfraBase.Application.Common.Services;
 using PartnersHub.InfraBase.Domain.Events;
 
 namespace PartnersHub.InfraBase.Application.Assets.EventHandlers;
@@ -10,15 +11,18 @@ public class AssetSubmittedEventHandler : INotificationHandler<AssetSubmittedEve
 {
     private readonly INotificationService _notificationService;
     private readonly IMiddlewareIntegrationService _middlewareService;
+    private readonly EmailTemplateService _emailTemplateService;
     private readonly ILogger<AssetSubmittedEventHandler> _logger;
 
     public AssetSubmittedEventHandler(
         INotificationService notificationService,
         IMiddlewareIntegrationService middlewareService,
+        EmailTemplateService emailTemplateService,
         ILogger<AssetSubmittedEventHandler> logger)
     {
         _notificationService = notificationService;
         _middlewareService = middlewareService;
+        _emailTemplateService = emailTemplateService;
         _logger = logger;
     }
 
@@ -55,7 +59,7 @@ public class AssetSubmittedEventHandler : INotificationHandler<AssetSubmittedEve
             var creatorName = ExtractNameFromEmail(notification.CreatedBy);
             
             // Build email body with HTML
-            var emailBody = BuildEmailBody(notification, creatorName);
+            var emailBody = _emailTemplateService.BuildAssetSubmittedEmail(creatorName, notification.AssetId);
             
             // Send email notification to PC admin
             await _notificationService.SendEmailAsync(
@@ -133,100 +137,21 @@ public class AssetSubmittedEventHandler : INotificationHandler<AssetSubmittedEve
         
         return email;
     }
-
-    private string BuildEmailBody(AssetSubmittedEvent notification, string creatorName)
-    {
-        // Build the asset details URL - adjust the base URL as needed
-        var assetDetailsUrl = $"/assets/{notification.AssetId}";
-        
-        return $@"
-<!DOCTYPE html>
-<html lang=""en"">
-<head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>New asset submitted</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }}
-        .email-container {{
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        .header {{
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }}
-        .content {{
-            margin: 20px 0;
-        }}
-        .button-container {{
-            text-align: center;
-            margin: 30px 0;
-        }}
-        .button {{
-            display: inline-block;
-            padding: 12px 30px;
-            background-color: #007bff;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 16px;
-        }}
-        .button:hover {{
-            background-color: #0056b3;
-        }}
-        .footer {{
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e0e0e0;
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-        }}
-    </style>
-</head>
-<body>
-    <div class=""email-container"">
-        <div class=""header"">
-            <h1 style=""color: #007bff; margin: 0;"">New asset submitted</h1>
-        </div>
-        <div class=""content"">
-            <p>New asset submitted by ""{creatorName}"" and waiting your approval</p>
-        </div>
-        <div class=""button-container"">
-            <a href=""{assetDetailsUrl}"" class=""button"">View Asset</a>
-        </div>
-        <div class=""footer"">
-            <p>Regards.<br>Infrabase team</p>
-        </div>
-    </div>
-</body>
-</html>";
-    }
 }
 
 public class AssetRejectedByPcAdminEventHandler : INotificationHandler<AssetRejectedByPcAdminEvent>
 {
     private readonly INotificationService _notificationService;
+    private readonly EmailTemplateService _emailTemplateService;
     private readonly ILogger<AssetRejectedByPcAdminEventHandler> _logger;
 
     public AssetRejectedByPcAdminEventHandler(
         INotificationService notificationService,
+        EmailTemplateService emailTemplateService,
         ILogger<AssetRejectedByPcAdminEventHandler> logger)
     {
         _notificationService = notificationService;
+        _emailTemplateService = emailTemplateService;
         _logger = logger;
     }
 
@@ -246,7 +171,7 @@ public class AssetRejectedByPcAdminEventHandler : INotificationHandler<AssetReje
             }
 
             // Build email body with HTML
-            var emailBody = BuildRejectionEmailBody(notification);
+            var emailBody = _emailTemplateService.BuildAssetRejectedByPcAdminEmail(notification.AssetId);
             
             // Send email notification to contributor (creator)
             await _notificationService.SendEmailAsync(
@@ -293,86 +218,6 @@ public class AssetRejectedByPcAdminEventHandler : INotificationHandler<AssetReje
             cancellationToken: cancellationToken);
     }
 
-    private string BuildRejectionEmailBody(AssetRejectedByPcAdminEvent notification)
-    {
-        var assetDetailsUrl = $"/assets/{notification.AssetId}";
-        
-        return $@"
-<!DOCTYPE html>
-<html lang=""en"">
-<head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>Asset Rejected</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }}
-        .email-container {{
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        .header {{
-            border-bottom: 2px solid #dc3545;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }}
-        .content {{
-            margin: 20px 0;
-        }}
-        .button-container {{
-            text-align: center;
-            margin: 30px 0;
-        }}
-        .button {{
-            display: inline-block;
-            padding: 12px 30px;
-            background-color: #007bff;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 16px;
-        }}
-        .button:hover {{
-            background-color: #0056b3;
-        }}
-        .footer {{
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e0e0e0;
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-        }}
-    </style>
-</head>
-<body>
-    <div class=""email-container"">
-        <div class=""header"">
-            <h1 style=""color: #dc3545; margin: 0;"">Asset Rejected</h1>
-        </div>
-        <div class=""content"">
-            <p>Your asset has been Rejected</p>
-        </div>
-        <div class=""button-container"">
-            <a href=""{assetDetailsUrl}"" class=""button"">View Asset</a>
-        </div>
-        <div class=""footer"">
-            <p>Regards.<br>Infrabase team</p>
-        </div>
-    </div>
-</body>
-</html>";
-    }
 }
 
 public class AssetAcceptedByPcAdminEventHandler : INotificationHandler<AssetAcceptedByPcAdminEvent>
@@ -380,17 +225,20 @@ public class AssetAcceptedByPcAdminEventHandler : INotificationHandler<AssetAcce
     private readonly INotificationService _notificationService;
     private readonly IMiddlewareIntegrationService _middlewareService;
     private readonly IConfiguration _configuration;
+    private readonly EmailTemplateService _emailTemplateService;
     private readonly ILogger<AssetAcceptedByPcAdminEventHandler> _logger;
 
     public AssetAcceptedByPcAdminEventHandler(
         INotificationService notificationService,
         IMiddlewareIntegrationService middlewareService,
         IConfiguration configuration,
+        EmailTemplateService emailTemplateService,
         ILogger<AssetAcceptedByPcAdminEventHandler> logger)
     {
         _notificationService = notificationService;
         _middlewareService = middlewareService;
         _configuration = configuration;
+        _emailTemplateService = emailTemplateService;
         _logger = logger;
     }
 
@@ -419,7 +267,7 @@ public class AssetAcceptedByPcAdminEventHandler : INotificationHandler<AssetAcce
             }
 
             // Build email body with HTML
-            var emailBody = BuildAcceptanceEmailBody(notification);
+            var emailBody = _emailTemplateService.BuildAssetAcceptedByPcAdminEmail(notification.AssetId);
             
             // Send email notification to contributor (creator)
             await _notificationService.SendEmailAsync(
@@ -475,7 +323,7 @@ public class AssetAcceptedByPcAdminEventHandler : INotificationHandler<AssetAcce
             var companyName = company?.Name ?? "Unknown Company";
             
             // Build email body with HTML
-            var emailBody = BuildInfrabaseAdminEmailBody(notification, companyName);
+            var emailBody = _emailTemplateService.BuildNewRequestSubmittedEmail(companyName, notification.AssetId);
             
             // Split emails by comma and send to all Infrabase admins
             var emailList = infrabaseAdminEmails
@@ -521,182 +369,24 @@ public class AssetAcceptedByPcAdminEventHandler : INotificationHandler<AssetAcce
             cancellationToken: cancellationToken);
     }
 
-    private string BuildAcceptanceEmailBody(AssetAcceptedByPcAdminEvent notification)
-    {
-        var assetDetailsUrl = $"/assets/{notification.AssetId}";
-        
-        return $@"
-<!DOCTYPE html>
-<html lang=""en"">
-<head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>Asset Accepted</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }}
-        .email-container {{
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        .header {{
-            border-bottom: 2px solid #28a745;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }}
-        .content {{
-            margin: 20px 0;
-        }}
-        .button-container {{
-            text-align: center;
-            margin: 30px 0;
-        }}
-        .button {{
-            display: inline-block;
-            padding: 12px 30px;
-            background-color: #007bff;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 16px;
-        }}
-        .button:hover {{
-            background-color: #0056b3;
-        }}
-        .footer {{
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e0e0e0;
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-        }}
-    </style>
-</head>
-<body>
-    <div class=""email-container"">
-        <div class=""header"">
-            <h1 style=""color: #28a745; margin: 0;"">Asset Accepted</h1>
-        </div>
-        <div class=""content"">
-            <p>Your asset has been Approved</p>
-        </div>
-        <div class=""button-container"">
-            <a href=""{assetDetailsUrl}"" class=""button"">View Asset</a>
-        </div>
-        <div class=""footer"">
-            <p>Regards.<br>Infrabase team</p>
-        </div>
-    </div>
-</body>
-    </html>";
-    }
-
-    private string BuildInfrabaseAdminEmailBody(AssetAcceptedByPcAdminEvent notification, string companyName)
-    {
-        var assetDetailsUrl = $"/assets/{notification.AssetId}";
-        
-        return $@"
-<!DOCTYPE html>
-<html lang=""en"">
-<head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>New request submitted</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }}
-        .email-container {{
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        .header {{
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }}
-        .content {{
-            margin: 20px 0;
-        }}
-        .button-container {{
-            text-align: center;
-            margin: 30px 0;
-        }}
-        .button {{
-            display: inline-block;
-            padding: 12px 30px;
-            background-color: #007bff;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 16px;
-        }}
-        .button:hover {{
-            background-color: #0056b3;
-        }}
-        .footer {{
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e0e0e0;
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-        }}
-    </style>
-</head>
-<body>
-    <div class=""email-container"">
-        <div class=""header"">
-            <h1 style=""color: #007bff; margin: 0;"">New request submitted</h1>
-        </div>
-        <div class=""content"">
-            <p>New request submitted by ""{companyName}"" and waiting your approval</p>
-        </div>
-        <div class=""button-container"">
-            <a href=""{assetDetailsUrl}"" class=""button"">Approve Request</a>
-        </div>
-        <div class=""footer"">
-            <p>Regards.<br>Infrabase team</p>
-        </div>
-    </div>
-</body>
-</html>";
-    }
 }
 
 public class AssetReturnedForCorrectionEventHandler : INotificationHandler<AssetReturnedForCorrectionByInfrabaseAdminEvent>
 {
     private readonly INotificationService _notificationService;
     private readonly IMiddlewareIntegrationService _middlewareService;
+    private readonly EmailTemplateService _emailTemplateService;
     private readonly ILogger<AssetReturnedForCorrectionEventHandler> _logger;
 
     public AssetReturnedForCorrectionEventHandler(
         INotificationService notificationService,
         IMiddlewareIntegrationService middlewareService,
+        EmailTemplateService emailTemplateService,
         ILogger<AssetReturnedForCorrectionEventHandler> logger)
     {
         _notificationService = notificationService;
         _middlewareService = middlewareService;
+        _emailTemplateService = emailTemplateService;
         _logger = logger;
     }
 
@@ -725,7 +415,7 @@ public class AssetReturnedForCorrectionEventHandler : INotificationHandler<Asset
             }
 
             // Build email body with HTML
-            var emailBody = BuildRejectionEmailBody(notification);
+            var emailBody = _emailTemplateService.BuildAssetRejectedByInfrabaseAdminEmail(notification.AssetId);
             
             // Send email notification to contributor (creator)
             await _notificationService.SendEmailAsync(
@@ -779,7 +469,7 @@ public class AssetReturnedForCorrectionEventHandler : INotificationHandler<Asset
             var pcAdminEmail = company.Representative.Email;
             
             // Build email body with HTML
-            var emailBody = BuildRejectionEmailBody(notification);
+            var emailBody = _emailTemplateService.BuildAssetRejectedByInfrabaseAdminEmail(notification.AssetId);
             
             // Send email notification to PC admin
             await _notificationService.SendEmailAsync(
@@ -825,101 +515,24 @@ public class AssetReturnedForCorrectionEventHandler : INotificationHandler<Asset
             cancellationToken: cancellationToken);
     }
 
-    private string BuildRejectionEmailBody(AssetReturnedForCorrectionByInfrabaseAdminEvent notification)
-    {
-        var assetDetailsUrl = $"/assets/{notification.AssetId}";
-        
-        return $@"
-<!DOCTYPE html>
-<html lang=""en"">
-<head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>Asset Rejected</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }}
-        .email-container {{
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        .header {{
-            border-bottom: 2px solid #dc3545;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }}
-        .content {{
-            margin: 20px 0;
-        }}
-        .button-container {{
-            text-align: center;
-            margin: 30px 0;
-        }}
-        .button {{
-            display: inline-block;
-            padding: 12px 30px;
-            background-color: #007bff;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 16px;
-        }}
-        .button:hover {{
-            background-color: #0056b3;
-        }}
-        .footer {{
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e0e0e0;
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-        }}
-    </style>
-</head>
-<body>
-    <div class=""email-container"">
-        <div class=""header"">
-            <h1 style=""color: #dc3545; margin: 0;"">Asset Rejected</h1>
-        </div>
-        <div class=""content"">
-            <p>Your asset has been Rejected</p>
-        </div>
-        <div class=""button-container"">
-            <a href=""{assetDetailsUrl}"" class=""button"">View Asset</a>
-        </div>
-        <div class=""footer"">
-            <p>Regards.<br>Infrabase team</p>
-        </div>
-    </div>
-</body>
-</html>";
-    }
 }
 
 public class AssetCheckedByInfrabaseAdminEventHandler : INotificationHandler<AssetCheckedByInfrabaseAdminEvent>
 {
     private readonly INotificationService _notificationService;
     private readonly IMiddlewareIntegrationService _middlewareService;
+    private readonly EmailTemplateService _emailTemplateService;
     private readonly ILogger<AssetCheckedByInfrabaseAdminEventHandler> _logger;
 
     public AssetCheckedByInfrabaseAdminEventHandler(
         INotificationService notificationService,
         IMiddlewareIntegrationService middlewareService,
+        EmailTemplateService emailTemplateService,
         ILogger<AssetCheckedByInfrabaseAdminEventHandler> logger)
     {
         _notificationService = notificationService;
         _middlewareService = middlewareService;
+        _emailTemplateService = emailTemplateService;
         _logger = logger;
     }
 
@@ -948,7 +561,7 @@ public class AssetCheckedByInfrabaseAdminEventHandler : INotificationHandler<Ass
             }
 
             // Build email body with HTML
-            var emailBody = BuildAcceptanceEmailBody(notification);
+            var emailBody = _emailTemplateService.BuildAssetAcceptedByInfrabaseAdminEmail(notification.AssetId);
             
             // Send email notification to contributor (creator)
             await _notificationService.SendEmailAsync(
@@ -1002,7 +615,7 @@ public class AssetCheckedByInfrabaseAdminEventHandler : INotificationHandler<Ass
             var pcAdminEmail = company.Representative.Email;
             
             // Build email body with HTML
-            var emailBody = BuildAcceptanceEmailBody(notification);
+            var emailBody = _emailTemplateService.BuildAssetAcceptedByInfrabaseAdminEmail(notification.AssetId);
             
             // Send email notification to PC admin
             await _notificationService.SendEmailAsync(
@@ -1048,84 +661,4 @@ public class AssetCheckedByInfrabaseAdminEventHandler : INotificationHandler<Ass
             cancellationToken: cancellationToken);
     }
 
-    private string BuildAcceptanceEmailBody(AssetCheckedByInfrabaseAdminEvent notification)
-    {
-        var assetDetailsUrl = $"/assets/{notification.AssetId}";
-        
-        return $@"
-<!DOCTYPE html>
-<html lang=""en"">
-<head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>Asset Accepted</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }}
-        .email-container {{
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        .header {{
-            border-bottom: 2px solid #28a745;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }}
-        .content {{
-            margin: 20px 0;
-        }}
-        .button-container {{
-            text-align: center;
-            margin: 30px 0;
-        }}
-        .button {{
-            display: inline-block;
-            padding: 12px 30px;
-            background-color: #007bff;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 16px;
-        }}
-        .button:hover {{
-            background-color: #0056b3;
-        }}
-        .footer {{
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e0e0e0;
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-        }}
-    </style>
-</head>
-<body>
-    <div class=""email-container"">
-        <div class=""header"">
-            <h1 style=""color: #28a745; margin: 0;"">Asset Accepted</h1>
-        </div>
-        <div class=""content"">
-            <p>Your asset has been Approved</p>
-        </div>
-        <div class=""button-container"">
-            <a href=""{assetDetailsUrl}"" class=""button"">View Asset</a>
-        </div>
-        <div class=""footer"">
-            <p>Regards.<br>Infrabase team</p>
-        </div>
-    </div>
-</body>
-</html>";
-    }
 }
