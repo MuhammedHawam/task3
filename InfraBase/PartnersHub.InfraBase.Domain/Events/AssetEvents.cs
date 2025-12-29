@@ -7,12 +7,18 @@ public class AssetSubmittedEvent : DomainEvent
     public Guid AssetId { get; }
     public string AssetCode { get; }
     public string SubmittedBy { get; }
+    public Guid CompanyId { get; }
+    public string CreatedBy { get; }
+    public bool IsContributorSubmission { get; }
 
-    public AssetSubmittedEvent(Guid assetId, string assetCode, string submittedBy)
+    public AssetSubmittedEvent(Guid assetId, string assetCode, string submittedBy, Guid companyId, string createdBy, bool isContributorSubmission)
     {
         AssetId = assetId;
         AssetCode = assetCode;
         SubmittedBy = submittedBy;
+        CompanyId = companyId;
+        CreatedBy = createdBy;
+        IsContributorSubmission = isContributorSubmission;
     }
 }
 

@@ -467,7 +467,7 @@ public class Asset : AggregateRoot
                 : "Asset resubmitted after addressing rejection reasons";
 
         AddHistory(action, userId ?? "Admin", comments);
-        AddDomainEvent(new AssetSubmittedEvent(Id, AssetCode, userId));
+        AddDomainEvent(new AssetSubmittedEvent(Id, AssetCode, userId ?? "Admin", CompanyId, CreatedBy ?? userId ?? "Admin", !isPcAdmin));
         return Result<bool>.Success(true);
     }
 
