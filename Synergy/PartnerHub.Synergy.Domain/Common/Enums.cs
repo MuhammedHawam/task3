@@ -1,0 +1,58 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace PartnersHub.Synergy.Domain.Common
+{
+    /// <summary>
+    /// Type of terms and conditions
+    /// </summary>
+    public enum TermsAndConditionType : byte
+    {
+        SynergyTermsAndCondition = 0,
+        GlobalTermsAndCondition = 1
+    }
+
+    /// <summary>
+    /// Status of an opportunity submission
+    /// </summary>
+    public enum OpportunityStatus : byte
+    {
+        PendingReview = 1,
+        AssetManagerApproved = 2,
+        AdminRejected = 3,
+        AssetManagerRejected = 4,
+        Published = 5
+    }
+
+    /// <summary>
+    /// Status of a success story submission
+    /// </summary>
+    public enum SuccessStoryStatus : byte
+    {
+        PendingReview = 1,
+        AssetManagerApproved = 2,
+        AssetManagerRejected = 3,
+        Published = 4,
+        AdminRejected  = 6,
+    }
+
+    /// <summary>
+    /// File extension types allowed for attachments
+    /// </summary>
+    public enum FileExtension : byte
+    {
+        Pdf = 0,
+        Docx = 1,
+        Xlsx = 2,
+        Image = 3,
+        Video = 4
+    }
+    public enum SuccessStroyCollaborationStatus : byte
+    {
+        Ongoing = 0,
+        Successful = 1,
+    }
+}

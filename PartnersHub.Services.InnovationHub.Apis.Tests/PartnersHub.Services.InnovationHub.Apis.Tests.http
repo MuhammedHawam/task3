@@ -1,0 +1,6 @@
+@PartnersHub.Services.InnovationHub.Apis.Tests_HostAddress = http://localhost:5080
+
+GET {{PartnersHub.Services.InnovationHub.Apis.Tests_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
