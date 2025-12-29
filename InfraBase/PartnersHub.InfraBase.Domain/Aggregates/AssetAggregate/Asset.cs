@@ -490,7 +490,7 @@ public class Asset : AggregateRoot
         UpdatedBy = userId;
         UpdatedAt = DateTime.Now;
         AddHistory("Accepted by PC Admin", userId, "Asset accepted and forwarded to Infrabase admin");
-        AddDomainEvent(new AssetAcceptedByPcAdminEvent(Id, AssetCode, userId ?? "Admin", CreatedBy ?? userId ?? "Admin"));
+        AddDomainEvent(new AssetAcceptedByPcAdminEvent(Id, AssetCode, userId ?? "Admin", CreatedBy ?? userId ?? "Admin", CompanyId));
         return Result<bool>.Success(true);
     }
 

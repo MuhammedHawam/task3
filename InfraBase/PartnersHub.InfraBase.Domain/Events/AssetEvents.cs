@@ -47,13 +47,15 @@ public class AssetAcceptedByPcAdminEvent : DomainEvent
     public string AssetCode { get; }
     public string AcceptedBy { get; }
     public string CreatedBy { get; }
+    public Guid CompanyId { get; }
 
-    public AssetAcceptedByPcAdminEvent(Guid assetId, string assetCode, string acceptedBy, string createdBy)
+    public AssetAcceptedByPcAdminEvent(Guid assetId, string assetCode, string acceptedBy, string createdBy, Guid companyId)
     {
         AssetId = assetId;
         AssetCode = assetCode;
         AcceptedBy = acceptedBy;
         CreatedBy = createdBy;
+        CompanyId = companyId;
     }
 }
 
