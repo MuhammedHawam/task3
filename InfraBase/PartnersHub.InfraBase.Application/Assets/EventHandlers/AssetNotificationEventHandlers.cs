@@ -219,42 +219,316 @@ public class AssetSubmittedEventHandler : INotificationHandler<AssetSubmittedEve
 public class AssetRejectedByPcAdminEventHandler : INotificationHandler<AssetRejectedByPcAdminEvent>
 {
     private readonly INotificationService _notificationService;
+    private readonly ILogger<AssetRejectedByPcAdminEventHandler> _logger;
 
-    public AssetRejectedByPcAdminEventHandler(INotificationService notificationService)
+    public AssetRejectedByPcAdminEventHandler(
+        INotificationService notificationService,
+        ILogger<AssetRejectedByPcAdminEventHandler> logger)
     {
         _notificationService = notificationService;
+        _logger = logger;
     }
 
     public async Task Handle(AssetRejectedByPcAdminEvent notification, CancellationToken cancellationToken)
     {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(notification.CreatedBy))
+            {
+                _logger.LogWarning(
+                    "Cannot send email notification for asset {AssetId} rejection: CreatedBy is empty",
+                    notification.AssetId);
+                
+                // Still send in-app notification
+                await SendInAppNotification(notification, cancellationToken);
+                return;
+            }
+
+            // Build email body with HTML
+            var emailBody = BuildRejectionEmailBody(notification);
+            
+            // Send email notification to contributor (creator)
+            await _notificationService.SendEmailAsync(
+                to: notification.CreatedBy,
+                subject: "Asset Rejected",
+                body: emailBody,
+                cancellationToken: cancellationToken);
+            
+            _logger.LogInformation(
+                "Email notification sent to contributor {CreatedBy} for asset {AssetId} rejection",
+                notification.CreatedBy, notification.AssetId);
+            
+            // Send in-app notification to contributor
+            await SendInAppNotification(notification, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error sending notification for asset {AssetId} rejection: {Message}",
+                notification.AssetId, ex.Message);
+            
+            // Try to send in-app notification even if email fails
+            try
+            {
+                await SendInAppNotification(notification, cancellationToken);
+            }
+            catch (Exception inAppEx)
+            {
+                _logger.LogError(inAppEx,
+                    "Failed to send in-app notification for asset {AssetId} rejection: {Message}",
+                    notification.AssetId, inAppEx.Message);
+            }
+        }
+    }
+
+    private async Task SendInAppNotification(AssetRejectedByPcAdminEvent notification, CancellationToken cancellationToken)
+    {
         await _notificationService.CreateInAppNotificationAsync(
-            userId: notification.RejectedBy,
+            userId: notification.CreatedBy,
             title: "Asset Rejected by PC Admin",
             message: $"Asset {notification.AssetCode} was rejected. Reason: {notification.RejectionReason}",
             link: $"/assets/{notification.AssetId}",
             notificationType: "AssetRejection",
             cancellationToken: cancellationToken);
     }
+
+    private string BuildRejectionEmailBody(AssetRejectedByPcAdminEvent notification)
+    {
+        var assetDetailsUrl = $"/assets/{notification.AssetId}";
+        
+        return $@"
+<!DOCTYPE html>
+<html lang=""en"">
+<head>
+    <meta charset=""UTF-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Asset Rejected</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }}
+        .email-container {{
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        .header {{
+            border-bottom: 2px solid #dc3545;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }}
+        .content {{
+            margin: 20px 0;
+        }}
+        .button-container {{
+            text-align: center;
+            margin: 30px 0;
+        }}
+        .button {{
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #007bff;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 16px;
+        }}
+        .button:hover {{
+            background-color: #0056b3;
+        }}
+        .footer {{
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }}
+    </style>
+</head>
+<body>
+    <div class=""email-container"">
+        <div class=""header"">
+            <h1 style=""color: #dc3545; margin: 0;"">Asset Rejected</h1>
+        </div>
+        <div class=""content"">
+            <p>Your asset has been Rejected</p>
+        </div>
+        <div class=""button-container"">
+            <a href=""{assetDetailsUrl}"" class=""button"">View Asset</a>
+        </div>
+        <div class=""footer"">
+            <p>Regards.<br>Infrabase team</p>
+        </div>
+    </div>
+</body>
+</html>";
+    }
 }
 
 public class AssetAcceptedByPcAdminEventHandler : INotificationHandler<AssetAcceptedByPcAdminEvent>
 {
     private readonly INotificationService _notificationService;
+    private readonly ILogger<AssetAcceptedByPcAdminEventHandler> _logger;
 
-    public AssetAcceptedByPcAdminEventHandler(INotificationService notificationService)
+    public AssetAcceptedByPcAdminEventHandler(
+        INotificationService notificationService,
+        ILogger<AssetAcceptedByPcAdminEventHandler> logger)
     {
         _notificationService = notificationService;
+        _logger = logger;
     }
 
     public async Task Handle(AssetAcceptedByPcAdminEvent notification, CancellationToken cancellationToken)
     {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(notification.CreatedBy))
+            {
+                _logger.LogWarning(
+                    "Cannot send email notification for asset {AssetId} acceptance: CreatedBy is empty",
+                    notification.AssetId);
+                
+                // Still send in-app notification
+                await SendInAppNotification(notification, cancellationToken);
+                return;
+            }
+
+            // Build email body with HTML
+            var emailBody = BuildAcceptanceEmailBody(notification);
+            
+            // Send email notification to contributor (creator)
+            await _notificationService.SendEmailAsync(
+                to: notification.CreatedBy,
+                subject: "Asset Accepted",
+                body: emailBody,
+                cancellationToken: cancellationToken);
+            
+            _logger.LogInformation(
+                "Email notification sent to contributor {CreatedBy} for asset {AssetId} acceptance",
+                notification.CreatedBy, notification.AssetId);
+            
+            // Send in-app notification to contributor
+            await SendInAppNotification(notification, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error sending notification for asset {AssetId} acceptance: {Message}",
+                notification.AssetId, ex.Message);
+            
+            // Try to send in-app notification even if email fails
+            try
+            {
+                await SendInAppNotification(notification, cancellationToken);
+            }
+            catch (Exception inAppEx)
+            {
+                _logger.LogError(inAppEx,
+                    "Failed to send in-app notification for asset {AssetId} acceptance: {Message}",
+                    notification.AssetId, inAppEx.Message);
+            }
+        }
+    }
+
+    private async Task SendInAppNotification(AssetAcceptedByPcAdminEvent notification, CancellationToken cancellationToken)
+    {
         await _notificationService.CreateInAppNotificationAsync(
-            userId: notification.AcceptedBy,
+            userId: notification.CreatedBy,
             title: "Asset Accepted by PC Admin",
-            message: $"Asset {notification.AssetCode} has been accepted by PC Admin and requires your review.",
+            message: $"Asset {notification.AssetCode} has been accepted by PC Admin.",
             link: $"/assets/{notification.AssetId}",
             notificationType: "AssetApproval",
             cancellationToken: cancellationToken);
+    }
+
+    private string BuildAcceptanceEmailBody(AssetAcceptedByPcAdminEvent notification)
+    {
+        var assetDetailsUrl = $"/assets/{notification.AssetId}";
+        
+        return $@"
+<!DOCTYPE html>
+<html lang=""en"">
+<head>
+    <meta charset=""UTF-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Asset Accepted</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }}
+        .email-container {{
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        .header {{
+            border-bottom: 2px solid #28a745;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }}
+        .content {{
+            margin: 20px 0;
+        }}
+        .button-container {{
+            text-align: center;
+            margin: 30px 0;
+        }}
+        .button {{
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #007bff;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 16px;
+        }}
+        .button:hover {{
+            background-color: #0056b3;
+        }}
+        .footer {{
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }}
+    </style>
+</head>
+<body>
+    <div class=""email-container"">
+        <div class=""header"">
+            <h1 style=""color: #28a745; margin: 0;"">Asset Accepted</h1>
+        </div>
+        <div class=""content"">
+            <p>Your asset has been Approved</p>
+        </div>
+        <div class=""button-container"">
+            <a href=""{assetDetailsUrl}"" class=""button"">View Asset</a>
+        </div>
+        <div class=""footer"">
+            <p>Regards.<br>Infrabase team</p>
+        </div>
+    </div>
+</body>
+</html>";
     }
 }
 

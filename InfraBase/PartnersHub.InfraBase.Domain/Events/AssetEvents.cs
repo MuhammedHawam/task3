@@ -28,14 +28,16 @@ public class AssetRejectedByPcAdminEvent : DomainEvent
     public string AssetCode { get; }
     public string RejectionReason { get; }
     public string RejectedBy { get; }
+    public string CreatedBy { get; }
 
     public AssetRejectedByPcAdminEvent(Guid assetId, string assetCode, 
-        string rejectionReason, string rejectedBy)
+        string rejectionReason, string rejectedBy, string createdBy)
     {
         AssetId = assetId;
         AssetCode = assetCode;
         RejectionReason = rejectionReason;
         RejectedBy = rejectedBy;
+        CreatedBy = createdBy;
     }
 }
 
@@ -44,12 +46,14 @@ public class AssetAcceptedByPcAdminEvent : DomainEvent
     public Guid AssetId { get; }
     public string AssetCode { get; }
     public string AcceptedBy { get; }
+    public string CreatedBy { get; }
 
-    public AssetAcceptedByPcAdminEvent(Guid assetId, string assetCode, string acceptedBy)
+    public AssetAcceptedByPcAdminEvent(Guid assetId, string assetCode, string acceptedBy, string createdBy)
     {
         AssetId = assetId;
         AssetCode = assetCode;
         AcceptedBy = acceptedBy;
+        CreatedBy = createdBy;
     }
 }
 

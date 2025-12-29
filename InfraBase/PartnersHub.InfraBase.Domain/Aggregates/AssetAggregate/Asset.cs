@@ -490,7 +490,7 @@ public class Asset : AggregateRoot
         UpdatedBy = userId;
         UpdatedAt = DateTime.Now;
         AddHistory("Accepted by PC Admin", userId, "Asset accepted and forwarded to Infrabase admin");
-        AddDomainEvent(new AssetAcceptedByPcAdminEvent(Id, AssetCode, userId ?? "Admin"));
+        AddDomainEvent(new AssetAcceptedByPcAdminEvent(Id, AssetCode, userId ?? "Admin", CreatedBy ?? userId ?? "Admin"));
         return Result<bool>.Success(true);
     }
 
@@ -519,7 +519,7 @@ public class Asset : AggregateRoot
         UpdatedBy = userId;
         UpdatedAt = DateTime.Now;
         AddHistory("Rejected by PC Admin", !string.IsNullOrWhiteSpace(userId) ? userId: "Admin", rejectionReason);
-        AddDomainEvent(new AssetRejectedByPcAdminEvent(Id, AssetCode, rejectionReason, !string.IsNullOrWhiteSpace(userId) ? userId : "Admin"));
+        AddDomainEvent(new AssetRejectedByPcAdminEvent(Id, AssetCode, rejectionReason, !string.IsNullOrWhiteSpace(userId) ? userId : "Admin", CreatedBy ?? userId ?? "Admin"));
         return Result<bool>.Success(true);
     }
 
