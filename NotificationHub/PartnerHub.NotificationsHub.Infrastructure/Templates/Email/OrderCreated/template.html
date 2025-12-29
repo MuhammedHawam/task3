@@ -1,0 +1,17 @@
+<h2>Order Confirmation</h2>
+<p>Dear {{CustomerName}},</p>
+<p>Thank you for your order! We're excited to confirm that we've received your order and it's being processed.</p>
+
+<div style="background-color: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
+    <h3>Order Details</h3>
+    <p><strong>Order Number:</strong> {{OrderNumber}}</p>
+    <p><strong>Order Date:</strong> {{OrderDate}}</p>
+    <p><strong>Total Amount:</strong> {{TotalAmount}}</p>
+</div>
+
+<p>You can track your order status by clicking the button below:</p>
+<a href="{{TrackingUrl}}" class="button">Track Your Order</a>
+
+<p>If you have any questions, please don't hesitate to contact our customer service team.</p>
+
+<p>Best regards,<br>The {{CompanyName}} Team</p>

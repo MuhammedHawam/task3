@@ -1,0 +1,18 @@
+<h2>Password Reset Request</h2>
+<p>Dear {{UserName}},</p>
+<p>We received a request to reset your password for your {{CompanyName}} account.</p>
+
+<div style="background-color: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
+    <h3>Reset Your Password</h3>
+    <p>Click the button below to reset your password. This link will expire in {{ExpirationHours}} hours.</p>
+    <a href="{{ResetUrl}}" class="button">Reset Password</a>
+</div>
+
+<p><strong>If you didn't request this password reset, please ignore this email.</strong> Your password will remain unchanged.</p>
+
+<p>For security reasons, this link will expire on {{ExpirationDate}}.</p>
+
+<p>If you're having trouble clicking the button, copy and paste the URL below into your web browser:</p>
+<p style="word-break: break-all; color: #666;">{{ResetUrl}}</p>
+
+<p>Best regards,<br>The {{CompanyName}} Security Team</p>

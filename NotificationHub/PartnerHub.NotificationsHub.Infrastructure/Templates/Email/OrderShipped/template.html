@@ -1,0 +1,18 @@
+<h2>Your Order Has Shipped!</h2>
+<p>Dear {{CustomerName}},</p>
+<p>Great news! Your order has been shipped and is on its way to you.</p>
+
+<div style="background-color: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
+    <h3>Shipping Details</h3>
+    <p><strong>Order Number:</strong> {{OrderNumber}}</p>
+    <p><strong>Tracking Number:</strong> {{TrackingNumber}}</p>
+    <p><strong>Carrier:</strong> {{Carrier}}</p>
+    <p><strong>Estimated Delivery:</strong> {{EstimatedDelivery}}</p>
+</div>
+
+<p>You can track your shipment using the tracking number above or by clicking the button below:</p>
+<a href="{{TrackingUrl}}" class="button">Track Your Shipment</a>
+
+<p>Thank you for choosing {{CompanyName}}!</p>
+
+<p>Best regards,<br>The {{CompanyName}} Team</p>
