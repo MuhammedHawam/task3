@@ -33,7 +33,7 @@ public class OpportunitySearchCardDto
     public Guid Id { get; set; }
     public string Title { get; set; } = null!;
     public string Description { get; set; } = null!;
-    public CollaborationStatusFilter Status { get; set; }
+    public OpportunityStatus Status { get; set; }
     public string StatusDescription { get; set; } = null!;
 
     // Company info
@@ -62,6 +62,8 @@ public class OpportunitySearchCardDto
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }
     public DateTime CreatedAt { get; set; }
+
+    public bool IsHide {  get; set; }
 }
 
 /// <summary>

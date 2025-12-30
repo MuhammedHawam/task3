@@ -21,7 +21,7 @@ namespace PartnersHub.Synergy.Domain.Common
     public enum OpportunityStatus : byte
     {
         PendingReview = 1,
-        AssetManagerApproved = 2,
+        Pending = 2,
         AdminRejected = 3,
         AssetManagerRejected = 4,
         Published = 5
@@ -33,7 +33,7 @@ namespace PartnersHub.Synergy.Domain.Common
     public enum SuccessStoryStatus : byte
     {
         PendingReview = 1,
-        AssetManagerApproved = 2,
+        pending = 2,
         AssetManagerRejected = 3,
         Published = 4,
         AdminRejected  = 6,

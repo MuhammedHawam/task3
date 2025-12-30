@@ -29,5 +29,7 @@ namespace PartnersHub.Synergy.Application.SuccessStories.Commands
         public string? SectorName { get;  set; }
         public string? UserEmail { get;  set; }
 
+        public string? CompanyName { get; set; }
+
     }
 }

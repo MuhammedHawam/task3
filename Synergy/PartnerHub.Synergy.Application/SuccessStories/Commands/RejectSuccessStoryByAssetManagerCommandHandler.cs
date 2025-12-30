@@ -28,7 +28,7 @@ namespace PartnersHub.Synergy.Application.SuccessStories.Commands
             if (successStory == null)
                 return Result.Failure("Success Story doesn't exist");
 
-            var result = successStory.RejectByAssetManager(_userService.CurrentUserId, request.RejectionReason);
+            var result = successStory.RejectByAssetManager(_userService.CurrentUserId, request.RejectionReason, successStory.Title.Value, successStory.CompanyName, successStory.UserEmail);
             if (result.IsFailure)
                 return Result.Failure(result.Error);
 

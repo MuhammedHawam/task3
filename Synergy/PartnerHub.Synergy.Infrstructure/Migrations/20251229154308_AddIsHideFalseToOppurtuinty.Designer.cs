@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PartnersHub.Synergy.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using PartnersHub.Synergy.Infrastructure.Persistence;
 namespace PartnersHub.Synergy.Infrastructure.Migrations
 {
     [DbContext(typeof(SynergyDbContext))]
-    partial class SynergyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251229154308_AddIsHideFalseToOppurtuinty")]
+    partial class AddIsHideFalseToOppurtuinty
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -29,7 +29,7 @@ namespace PartnersHub.Synergy.Application.SuccessStories.Commands
             if (successStory == null)
                 return Result.Failure("Success Story doesn't exist");
 
-            var result = successStory.Publish(_userService.CurrentUserId);
+            var result = successStory.Publish(_userService.CurrentUserId, successStory.Title.Value, successStory.CompanyName,successStory.UserEmail);
             if (result.IsFailure)
                 return Result.Failure(result.Error);
 

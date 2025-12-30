@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PartnersHub.Synergy.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using PartnersHub.Synergy.Infrastructure.Persistence;
 namespace PartnersHub.Synergy.Infrastructure.Migrations
 {
     [DbContext(typeof(SynergyDbContext))]
-    partial class SynergyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251229153423_AddIsHideToOppurtuinty")]
+    partial class AddIsHideToOppurtuinty
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -72,7 +75,7 @@ namespace PartnersHub.Synergy.Infrastructure.Migrations
                     b.Property<bool?>("IsAdminCreated")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsHide")
+                    b.Property<bool?>("IsHide")
                         .HasColumnType("bit");
 
                     b.Property<int>("OpportunityTypeId")
@@ -272,7 +275,7 @@ namespace PartnersHub.Synergy.Infrastructure.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsHide")
+                    b.Property<bool?>("IsHide")
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("RejectedAt")

@@ -50,6 +50,8 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.Configure<EmailParameters>(builder.Configuration.GetSection("EmailParameters"));
 
+
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "Partners Hub Synergy API", Version = "v1" });
@@ -196,7 +198,7 @@ using var scope = app.Services.CreateScope();
 
 // Configure the HTTP request pipeline.
 //TODO: uncomment the below on UAT
-//if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>

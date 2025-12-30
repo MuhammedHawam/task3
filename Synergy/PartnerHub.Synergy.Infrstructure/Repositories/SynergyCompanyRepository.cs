@@ -129,7 +129,7 @@ public class SynergyCompanyRepository : ISynergyCompanyRepository
 
     public async Task<List<SynergyCompany>> GetRecentAsync(int count, bool asNoTracking = true, params Expression<Func<SynergyCompany, object>>[] includes)
     {
-        var query = _context.SynergyCompanies
+        var query = _context.SynergyCompanies.Where(e => e.IsActive)
             .OrderByDescending(c => c.CreatedAt)
             .Take(count);
         if (includes != null)

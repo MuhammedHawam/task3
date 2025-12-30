@@ -1,5 +1,6 @@
 using MediatR;
 using PartnersHub.Synergy.Application.Interfaces.Common;
+using PartnersHub.Synergy.Domain.Aggregates.SuccessStoryAggregate;
 using PartnersHub.Synergy.Domain.Common;
 using PartnersHub.Synergy.Domain.Events;
 
@@ -49,11 +50,15 @@ public class SuccessStoryRejectedEventHandler : INotificationHandler<SuccessStor
             cancellationToken);
 
         // Send notification to PC Representative
-        await _notificationService.SendSuccessStoryRejectedNotificationAsync(
+        await _notificationService.SendRejectedNotificationAsync(
+            "SuccessStory",
             notification.SuccessStoryId,
             notification.CompanyId,
             notification.RejectionReason,
             notification.RejectedBy,
+            notification.SuccessStoryName,
+            notification.CompanyName,
+            notification.CompanyEmail,
             cancellationToken);
     }
 }

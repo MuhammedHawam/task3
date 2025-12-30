@@ -1,0 +1,109 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Update on Your Submission</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .english {
+            direction: ltr;
+            text-align: left;
+        }
+
+        .arabic {
+            direction: rtl;
+            text-align: right;
+        }
+
+        .reason {
+            font-weight: bold;
+            color: #b00020;
+        }
+
+        a {
+            color: #0066cc;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- ================= ENGLISH ================= -->
+        <div class="section english">
+            <p>Dear {PC Name},</p>
+
+            <p>Thank you for your submission.</p>
+
+            <p>
+                After review, your
+                <strong>{Submission Type}</strong>
+                was not approved.
+            </p>
+
+            <p class="reason">
+                Reason: {Reason}
+            </p>
+
+            <p>You may view the request details using the link below:</p>
+
+            <p>
+                <a href="{BaseURL}/synergy/{module}/{request-id}">
+                    👉 View Request
+                </a>
+            </p>
+
+            <p>
+                Regards,<br />
+                Synergy Platform
+            </p>
+        </div>
+
+        <hr />
+
+        <!-- ================= ARABIC ================= -->
+        <div class="section arabic">
+            <p>عزيزي {PC Name}،</p>
+
+            <p>نشكر لكم تقديم الطلب.</p>
+
+            <p>
+                بعد المراجعة، لم تتم الموافقة على
+                <strong>{Submission Type}</strong>.
+            </p>
+
+            <p class="reason">
+                سبب الرفض: {Reason}
+            </p>
+
+            <p>يمكنكم الاطلاع على تفاصيل الطلب عبر الرابط أدناه:</p>
+
+            <p>
+                <a href="{BaseURL}/synergy/{module}/{request-id}">
+                    عرض الطلب
+                </a>
+            </p>
+
+            <p>
+                مع التحية،<br />
+                منصة سينرجي
+            </p>
+        </div>
+
+    </div>
+</body>
+</html>

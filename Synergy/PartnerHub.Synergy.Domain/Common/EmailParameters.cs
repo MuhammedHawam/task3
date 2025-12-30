@@ -32,5 +32,28 @@ namespace PartnersHub.Synergy.Domain.Common
         public string SuccessStoryRejectedBody { get; set; }
 
         public string BaseURL { get; set; }
+
+        public List<CompanyAssetManager> AssetManagersList { get; set; } = new();
+
+        public List<SynergyMember> SynergyTeam {  get; set; } = new();
+    }
+
+
+    public class CompanyAssetManager
+    {
+        public string PCName { get; set; }
+        public string AssetManagerEmail { get; set; }
+        public string Sector { get; set; }
+        public string Industry { get; set; }
+        public string SectorHeadName  { get; set; }
+        public string SectorHeadEmail { get; set; }
+        public string AssetManagerName { get; set; }
+    }
+
+    public class SynergyMember
+    {
+        public string SynergyMemberName { get; set; }
+        public string Email { get; set;}
+
     }
 }

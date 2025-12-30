@@ -13,7 +13,7 @@ namespace PartnersHub.Synergy.Apis.Controllers;
 /// </summary>
 [Route("api/[controller]")]
 [ApiController]
-[Authorize]
+//[Authorize]
 public class DashboardController : ControllerBase
 {
     private readonly IMediator _mediator;

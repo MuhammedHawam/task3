@@ -29,11 +29,13 @@ public class OpportunitySubmittedEventHandler : INotificationHandler<Opportunity
             cancellationToken);
 
         // Send notification to Asset Manager
-        await _notificationService.SendOpportunitySubmittedNotificationAsync(
+        await _notificationService.SendSubmittedNotificationAsync(
+            "Opportunity",
             notification.OpportunityId,
             notification.CompanyId,
             notification.SubmittedBy,
             notification.OpportunityName,
+            notification.CompanyName,
             cancellationToken);
     }
 }

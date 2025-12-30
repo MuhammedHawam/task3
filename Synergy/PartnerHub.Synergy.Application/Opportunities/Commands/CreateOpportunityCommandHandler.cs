@@ -165,7 +165,8 @@ public class CreateOpportunityCommandHandler : IRequestHandler<CreateOpportunity
             command.IsAdmin,
             command.ContactName,
             command.ContactAddress,
-            command.ContactMobile);
+            command.ContactMobile,
+            command.CompanyName, userEmail);
         if (opportunity.IsFailure)
             return Result<Guid>.Failure(opportunity.Error);
 
@@ -188,7 +189,7 @@ public class CreateOpportunityCommandHandler : IRequestHandler<CreateOpportunity
         if (result.IsFailure) return Result<Guid>.Failure(result.Error);
 
 
-        result = opportunity.Value.Submit(_userService.CurrentUserId, command.Title);
+        result = opportunity.Value.Submit(_userService.CurrentUserId, command.Title, command.CompanyName);
         if (result.IsFailure) return Result<Guid>.Failure(result.Error);
 
         await _opportunityRepository.AddAsync(opportunity.Value);

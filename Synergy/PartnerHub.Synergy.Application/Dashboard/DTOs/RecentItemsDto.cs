@@ -25,6 +25,7 @@ public class RecentOpportunityCardDto
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }
     public string CompanyName { get; set; }
+    public bool IsHide { get; set; }
 }
 
 public class RecentSuccessStoryCardDto
@@ -40,6 +41,8 @@ public class RecentSuccessStoryCardDto
     public DateTime EndDate { get; set; }
 
     public string CompanyName { get; set; } 
+
+    public bool IsHide { get; set; }
 }
 
 public class RecentCompanyCardDto

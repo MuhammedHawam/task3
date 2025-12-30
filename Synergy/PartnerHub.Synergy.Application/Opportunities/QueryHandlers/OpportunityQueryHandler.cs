@@ -264,7 +264,7 @@ internal static class Helpers
         return status switch
         {
             OpportunityStatus.PendingReview => "Pending",
-            OpportunityStatus.AssetManagerApproved => "Pending",
+            OpportunityStatus.Pending => "Pending",
             OpportunityStatus.Published => "Published",
             OpportunityStatus.AssetManagerRejected => "Rejected",
             OpportunityStatus.AdminRejected => "Rejected",

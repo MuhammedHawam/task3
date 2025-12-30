@@ -82,8 +82,8 @@ public class GetSuccessStoryStatusesQueryHandler : IRequestHandler<GetSuccessSto
     {
         var successStoryStatuses = new List<KeyValueDto>
             {
-                new KeyValueDto((byte)SuccessStoryStatus.PendingReview, "Pending Review" ),
-                new KeyValueDto ((byte) SuccessStoryStatus.AssetManagerApproved, "Approved"),
+                new KeyValueDto((byte)SuccessStoryStatus.PendingReview, "Pending" ),
+                new KeyValueDto ((byte) SuccessStoryStatus.pending, "Pending"),
                 new KeyValueDto ((byte) SuccessStoryStatus.AdminRejected, "Rejected By Admin"),
                 new KeyValueDto ((byte) SuccessStoryStatus.Published, "Published"),
             };

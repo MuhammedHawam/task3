@@ -161,6 +161,7 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
         s.StartDate,
         s.EndDate,
         s.RequestId,
+        s.IsHide,
         s.Status AS SuccessStoryStatus,
         s.CreatedAt AS SubmissionDate,
         s.RejectionReason AS RejectionReason, 
@@ -739,7 +740,7 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
             return status switch
             {
                 SuccessStoryStatus.PendingReview => "Pending",
-                SuccessStoryStatus.AssetManagerApproved => "Approved",
+                SuccessStoryStatus.pending => "Pending",
                 SuccessStoryStatus.Published => "Published",
                 SuccessStoryStatus.AssetManagerRejected => "Rejected",
                 SuccessStoryStatus.AdminRejected => "Rejected",

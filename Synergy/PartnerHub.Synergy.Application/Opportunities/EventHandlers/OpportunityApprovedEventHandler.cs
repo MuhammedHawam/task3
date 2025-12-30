@@ -24,16 +24,19 @@ public class OpportunityApprovedEventHandler : INotificationHandler<OpportunityA
         string action;
         string comments;
         
-        if (notification.NewStatus == OpportunityStatus.AssetManagerApproved)
+        if (notification.NewStatus == OpportunityStatus.Pending)
         {
             action = "Approved by Asset Manager";
             comments = "Opportunity approved by Asset Manager, pending Synergy Admin review";
             
             // Notify PC Representative
-            await _notificationService.SendOpportunityApprovedByAssetManagerNotificationAsync(
+            await _notificationService.SendApprovedByAssetManagerNotificationAsync(
+                "Opportunity",
                 notification.OpportunityId,
                 notification.CompanyId,
                 notification.ApprovedBy,
+                notification.OpportunityName,
+                notification.CompanyName,
                 cancellationToken);
         }
         else if (notification.NewStatus == OpportunityStatus.Published)
@@ -42,10 +45,14 @@ public class OpportunityApprovedEventHandler : INotificationHandler<OpportunityA
             comments = "Opportunity published by Synergy Admin";
             
             // Notify PC Representative and eligible companies
-            await _notificationService.SendOpportunityPublishedNotificationAsync(
+            await _notificationService.SendPublishedNotificationAsync(
+                "Opportunity",
                 notification.OpportunityId,
                 notification.CompanyId,
                 notification.ApprovedBy,
+                notification.OpportunityName,
+                notification.CompanyName,
+                notification.CompanyEmail,
                 cancellationToken);
         }
         else

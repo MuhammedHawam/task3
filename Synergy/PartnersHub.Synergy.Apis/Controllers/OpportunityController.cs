@@ -223,6 +223,28 @@ namespace PartnersHub.Synergy.Apis.Controllers
 
             return Ok(result);
         }
+
+
+        [HttpPut("visibility/{opportunityId}")]
+        public async Task<ActionResult<Result>> SetOpportunityVisibility(
+                                                                         Guid opportunityId,
+                                                                         [FromQuery] bool hide)
+        {
+            var command = new SetOpportunityVisibilityCommand(
+                opportunityId,
+                hide);
+
+            var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+
+        [HttpPut("{opportunityId}")]
+        public async Task<ActionResult<Result>> UpdateOpportunity(Guid opportunityId, [FromBody] UpdateOpportunityCommand command)
+        {
+            var updated = command with { OpportunityId = opportunityId };
+            var result = await _mediator.Send(updated);
+            return Ok(result);
+        }
         #region Helper Methods
 
         private List<Guid>? ParseGuids(string? value)

@@ -49,11 +49,15 @@ public class OpportunityRejectedEventHandler : INotificationHandler<OpportunityR
             cancellationToken);
 
         // Send notification to PC Representative
-        await _notificationService.SendOpportunityRejectedNotificationAsync(
+        await _notificationService.SendRejectedNotificationAsync(
+            "Opportunity",
             notification.OpportunityId,
             notification.CompanyId,
             notification.RejectionReason,
             notification.RejectedBy,
+            notification.OpportunityName,
+            notification.CompanyName,
+            notification.CompanyEmail,
             cancellationToken);
     }
 }
