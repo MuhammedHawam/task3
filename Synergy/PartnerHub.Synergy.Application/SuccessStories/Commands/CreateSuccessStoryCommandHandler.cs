@@ -92,7 +92,7 @@ public class CreateSuccessStoryCommandHandler : IRequestHandler<CreateSuccessSto
         if (result.IsFailure)
             return Result<Guid>.Failure(result.Error);
 
-        successStoryResult.Value.Submit(_userService.CurrentUserId);
+        successStoryResult.Value.Submit(_userService.CurrentUserId, request.Title,request.CompanyName);
         await _successStoryRepository.AddAsync(successStoryResult.Value);
         await _unitOfWork.SaveChangesAsync();
 

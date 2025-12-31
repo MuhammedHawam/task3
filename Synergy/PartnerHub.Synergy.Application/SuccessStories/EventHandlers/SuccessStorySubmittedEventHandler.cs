@@ -29,10 +29,13 @@ public class SuccessStorySubmittedEventHandler : INotificationHandler<SuccessSto
             cancellationToken);
 
         // Send notification to Asset Manager
-        await _notificationService.SendSuccessStorySubmittedNotificationAsync(
+        await _notificationService.SendSubmittedNotificationAsync(
+            "SuccessStory",
             notification.SuccessStoryId,
             notification.CompanyId,
             notification.SubmittedBy,
+            notification.SuccessStoryName,
+            notification.CompanyName,
             cancellationToken);
     }
 }

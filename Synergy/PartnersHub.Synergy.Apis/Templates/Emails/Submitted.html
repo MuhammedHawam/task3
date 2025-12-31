@@ -1,0 +1,78 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>New Submission Pending Your Review</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .highlight {
+            font-weight: bold;
+        }
+
+        .english {
+            direction: ltr;
+            text-align: left;
+        }
+
+        .arabic {
+            direction: rtl;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- English Content -->
+        <div class="english">
+            <p>Dear Asset Manager,</p>
+
+            <p>A new submission has been received from a Portfolio Company and requires your review.</p>
+
+            <p><strong>Details:</strong></p>
+            <ul>
+                <li>Company Name: <span class="highlight">{PC Name}</span></li>
+                <li>Submission Type: <span class="highlight">{Submission Type}</span></li>
+                <li>Title: <span class="highlight">{Title}</span></li>
+                <li>Submission Date: <span class="highlight">{Date}</span></li>
+            </ul>
+
+            <p>Please review the request using the link below:</p>
+            <p><a href="{BaseURL}/synergy/{module}/{request-id}">View Request</a></p>
+
+            <p>Regards,</p>
+            <p>Synergy Platform</p>
+        </div>
+
+        <!-- Arabic Content -->
+        <div class="arabic">
+            <p>عزيزي مدير الأصول،</p>
+
+            <p>تم استلام طلب جديد من إحدى شركات المحفظة ويتطلب مراجعتكم.</p>
+
+            <p><strong>التفاصيل:</strong></p>
+            <ul>
+                <li>اسم الشركة: <span class="highlight">{PC Name}</span></li>
+                <li>نوع الطلب: <span class="highlight">{Submission Type}</span></li>
+                <li>العنوان: <span class="highlight">{Title}</span></li>
+                <li>تاريخ التقديم: <span class="highlight">{Date}</span></li>
+            </ul>
+
+            <p>يرجى مراجعة الطلب عبر الرابط أدناه:</p>
+            <p><a href="{BaseURL}/synergy/{module}/{request-id}">عرض الطلب</a></p>
+
+            <p>مع التحية،</p>
+            <p>منصة سينرجي</p>
+        </div>
+
+    </div>
+</body>
+</html>

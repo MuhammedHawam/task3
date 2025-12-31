@@ -1,0 +1,93 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Your Submission Has Been Approved</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .english {
+            direction: ltr;
+            text-align: left;
+        }
+
+        .arabic {
+            direction: rtl;
+            text-align: right;
+        }
+
+        a {
+            color: #0066cc;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- ================= ENGLISH ================= -->
+        <div class="section english">
+            <p>Dear {PC Name},</p>
+
+            <p>
+                We are pleased to inform you that your
+                <strong>{Submission Type}</strong>
+                has been approved after review by the Asset Manager and the Synergy Team.
+            </p>
+
+            <p>You may view the approved request using the link below:</p>
+
+            <p>
+                <a href="{BaseURL}/synergy/{module}/{request-id}">
+                    View Request
+                </a>
+            </p>
+
+            <p>
+                Regards,<br />
+                Synergy Platform
+            </p>
+        </div>
+
+        <hr />
+
+        <!-- ================= ARABIC ================= -->
+        <div class="section arabic">
+            <p>عزيزي {PC Name}،</p>
+
+            <p>
+                يسرنا إعلامكم بأنه تمت الموافقة على
+                <strong>{Submission Type}</strong>
+                بعد مراجعته من قبل مدير الأصول وفريق سينرجي.
+            </p>
+
+            <p>يمكنكم الاطلاع على الطلب عبر الرابط أدناه:</p>
+
+            <p>
+                <a href="{BaseURL}/synergy/{module}/{request-id}">
+                    عرض الطلب
+                </a>
+            </p>
+
+            <p>
+                مع التحية،<br />
+                منصة سينرجي
+            </p>
+        </div>
+
+    </div>
+</body>
+</html>

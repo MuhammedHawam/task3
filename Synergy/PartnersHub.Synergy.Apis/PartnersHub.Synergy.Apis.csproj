@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>15ab1a12-7b37-420d-9a78-88226757ebfd</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,5 +23,11 @@
     <ProjectReference Include="..\PartnerHub.Synergy.Application\PartnersHub.Synergy.Application.csproj" />
     <ProjectReference Include="..\PartnerHub.Synergy.Infrstructure\PartnersHub.Synergy.Infrastructure.csproj" />
   </ItemGroup>
+
+	<ItemGroup>
+		<Content Include="Templates\Emails\**\*.html">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
 </Project>

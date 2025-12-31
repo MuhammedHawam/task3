@@ -114,7 +114,8 @@ public class GetDashboardHomeQueryHandler : IRequestHandler<GetDashboardHomeQuer
                 Sector = o.Sector?.Value ?? "N/A",
                 StartDate = o.StartDate,
                 EndDate = o.EndDate,
-                CompanyName = company?.Name.Value ?? "Unknown"
+                CompanyName = company?.Name.Value ?? "Unknown",
+                IsHide = o.IsHide
             };
         }).ToList();
     }
@@ -163,7 +164,8 @@ public class GetDashboardHomeQueryHandler : IRequestHandler<GetDashboardHomeQuer
                 Type = MapSuccessStoryType(s.SuccessStoryTypeId),
                 StartDate = s.StartDate,
                 EndDate = s.EndDate,
-                CompanyName = company?.Name.Value ?? "Unknown"
+                CompanyName = company?.Name.Value ?? "Unknown",
+                IsHide = s.IsHide
             };
         }).ToList();
     }

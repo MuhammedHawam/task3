@@ -80,7 +80,7 @@ public class GetUserSubmissionsQueryHandler : IRequestHandler<GetUserSubmissions
                 "pending" or "pendingreview" => new List<OpportunityStatus>
                 {
                     OpportunityStatus.PendingReview,
-                    OpportunityStatus.AssetManagerApproved
+                    OpportunityStatus.Pending
                 },
                 "published" => new List<OpportunityStatus> { OpportunityStatus.Published },
                 "returned" or "rejected" => new List<OpportunityStatus>
@@ -105,7 +105,7 @@ public class GetUserSubmissionsQueryHandler : IRequestHandler<GetUserSubmissions
         return status switch
         {
             OpportunityStatus.PendingReview => "Pending",
-            OpportunityStatus.AssetManagerApproved => "Approved",
+            OpportunityStatus.Pending => "Approved",
             OpportunityStatus.Published => "Published",
             OpportunityStatus.AdminRejected => "Rejected",
             OpportunityStatus.AssetManagerRejected => "Rejected",
@@ -224,7 +224,7 @@ public class GetUserSuccessStoriesQueryHandler : IRequestHandler<GetUserSuccessS
                 "pending" or "pendingreview" => new List<SuccessStoryStatus>
                 {
                     SuccessStoryStatus.PendingReview,
-                    SuccessStoryStatus.AssetManagerApproved
+                    SuccessStoryStatus.pending
                 },
                 "published" => new List<SuccessStoryStatus> { SuccessStoryStatus.Published },
                 "returned" or "rejected" => new List<SuccessStoryStatus>
@@ -272,7 +272,7 @@ public class GetUserSuccessStoriesQueryHandler : IRequestHandler<GetUserSuccessS
         return status switch
         {
             SuccessStoryStatus.PendingReview => "Pending",
-            SuccessStoryStatus.AssetManagerApproved => "Approved",
+            SuccessStoryStatus.pending => "Pending",
             SuccessStoryStatus.Published => "Published",
             SuccessStoryStatus.AssetManagerRejected => "Rejected",
             SuccessStoryStatus.AdminRejected => "Rejected",

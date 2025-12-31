@@ -24,16 +24,19 @@ public class SuccessStoryApprovedEventHandler : INotificationHandler<SuccessStor
         string action;
         string comments;
         
-        if (notification.NewStatus == SuccessStoryStatus.AssetManagerApproved)
+        if (notification.NewStatus == SuccessStoryStatus.pending)
         {
             action = "Approved by Asset Manager";
             comments = "Success Story approved by Asset Manager, pending Synergy Admin review";
             
             // Notify PC Representative
-            await _notificationService.SendSuccessStoryApprovedByAssetManagerNotificationAsync(
+            await _notificationService.SendApprovedByAssetManagerNotificationAsync(
+                "SuccessStory",
                 notification.SuccessStoryId,
                 notification.CompanyId,
                 notification.ApprovedBy,
+                notification.SuccessStoryName,
+                notification.CompanyName,
                 cancellationToken);
         }
         else if (notification.NewStatus == SuccessStoryStatus.Published)
@@ -42,10 +45,14 @@ public class SuccessStoryApprovedEventHandler : INotificationHandler<SuccessStor
             comments = "Success Story published by Synergy Admin";
             
             // Notify PC Representative
-            await _notificationService.SendSuccessStoryPublishedNotificationAsync(
+            await _notificationService.SendPublishedNotificationAsync(
+                "SuccessStory",
                 notification.SuccessStoryId,
                 notification.CompanyId,
                 notification.ApprovedBy,
+                notification.SuccessStoryName,
+                notification.CompanyName,
+                notification.CompanyEmail,
                 cancellationToken);
         }
         else

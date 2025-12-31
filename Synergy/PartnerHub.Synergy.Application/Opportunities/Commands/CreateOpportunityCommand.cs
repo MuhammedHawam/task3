@@ -40,4 +40,6 @@ public record CreateOpportunityCommand : IRequest<Result<Guid>>
     public string? UserMobile { get; set; }
 
     public List<AttachmentMetaDataDto>? Attachments { get; set; }
+
+    public string? CompanyName { get; set; }
 }

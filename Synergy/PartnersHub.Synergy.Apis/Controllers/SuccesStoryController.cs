@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using PartnersHub.Synergy.Apis.Controllers.Base;
 using PartnersHub.Synergy.Application.Models;
+using PartnersHub.Synergy.Application.Opportunities.Commands;
 using PartnersHub.Synergy.Application.Opportunities.DTOs;
 using PartnersHub.Synergy.Application.Opportunity.Queries;
 using PartnersHub.Synergy.Application.SuccessStories.Commands;
@@ -212,6 +213,20 @@ namespace PartnersHub.Synergy.Apis.Controllers
                     : BadRequest(result);
             }
 
+            return Ok(result);
+        }
+
+
+        [HttpPut("visibility/{successStoryId}")]
+        public async Task<ActionResult<Result>> SetSuccessStoryVisibility(
+                                                                     Guid successStoryId,
+                                                                     [FromQuery] bool hide)
+        {
+            var command = new SetSuccessStoryVisibilityCommand(
+                successStoryId,
+                hide);
+
+            var result = await _mediator.Send(command);
             return Ok(result);
         }
     }

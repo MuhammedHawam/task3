@@ -27,7 +27,7 @@ namespace PartnersHub.Synergy.Application.Opportunities.Commands
             if (opportunity == null)
                 return Result.Failure("Opportunity doesn't exist");
 
-            var result = opportunity.ApproveByAssetManager(_userService.CurrentUserId);
+            var result = opportunity.ApproveByAssetManager(_userService.CurrentUserId, opportunity.Title.Value, opportunity.CompanyName, opportunity.UserEmail);
             if (result.IsFailure)
                 return Result.Failure(result.Error);
 

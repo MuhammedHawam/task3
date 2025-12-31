@@ -19,6 +19,7 @@ public class Opportunity : AggregateRoot
     //ToDo : Convert RequestId from primitive type to value object
     public string RequestId { get; private set; }
     public Guid CompanyId { get; private set; }
+    public string? CompanyName { get; private set; }
     public Title Title { get; private set; } = null!;
     public Description Description { get; private set; } = null!;
     public int OpportunityTypeId { get; private set; }
@@ -58,13 +59,18 @@ public class Opportunity : AggregateRoot
 
     public string? ContactMobile { get; private set; }
 
+    public string? UserEmail { get; private set; }
+
+    public bool IsHide {  get; private set; }  = false;
+
     private Opportunity() { }
 
     private Opportunity(Guid companyId, Title title, Description description, Sector sector, RepresentativeInformation representativeInfo,
         string collaborationRationale, int opportunityTypeId, int thematicAreaId, string requestId, DateOnly startDate, DateOnly endDate,
-        Guid termsAndConditionId, Guid createdBy, bool? IsAdminCreated, string? ContactName, string? ContactAddress, string? ContactMobile)
+        Guid termsAndConditionId, Guid createdBy, bool? IsAdminCreated, string? ContactName, string? ContactAddress, string? ContactMobile, string? companyName, string? userEmail)
     {
         CompanyId = companyId;
+        CompanyName = companyName;
         Title = title;
         Description = description;
         Sector = sector;
@@ -75,13 +81,15 @@ public class Opportunity : AggregateRoot
         EndDate = endDate;
         TermsAndConditionId = termsAndConditionId;
         TermsAccepted = true;
-        Status = OpportunityStatus.PendingReview;
+        Status = IsAdminCreated == true ? OpportunityStatus.Published : OpportunityStatus.PendingReview;
         CollaborationRationale = collaborationRationale;
         RequestId = requestId;
         IsAdminCreated = IsAdminCreated;
         ContactName = ContactName;
         ContactAddress = ContactAddress;
         ContactMobile = ContactMobile;
+        CompanyName = companyName;
+        UserEmail = userEmail;
         MarkAsCreated(createdBy);
     }
 
@@ -103,7 +111,9 @@ public class Opportunity : AggregateRoot
         bool? IsAdmin,
         string? ContactName,
         string? ContactAddress,
-        string? ContactMobile)
+        string? ContactMobile,
+        string? CompanyName,
+        string? UserEmail)
     {
         if (companyId == Guid.Empty)
             return Result<Opportunity>.Failure("Company ID is required");
@@ -134,7 +144,7 @@ public class Opportunity : AggregateRoot
 
         var opportunity = new Opportunity(companyId, titleResult.Value!, descriptionResult.Value!, sectorResult.Value, representativeInfo.Value,
             collaborationRationale, opportunityTypeId, thematicAreaId, requestId, startDate, endDate,
-            termsAndConditionId, createdBy,IsAdmin, ContactName, ContactAddress, ContactMobile);
+            termsAndConditionId, createdBy,IsAdmin, ContactName, ContactAddress, ContactMobile,CompanyName, UserEmail);
 
         return Result<Opportunity>.Success(opportunity);
     }
@@ -305,7 +315,7 @@ public class Opportunity : AggregateRoot
         return Result.Success();
     }
 
-    public Result Submit(Guid userId, string name)
+    public Result Submit(Guid userId, string opportunityName, string? companyName)
     {
         //if (Status != OpportunityStatus.Draft)
         //    return Result.Failure("Only draft opportunities can be submitted");
@@ -324,42 +334,42 @@ public class Opportunity : AggregateRoot
 
         Status = OpportunityStatus.PendingReview;
         MarkAsUpdated(userId);
-        AddDomainEvent(new OpportunitySubmittedEvent(Id, CompanyId, userId, name));
+        AddDomainEvent(new OpportunitySubmittedEvent(Id, CompanyId, userId, opportunityName, companyName));
 
         return Result.Success();
     }
 
-    public Result<bool> Publish(Guid userId)
+    public Result<bool> Publish(Guid userId, string opportunityName, string? companyName, string? companyEmail)
     {
-        if (Status != OpportunityStatus.AssetManagerApproved)
+        if (Status != OpportunityStatus.Pending)
             return Result<bool>.Failure("Only pending opportunities can be approved");
 
         Status = OpportunityStatus.Published;
         ApprovedBy = userId;
         ApprovedAt = DateTime.UtcNow;
         MarkAsUpdated(userId);
-        AddDomainEvent(new OpportunityApprovedEvent(Id, CompanyId, Status, userId));
+        AddDomainEvent(new OpportunityApprovedEvent(Id, CompanyId, Status, userId, opportunityName, companyName, companyEmail));
 
         return Result<bool>.Success(true);
     }
 
-    public Result<bool> ApproveByAssetManager(Guid userId)
+    public Result<bool> ApproveByAssetManager(Guid userId, string opportunityName, string? companyName, string? companyEmail)
     {
         if (Status != OpportunityStatus.PendingReview)
             return Result<bool>.Failure("Opportunity must be pending approval");
 
-        Status = OpportunityStatus.AssetManagerApproved;
+        Status = OpportunityStatus.Pending;
         ApprovedBy = userId;
         ApprovedAt = DateTime.UtcNow;
         MarkAsUpdated(userId);
-        AddDomainEvent(new OpportunityApprovedEvent(Id, CompanyId, Status, userId));
+        AddDomainEvent(new OpportunityApprovedEvent(Id, CompanyId, Status, userId, opportunityName, companyName, companyEmail));
 
         return Result<bool>.Success(true);
     }
 
-    public Result<bool> RejectByAdmin(Guid userId, string rejectionReason)
+    public Result<bool> RejectByAdmin(Guid userId, string rejectionReason, string opportunityName, string? companyName,string? companyEmail)
     {
-        if (Status != OpportunityStatus.AssetManagerApproved)
+        if (Status != OpportunityStatus.Pending)
             return Result<bool>.Failure("Only approved opportunities can be rejected");
 
         if (string.IsNullOrWhiteSpace(rejectionReason))
@@ -370,12 +380,12 @@ public class Opportunity : AggregateRoot
         RejectedBy = userId;
         RejectedAt = DateTime.UtcNow;
         MarkAsUpdated(userId);
-        AddDomainEvent(new OpportunityRejectedEvent(Id, CompanyId, Status, rejectionReason, userId));
+        AddDomainEvent(new OpportunityRejectedEvent(Id, CompanyId, Status, rejectionReason, userId, opportunityName, companyName, companyEmail));
 
         return Result<bool>.Success(true);
     }
 
-    public Result RejectByAssetManager(Guid userId, string rejectionReason)
+    public Result RejectByAssetManager(Guid userId, string rejectionReason, string opportunityName, string? companyName, string? companyEmail)
     {
         if (Status != OpportunityStatus.PendingReview)
             return Result.Failure("Opportunity must be admin approved before asset manager can reject");
@@ -388,16 +398,178 @@ public class Opportunity : AggregateRoot
         RejectedBy = userId;
         RejectedAt = DateTime.UtcNow;
         MarkAsUpdated(userId);
-        AddDomainEvent(new OpportunityRejectedEvent(Id, CompanyId, Status, rejectionReason, userId));
+        AddDomainEvent(new OpportunityRejectedEvent(Id, CompanyId, Status, rejectionReason, userId, opportunityName, companyName, companyEmail));
 
         return Result.Success();
     }
 
 
 
-    public bool CanBeEditedBy(Guid userId)
+
+    public Result SetVisibility(bool hide, Guid userId)
     {
-        //return Status == OpportunityStatus.Draft && CreatedBy == userId;
-        return true;
+        if (IsHide == hide)
+            return Result.Failure("Visibility already set");
+
+        IsHide = hide;
+        MarkAsUpdated(userId);
+
+        return Result.Success();
     }
+    public Result Update(
+    Guid userId,
+    string title,
+    string description,
+    string sectorName,
+    Guid sectorId,
+    int opportunityTypeId,
+    int thematicAreaId,
+    string collaborationRationale,
+    DateOnly startDate,
+    DateOnly endDate,
+    string? contactName,
+    string? contactAddress,
+    string? contactMobile)
+    {
+
+
+        if (Status != OpportunityStatus.Published )
+            return Result.Failure("Opportunity cannot be edited in the current status");
+
+
+        var titleResult = Title.Create(title);
+        if (titleResult.IsFailure)
+            return Result.Failure(titleResult.Error!);
+
+        var descriptionResult = Description.Create(description);
+        if (descriptionResult.IsFailure)
+            return Result.Failure(descriptionResult.Error!);
+
+        var sectorResult = Sector.Create(sectorName, sectorId);
+        if (sectorResult.IsFailure)
+            return Result.Failure(sectorResult.Error!);
+
+        if (startDate >= endDate)
+            return Result.Failure("End date must be after start date");
+
+        if (string.IsNullOrWhiteSpace(collaborationRationale))
+            return Result.Failure("Collaboration rationale is required");
+
+        Title = titleResult.Value!;
+        Description = descriptionResult.Value!;
+        Sector = sectorResult.Value;
+        OpportunityTypeId = opportunityTypeId;
+        ThematicAreaId = thematicAreaId;
+        CollaborationRationale = collaborationRationale.Trim();
+        StartDate = startDate;
+        EndDate = endDate;
+
+        ContactName = contactName;
+        ContactAddress = contactAddress;
+        ContactMobile = contactMobile;
+
+        MarkAsUpdated(userId);
+
+        return Result.Success();
+    }
+
+    public Result ReplaceCollaboratedCompanies(List<Guid>? companyIds, Guid userId)
+    {
+        companyIds ??= new List<Guid>();
+
+        _collaboratedCompanies.RemoveAll(x => !companyIds.Contains(x.SynergyCompanyId));
+
+        foreach (var companyId in companyIds)
+        {
+            if (!_collaboratedCompanies.Any(x => x.SynergyCompanyId == companyId))
+            {
+                _collaboratedCompanies.Add(new OpportunitySynergyCompany(Id, companyId));
+            }
+        }
+
+        MarkAsUpdated(userId);
+        return Result.Success();
+    }
+
+    public Result ReplaceCollaborationRequirements(
+    List<CollaborationRequirement>? collaborationRequirements,
+    string? otherCollaborationRequirement,
+    Guid userId)
+    {
+        collaborationRequirements ??= new List<CollaborationRequirement>();
+
+        _collaborationRequirements.Clear();
+        CollaborationRequirementOther = null;
+
+        if (!collaborationRequirements.Any())
+        {
+            MarkAsUpdated(userId);
+            return Result.Success();
+        }
+
+        var hasOther = collaborationRequirements
+            .Any(cr => cr.Name.Contains(Constants.Other, StringComparison.OrdinalIgnoreCase));
+
+        if (hasOther)
+        {
+            if (string.IsNullOrWhiteSpace(otherCollaborationRequirement))
+                return Result.Failure("Other collaboration requirement field is required.");
+
+            CollaborationRequirementOther = otherCollaborationRequirement;
+        }
+
+        foreach (var cr in collaborationRequirements)
+        {
+            _collaborationRequirements.Add(new OpportunityCollaborationRequirement(Id, cr.Id));
+        }
+
+        MarkAsUpdated(userId);
+        return Result.Success();
+    }
+
+    public Result ReplaceExpectedOutcomes(
+    List<ExpectedOutcome>? expectedOutcomes,
+    string? otherExpectedOutcome,
+    Guid userId)
+    {
+        expectedOutcomes ??= new List<ExpectedOutcome>();
+
+        _expectedOutcomes.Clear();
+        ExpectedOutcomeOther = null;
+
+        // If list empty and no other. Accept
+        if (!expectedOutcomes.Any() && string.IsNullOrWhiteSpace(otherExpectedOutcome))
+        {
+            MarkAsUpdated(userId);
+            return Result.Success();
+        }
+
+        var hasOther = expectedOutcomes
+            .Any(eo => eo.Name.Contains(Constants.Other, StringComparison.OrdinalIgnoreCase));
+
+        if (hasOther)
+        {
+            if (string.IsNullOrWhiteSpace(otherExpectedOutcome))
+                return Result.Failure("Other expected outcome field is required");
+
+            ExpectedOutcomeOther = otherExpectedOutcome;
+        }
+        else
+        {
+            // If user typed Other but did not select Other. Reject or ignore
+            if (!string.IsNullOrWhiteSpace(otherExpectedOutcome))
+                return Result.Failure("Other expected outcome is not allowed unless 'Other' is selected");
+        }
+
+        foreach (var eo in expectedOutcomes)
+        {
+            _expectedOutcomes.Add(new OpportunityExpectedOutcome(Id, eo.Id));
+        }
+
+        MarkAsUpdated(userId);
+        return Result.Success();
+    }
+
+
+
 }

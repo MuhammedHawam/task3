@@ -9,6 +9,7 @@ using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Repository;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Services;
 using PartnersHub.InfraBase.Application.Common.Options;
+using PartnersHub.InfraBase.Application.Common.Services;
 using PartnersHub.InfraBase.Infrastructure.Persistence;
 using PartnersHub.InfraBase.Infrastructure.Persistence.Repositories;
 using PartnersHub.InfraBase.Infrastructure.Services;
@@ -73,6 +74,9 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // Add Notification Service (placeholder implementation)
 builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// Add Email Template Service
+builder.Services.AddScoped<EmailTemplateService>();
 
 // Add CORS
 builder.Services.AddCors(options => {

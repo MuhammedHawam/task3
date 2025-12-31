@@ -95,9 +95,10 @@ public class SearchOpportunitiesQueryHandler : IRequestHandler<SearchOpportuniti
                 RequestId = o.RequestId,
                 Title = o.Title.Value,
                 Description = o.Description?.Value ?? string.Empty,
-                Status = (o.StartDate > DateOnly.FromDateTime(DateTime.Now)) ? CollaborationStatusFilter.Upcoming :
-                                                                   ((o.StartDate <= DateOnly.FromDateTime(DateTime.Now) && (o.EndDate == null || o.EndDate >= DateOnly.FromDateTime(DateTime.Now))) ?
-                                                                   CollaborationStatusFilter.Active : (o.StartDate == null ? CollaborationStatusFilter.Upcoming : CollaborationStatusFilter.Closed)),
+                Status =o.Status,
+                //Status = (o.StartDate > DateOnly.FromDateTime(DateTime.Now)) ? CollaborationStatusFilter.Upcoming :
+                //                                                   ((o.StartDate <= DateOnly.FromDateTime(DateTime.Now) && (o.EndDate == null || o.EndDate >= DateOnly.FromDateTime(DateTime.Now))) ?
+                //                                                   CollaborationStatusFilter.Active : (o.StartDate == null ? CollaborationStatusFilter.Upcoming : CollaborationStatusFilter.Closed)),
                 StatusDescription = MapStatusToDisplay(o.Status),
                 CompanyId = o.CompanyId,
                 CompanyName = company?.Name.Value ?? "Unknown Company",
@@ -115,7 +116,8 @@ public class SearchOpportunitiesQueryHandler : IRequestHandler<SearchOpportuniti
                 CollaboratedCompaniesCount = o.CollaboratedCompanies.Count,
                 StartDate = o.StartDate,
                 EndDate = o.EndDate,
-                CreatedAt = o.CreatedAt
+                CreatedAt = o.CreatedAt,
+                IsHide = o.IsHide
             };
         }).ToList();
 
@@ -136,7 +138,7 @@ public class SearchOpportunitiesQueryHandler : IRequestHandler<SearchOpportuniti
         return status switch
         {
             OpportunityStatus.PendingReview => "Pending",
-            OpportunityStatus.AssetManagerApproved => "Approved",
+            OpportunityStatus.Pending => "Approved",
             OpportunityStatus.Published => "Published",
             OpportunityStatus.AssetManagerRejected => "Rejected",
             OpportunityStatus.AdminRejected => "Rejected",

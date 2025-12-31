@@ -88,7 +88,7 @@ public class OpportunityRepository : IOpportunityRepository
 
     public async Task<List<Opportunity>> GetByPublishingCompanyId(Guid companyId, bool asNoTracking = false, params Expression<Func<Opportunity, object>>[] includes)
     {
-        IQueryable<Opportunity> query = _context.Opportunities.Where(o => o.CompanyId == companyId);
+        IQueryable<Opportunity> query = _context.Opportunities.Where(o => o.CompanyId == companyId && o.Status == OpportunityStatus.Published);
 
         if (asNoTracking)
             query = query.AsNoTracking();

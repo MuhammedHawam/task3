@@ -26,12 +26,15 @@ public class OpportunitySubmittedEvent : DomainEvent
 
     public string OpportunityName { get; }
 
-    public OpportunitySubmittedEvent(Guid opportunityId, Guid companyId, Guid submittedBy, string opportunityName)
+    public string? CompanyName { get; }
+
+    public OpportunitySubmittedEvent(Guid opportunityId, Guid companyId, Guid submittedBy, string opportunityName, string? companyName)
     {
         OpportunityId = opportunityId;
         CompanyId = companyId;
         SubmittedBy = submittedBy;
         OpportunityName = opportunityName;
+        CompanyName = companyName;
     }
 }
 
@@ -41,13 +44,21 @@ public class OpportunityApprovedEvent : DomainEvent
     public Guid CompanyId { get; }
     public OpportunityStatus NewStatus { get; }
     public Guid ApprovedBy { get; }
+    public string OpportunityName { get; }
 
-    public OpportunityApprovedEvent(Guid opportunityId, Guid companyId, OpportunityStatus newStatus, Guid approvedBy)
+    public string? CompanyName { get; }
+
+    public string? CompanyEmail { get; }
+
+    public OpportunityApprovedEvent(Guid opportunityId, Guid companyId, OpportunityStatus newStatus, Guid approvedBy, string opportunityName, string? companyName, string? companyEmail)
     {
         OpportunityId = opportunityId;
         CompanyId = companyId;
         NewStatus = newStatus;
         ApprovedBy = approvedBy;
+        OpportunityName = opportunityName;
+        CompanyName = companyName;
+        CompanyEmail = companyEmail;
     }
 }
 
@@ -59,13 +70,21 @@ public class OpportunityRejectedEvent : DomainEvent
     public string RejectionReason { get; }
     public Guid RejectedBy { get; }
 
-    public OpportunityRejectedEvent(Guid opportunityId, Guid companyId, OpportunityStatus newStatus, string rejectionReason, Guid rejectedBy)
+    public string OpportunityName { get; }
+
+    public string? CompanyName { get; }
+    public string? CompanyEmail { get; }
+
+    public OpportunityRejectedEvent(Guid opportunityId, Guid companyId, OpportunityStatus newStatus, string rejectionReason, Guid rejectedBy, string opportunityName, string? companyName, string? companyEmail)
     {
         OpportunityId = opportunityId;
         CompanyId = companyId;
         NewStatus = newStatus;
         RejectionReason = rejectionReason;
         RejectedBy = rejectedBy;
+        OpportunityName = opportunityName;
+        CompanyName = companyName;
+        CompanyEmail = companyEmail;
     }
 }
 

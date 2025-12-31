@@ -29,7 +29,7 @@ namespace PartnersHub.Synergy.Application.Opportunities.Commands
             if (opportunity == null)
                 return Result.Failure("Opportunity doesn't exist");
 
-            var result = opportunity.Publish(_userService.CurrentUserId);
+            var result = opportunity.Publish(_userService.CurrentUserId, opportunity.Title.Value, opportunity.CompanyName, opportunity.UserEmail);
             if (result.IsFailure)
                 return Result.Failure(result.Error);
 

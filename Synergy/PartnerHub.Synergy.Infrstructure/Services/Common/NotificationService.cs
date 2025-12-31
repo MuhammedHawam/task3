@@ -1,11 +1,16 @@
+using Azure.Core;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PartnersHub.Synergy.Application.Interfaces.Common;
 using PartnersHub.Synergy.Domain.Common;
+using PartnersHub.Synergy.Domain.ValueObjects;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Xml.Linq;
+using static Azure.Core.HttpHeader;
 
 namespace PartnersHub.Synergy.Infrastructure.Services.Common;
 
@@ -83,72 +88,108 @@ public class NotificationService : INotificationService
         return templateContent;
     }
 
-    public async Task SendOpportunitySubmittedNotificationAsync(Guid opportunityId, Guid companyId, Guid submitterId,string opportunityName, CancellationToken cancellationToken = default)
+    public async Task SendSubmittedNotificationAsync(string moduleName, Guid Id, Guid companyId, Guid submitterId,string name,string? companyName ,CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Opportunity {OpportunityId} submitted. Notification sent.", opportunityId);
+        _logger.LogInformation("{moduleName} {Id} submitted. Notification sent.", moduleName, Id);
 
-        // Prepare placeholders for both languages
         var placeholders = new Dictionary<string, string>
+                              {
+                                { "{PC Name}", companyName },
+                                { "{Submission Type}", "Collaboration" },  
+                                { "{Title}", name },  
+                                { "{Date}", DateTime.UtcNow.ToString("yyyy-MM-dd") },  
+                                { "{BaseURL}", _emailParams.BaseURL },  
+                                { "{module}", moduleName },  
+                                { "{request-id}", Id.ToString() }  
+                              };
+
+        var emailBody = LoadTemplate("Submitted.html", placeholders);
+
+        var assetManager = _emailParams.AssetManagersList.FirstOrDefault(x => x.PCName.Equals(companyName, StringComparison.OrdinalIgnoreCase));
+
+        //await SendEmail(new EmailNotificationModel
+        //{
+        //    to = new List<string> { assetManager?.AssetManagerEmail },
+        //    subject = _emailParams.OpportunitySubmittedSubject,
+        //    body = emailBody,
+        //    isHtml = true
+        //});
+    }
+
+    public async Task SendApprovedByAssetManagerNotificationAsync(string moduleName, Guid Id, Guid companyId, Guid approverId,string name, string? companyName, CancellationToken cancellationToken = default)
     {
-        { "{PC Name}", opportunityName },
-        { "{Submission Type}", "Collaboration" },  
-        { "{Title}", opportunityName },  
-        { "{Date}", DateTime.UtcNow.ToString("yyyy-MM-dd") },  
-        { "{BaseURL}", _emailParams.BaseURL },  
-        { "{module}", "opportunity" },  
-        { "{request-id}", opportunityId.ToString() }  
-    };
+        _logger.LogInformation("{moduleName} {Id} approved. Notification sent.", moduleName, Id);
 
-        // Load the email template and replace the placeholders
-        var emailBody = LoadTemplate("OpportunitySubmitted.html", placeholders);
+        var placeholders = new Dictionary<string, string>
+                         {
+                           { "{PC Name}", companyName },
+                           { "{Submission Type}", "Collaboration" }, 
+                           { "{Title}", name },
+                           { "{BaseURL}", _emailParams.BaseURL },
+                           { "{module}", moduleName},
+                           { "{request-id}", Id.ToString() }
+                         };
 
+        var emailBody = LoadTemplate("PendingFinalApproval.html", placeholders);
+
+
+        //await SendEmail(new EmailNotificationModel
+        //{
+        //    to =  _emailParams.SynergyTeam.Select(e => e.Email).ToList(),
+        //    subject = _emailParams.OpportunityApprovedSubject,
+        //    body = emailBody,
+        //    isHtml = true
+        //});
+    }
+
+    public async Task SendPublishedNotificationAsync(string moduleName, Guid Id, Guid companyId, Guid publisherId, string name, string? companyName,string? companyEmail, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("{moduleName} {Id} published. Notification sent.", moduleName, Id);
+        var placeholders = new Dictionary<string, string>
+                            {
+                               { "{PC Name}", companyName },
+                               { "{Submission Type}", "Collaboration" }, 
+                               { "{Title}", name },
+                               { "{BaseURL}", _emailParams.BaseURL },
+                               { "{module}", moduleName},
+                               { "{request-id}", Id.ToString() }
+                            };
+
+        var emailBody = LoadTemplate("FinalApproved.html", placeholders);
         await SendEmail(new EmailNotificationModel
         {
             to = new List<string> { _emailParams.SynergyModuleReviever },
-            cc = new List<string> { _emailParams.SynergyModuleCC },
-            subject = _emailParams.OpportunitySubmittedSubject,
+            subject = _emailParams.OpportunityPublishedSubject,
             body = emailBody,
             isHtml = true
         });
     }
 
-    public async Task SendOpportunityApprovedByAssetManagerNotificationAsync(Guid opportunityId, Guid companyId, Guid approverId, CancellationToken cancellationToken = default)
+    public async Task SendRejectedNotificationAsync(string moduleName, Guid Id, Guid companyId, string rejectionReason, Guid rejecterId, string name, string? companyName, string? companyEmail, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Opportunity {OpportunityId} approved. Notification sent.", opportunityId);
+        _logger.LogInformation("{moduleName} {Id} rejected. Reason: {RejectionReason}.", moduleName, Id, rejectionReason);
 
-        await SendEmail(new EmailNotificationModel
-        {
-            to = new List<string> { _emailParams.SynergyModuleReviever },
-            cc = new List<string> { _emailParams.SynergyModuleCC },
-            subject = _emailParams.OpportunityApprovedSubject,
-            body = _emailParams.OpportunityApprovedBody
-        });
-    }
 
-    public async Task SendOpportunityPublishedNotificationAsync(Guid opportunityId, Guid companyId, Guid publisherId, CancellationToken cancellationToken = default)
-    {
-        _logger.LogInformation("Opportunity {OpportunityId} published. Notification sent.", opportunityId);
+        var placeholders = new Dictionary<string, string>
+                         {
+                           { "{PC Name}", companyName },
+                           { "{Submission Type}", "Collaboration" },
+                           { "{Title}", name },
+                           { "{Reason}", rejectionReason ?? "—" },
+                           { "{BaseURL}", _emailParams.BaseURL },
+                           { "{module}", moduleName},
+                           { "{request-id}", Id.ToString() }
+                         };
 
-        await SendEmail(new EmailNotificationModel
-        {
-            to = new List<string> { _emailParams.SynergyModuleReviever },
-            cc = new List<string> { _emailParams.SynergyModuleCC },
-            subject = _emailParams.OpportunityPublishedSubject,
-            body = _emailParams.OpportunityPublishedBody
-        });
-    }
+        var emailBody = LoadTemplate("Rejected.html", placeholders);
 
-    public async Task SendOpportunityRejectedNotificationAsync(Guid opportunityId, Guid companyId, string rejectionReason, Guid rejecterId, CancellationToken cancellationToken = default)
-    {
-        _logger.LogInformation("Opportunity {OpportunityId} rejected. Reason: {RejectionReason}.", opportunityId, rejectionReason);
-
-        await SendEmail(new EmailNotificationModel
-        {
-            to = new List<string> { _emailParams.SynergyModuleReviever },
-            cc = new List<string> { _emailParams.SynergyModuleCC },
-            subject = _emailParams.OpportunityRejectedSubject,
-            body = $"{_emailParams.OpportunityRejectedBody} {rejectionReason}"
-        });
+        //await SendEmail(new EmailNotificationModel
+        //{
+        //    to = new List<string> { _emailParams.SynergyModuleReviever },
+        //    subject = _emailParams.OpportunityRejectedSubject,
+        //    body = emailBody,
+        //    isHtml = true
+        //});
     }
 
     public async Task SendSuccessStorySubmittedNotificationAsync(Guid successStoryId, Guid companyId, Guid submitterId, CancellationToken cancellationToken = default)

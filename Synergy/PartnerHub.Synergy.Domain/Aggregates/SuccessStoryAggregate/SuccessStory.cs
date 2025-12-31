@@ -16,6 +16,7 @@ public class SuccessStory : AggregateRoot
     //ToDo : Convert RequestId from primitive type to value object
     public string RequestId { get; private set; }
     public Guid CompanyId { get; private set; }
+    public string? CompanyName { get; private set; }
     public Title Title { get; private set; } = null!;
     public Description Description { get; private set; } = null!;
     public int SuccessStoryTypeId { get; private set; }
@@ -40,6 +41,8 @@ public class SuccessStory : AggregateRoot
     public Guid? SectorId { get; private set; }
     public string? SectorName { get; private set;}
     public string? UserEmail { get; private set; }
+
+    public bool IsHide { get; private set; }  = false;
 
     private SuccessStory() { }
 
@@ -179,7 +182,7 @@ public class SuccessStory : AggregateRoot
         return Result<bool>.Success(true);
     }
 
-    public Result<bool> Submit(Guid userId)
+    public Result<bool> Submit(Guid userId, string successStoryName , string? companyName)
     {
         //if (Status != SuccessStoryStatus.PendingReview)
         //    return Result<bool>.Failure("Only draft stories can be submitted");
@@ -194,27 +197,27 @@ public class SuccessStory : AggregateRoot
         MarkAsUpdated(userId);
         
         // Raise domain event for audit trail and notifications
-        AddDomainEvent(new SuccessStorySubmittedEvent(Id, CompanyId, userId));
+        AddDomainEvent(new SuccessStorySubmittedEvent(Id, CompanyId, userId, successStoryName, companyName));
 
         return Result<bool>.Success(true);
     }
 
-    public Result<bool> Approve(Guid userId)
+    public Result<bool> Approve(Guid userId, string successStoryName, string? companyName, string? companyEmail)
     {
         if (Status != SuccessStoryStatus.PendingReview)
             return Result<bool>.Failure("Only pending stories can be approved");
 
-        Status = SuccessStoryStatus.AssetManagerApproved;
+        Status = SuccessStoryStatus.pending;
         ApprovedBy = userId;
         ApprovedAt = DateTime.UtcNow;
         MarkAsUpdated(userId);
         
-        AddDomainEvent(new SuccessStoryApprovedEvent(Id, CompanyId, Status, userId));
+        AddDomainEvent(new SuccessStoryApprovedEvent(Id, CompanyId, Status, userId,successStoryName,companyName, companyEmail));
 
         return Result<bool>.Success(true);
     }
 
-    public Result<bool> RejectByAssetManager(Guid userId, string rejectionReason)
+    public Result<bool> RejectByAssetManager(Guid userId, string rejectionReason, string successStoryName, string? companyName, string? companyEmail)
     {
         if (Status != SuccessStoryStatus.PendingReview)
             return Result<bool>.Failure("Only pending stories can be rejected");
@@ -228,14 +231,14 @@ public class SuccessStory : AggregateRoot
         RejectedAt = DateTime.UtcNow;
         MarkAsUpdated(userId);
         
-        AddDomainEvent(new SuccessStoryRejectedEvent(Id, CompanyId, Status, rejectionReason, userId));
+        AddDomainEvent(new SuccessStoryRejectedEvent(Id, CompanyId, Status, rejectionReason, userId,successStoryName,companyName, companyEmail));
 
         return Result<bool>.Success(true);
     }
     
-    public Result<bool> RejectByAdmin(Guid userId, string rejectionReason)
+    public Result<bool> RejectByAdmin(Guid userId, string rejectionReason, string successStoryName, string? companyName, string? companyEmail)
     {
-        if (Status != SuccessStoryStatus.AssetManagerApproved)
+        if (Status != SuccessStoryStatus.pending)
             return Result<bool>.Failure("Only asset manager approved stories can be rejected");
 
         if (string.IsNullOrWhiteSpace(rejectionReason))
@@ -247,20 +250,20 @@ public class SuccessStory : AggregateRoot
         RejectedAt = DateTime.UtcNow;
         MarkAsUpdated(userId);
         
-        AddDomainEvent(new SuccessStoryRejectedEvent(Id, CompanyId, Status, rejectionReason, userId));
+        AddDomainEvent(new SuccessStoryRejectedEvent(Id, CompanyId, Status, rejectionReason, userId, successStoryName, companyName, companyEmail));
 
         return Result<bool>.Success(true);
     }
     
-    public Result<bool> Publish(Guid userId)
+    public Result<bool> Publish(Guid userId, string successStoryName, string? companyName, string? companyEmail)
     {
-        if (Status != SuccessStoryStatus.AssetManagerApproved)
+        if (Status != SuccessStoryStatus.pending)
             return Result<bool>.Failure("Only approved stories can be published");
 
         Status = SuccessStoryStatus.Published;
         MarkAsUpdated(userId);
         
-        AddDomainEvent(new SuccessStoryApprovedEvent(Id, CompanyId, Status, userId));
+        AddDomainEvent(new SuccessStoryApprovedEvent(Id, CompanyId, Status, userId, successStoryName, companyName, companyEmail));
 
         return Result<bool>.Success(true);
     }
@@ -271,4 +274,16 @@ public class SuccessStory : AggregateRoot
     //{
     //    return Status == SuccessStoryStatus.Draft && CreatedBy == userId;
     //}
+
+
+    public Result SetVisibility(bool hide, Guid userId)
+    {
+        if (IsHide == hide)
+            return Result.Failure("Visibility already set");
+
+        IsHide = hide;
+        MarkAsUpdated(userId);
+
+        return Result.Success();
+    }
 }

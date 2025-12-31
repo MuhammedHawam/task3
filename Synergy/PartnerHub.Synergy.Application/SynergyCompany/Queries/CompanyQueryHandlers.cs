@@ -205,7 +205,7 @@ public class GetCompanyDetailsQueryHandler : IRequestHandler<GetCompanyDetailsQu
         return status switch
         {
             OpportunityStatus.PendingReview => "Pending",
-            OpportunityStatus.AssetManagerApproved => "Approved",
+            OpportunityStatus.Pending => "Approved",
             OpportunityStatus.Published => "Published",
             OpportunityStatus.AssetManagerRejected => "Rejected",
             OpportunityStatus.AdminRejected => "Rejected",

@@ -36,6 +36,8 @@ namespace PartnersHub.Synergy.Application.SuccessStories.DTOs
         public string? RejectionReason { get; set; }
 
         public string OpportunityTypeName { get; set; } 
+
+        public bool IsHide { get; set; }
     }
 
 

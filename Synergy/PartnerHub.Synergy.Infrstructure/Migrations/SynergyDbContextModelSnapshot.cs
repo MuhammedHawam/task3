@@ -44,6 +44,9 @@ namespace PartnersHub.Synergy.Infrastructure.Migrations
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("CompanyName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ContactAddress")
                         .HasColumnType("nvarchar(max)");
 
@@ -67,6 +70,9 @@ namespace PartnersHub.Synergy.Infrastructure.Migrations
                         .HasColumnType("nvarchar(1000)");
 
                     b.Property<bool?>("IsAdminCreated")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsHide")
                         .HasColumnType("bit");
 
                     b.Property<int>("OpportunityTypeId")
@@ -112,6 +118,9 @@ namespace PartnersHub.Synergy.Infrastructure.Migrations
 
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("UserEmail")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -251,6 +260,9 @@ namespace PartnersHub.Synergy.Infrastructure.Migrations
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("CompanyName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -259,6 +271,9 @@ namespace PartnersHub.Synergy.Infrastructure.Migrations
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsHide")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("RejectedAt")
                         .HasColumnType("datetime2");
