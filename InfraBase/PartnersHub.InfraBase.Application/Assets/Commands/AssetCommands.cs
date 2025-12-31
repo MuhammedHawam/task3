@@ -90,3 +90,40 @@ public record RemoveAssetAttachmentCommand(Guid AssetId, Guid AttachmentId) : IR
 public record CapexDetailDto(int Year, decimal Amount);
 
 public record OpexDetailDto(int Year, decimal Amount);
+
+/// <summary>
+/// Command for InfraBases Admin to create an asset on behalf of a Portfolio Company
+/// </summary>
+public record CreateAssetOnBehalfOfPcCompanyCommand : IRequest<Guid>
+{
+    /// <summary>
+    /// Portfolio Company ID - Mandatory when creating on behalf of PC Company
+    /// </summary>
+    public Guid PortfolioCompanyId { get; init; }
+    
+    public string? AssetName { get; init; }
+    public string LocationCity { get; init; } = string.Empty;
+    public Guid? SectorId { get; init; }
+    public Guid? SubSectorId { get; init; }
+    public Guid? AssetTypeId { get; init; }
+    public string? AssetTypeOther { get; init; }
+    public decimal? QuantityOfAsset { get; init; }
+    public decimal CapacityPerAsset { get; init; }
+    public Guid? UnitOfMeasurementId { get; init; }
+    public string? UnitOfMeasurementOther { get; init; }
+    public string? Description { get; init; }
+    public int? ConstructionStartingQuarter { get; init; }
+    public int? ConstructionStartingYear { get; init; }
+    public int? ConstructionCompletionQuarter { get; init; }
+    public int? ConstructionCompletionYear { get; init; }
+    public TenderingStages? TenderingStage { get; init; }
+    public DevelopmentTypes? DevelopmentType { get; init; }
+    public FundingModels? FundingModel { get; init; }
+    public decimal? ExpectedDebt { get; init; }
+    public decimal? ExpectedEquity { get; init; }
+    public bool? IsRevenueGenerating { get; init; }
+    public decimal? IRR { get; init; }
+    public bool? IsPifGuaranteesRequired { get; init; }
+    public List<CapexDetailDto> CapexDetails { get; init; } = new();
+    public List<OpexDetailDto> OpexDetails { get; init; } = new();
+}
