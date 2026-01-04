@@ -22,4 +22,12 @@
     <ProjectReference Include="..\PartnersHub.InfraBase.Infrastructure\PartnersHub.InfraBase.Infrastructure.csproj" />
   </ItemGroup>
 
+  <!-- Mail templates (HTML + images) -->
+  <ItemGroup>
+    <Content Include="..\..\MailTemplate\**\*">
+      <Link>MailTemplate\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

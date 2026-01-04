@@ -5,6 +5,12 @@ namespace PartnersHub.InfraBase.Application.Assets.Commands;
 
 public record CreateAssetCommand : IRequest<Guid>
 {
+    /// <summary>
+    /// Used by InfraBase Admins to create an asset on behalf of a selected portfolio company.
+    /// For non-admin users, company is always resolved from the access token.
+    /// </summary>
+    public Guid? PortfolioCompanyId { get; init; }
+
     public string? AssetName { get; init; }
     public string LocationCity { get; init; } = string.Empty;
     public Guid? SectorId { get; init; }

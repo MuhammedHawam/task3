@@ -91,13 +91,13 @@ public class TokenService : ITokenService
         return userRoleIds.Any(userRole => pcAdminRoleIds.Contains(userRole));
     }
 
-    //public bool IsInfrabaseAdmin()
-    //{
-    //    var userRoleIds = GetUserRoleIds();
-    //    var infrabaseAdminRoleIds = GetConfiguredRoleIds("RoleIds:InfrabaseAdmin");
+    public bool IsInfrabaseAdmin()
+    {
+        var userRoleIds = GetUserRoleIds();
+        var infrabaseAdminRoleIds = GetConfiguredRoleIds("RoleIds:InfrabaseAdmin");
 
-    //    return userRoleIds.Any(userRole => infrabaseAdminRoleIds.Contains(userRole));
-    //}
+        return userRoleIds.Any(userRole => infrabaseAdminRoleIds.Contains(userRole));
+    }
 
     private List<Guid> GetConfiguredRoleIds(string configKey)
     {

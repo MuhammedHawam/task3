@@ -1,490 +1,147 @@
+using System.Text;
+
 namespace PartnersHub.InfraBase.Application.Common.Services;
 
+/// <summary>
+/// Generates HTML email bodies for asset workflow notifications.
+///
+/// Implementation note:
+/// We render from the shared PIF email template in `MailTemplate/emailTemplate.html`
+/// (copied to output by the InfraBase API project) and inline the images as base64
+/// to keep the email self-contained.
+/// </summary>
 public class EmailTemplateService
 {
+    private const string TemplateFolderName = "MailTemplate";
+    private const string TemplateFileName = "emailTemplate.html";
+
+    private static readonly Lazy<string> _baseTemplate = new(LoadAndInlineTemplate, isThreadSafe: true);
+
     public string BuildAssetSubmittedEmail(string creatorName, Guid assetId)
     {
-        var assetDetailsUrl = $"/assets/{assetId}";
-        
-        return $@"
-<!DOCTYPE html>
-<html lang=""en"">
-<head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>New asset submitted</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }}
-        .email-container {{
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        .header {{
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }}
-        .content {{
-            margin: 20px 0;
-        }}
-        .button-container {{
-            text-align: center;
-            margin: 30px 0;
-        }}
-        .button {{
-            display: inline-block;
-            padding: 12px 30px;
-            background-color: #007bff;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 16px;
-        }}
-        .button:hover {{
-            background-color: #0056b3;
-        }}
-        .footer {{
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e0e0e0;
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-        }}
-    </style>
-</head>
-<body>
-    <div class=""email-container"">
-        <div class=""header"">
-            <h1 style=""color: #007bff; margin: 0;"">New asset submitted</h1>
-        </div>
-        <div class=""content"">
-            <p>New asset submitted by ""{creatorName}"" and waiting your approval</p>
-        </div>
-        <div class=""button-container"">
-            <a href=""{assetDetailsUrl}"" class=""button"">View Asset</a>
-        </div>
-        <div class=""footer"">
-            <p>Regards.<br>Infrabase team</p>
-        </div>
-    </div>
-</body>
-</html>";
+        var link = $"/assets/{assetId}";
+        return Render(
+            messageEn: $"New asset submitted by \"{creatorName}\" and waiting your approval.",
+            messageAr: "تم إرسال أصل جديد وبانتظار موافقتك.",
+            linkUrl: link);
     }
 
     public string BuildAssetAcceptedByPcAdminEmail(Guid assetId)
     {
-        var assetDetailsUrl = $"/assets/{assetId}";
-        
-        return $@"
-<!DOCTYPE html>
-<html lang=""en"">
-<head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>Asset Accepted</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }}
-        .email-container {{
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        .header {{
-            border-bottom: 2px solid #28a745;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }}
-        .content {{
-            margin: 20px 0;
-        }}
-        .button-container {{
-            text-align: center;
-            margin: 30px 0;
-        }}
-        .button {{
-            display: inline-block;
-            padding: 12px 30px;
-            background-color: #007bff;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 16px;
-        }}
-        .button:hover {{
-            background-color: #0056b3;
-        }}
-        .footer {{
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e0e0e0;
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-        }}
-    </style>
-</head>
-<body>
-    <div class=""email-container"">
-        <div class=""header"">
-            <h1 style=""color: #28a745; margin: 0;"">Asset Accepted</h1>
-        </div>
-        <div class=""content"">
-            <p>Your asset has been Approved</p>
-        </div>
-        <div class=""button-container"">
-            <a href=""{assetDetailsUrl}"" class=""button"">View Asset</a>
-        </div>
-        <div class=""footer"">
-            <p>Regards.<br>Infrabase team</p>
-        </div>
-    </div>
-</body>
-</html>";
+        var link = $"/assets/{assetId}";
+        return Render(
+            messageEn: "Your asset has been approved.",
+            messageAr: "تمت الموافقة على الأصل.",
+            linkUrl: link);
     }
 
     public string BuildAssetRejectedByPcAdminEmail(Guid assetId)
     {
-        var assetDetailsUrl = $"/assets/{assetId}";
-        
-        return $@"
-<!DOCTYPE html>
-<html lang=""en"">
-<head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>Asset Rejected</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }}
-        .email-container {{
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        .header {{
-            border-bottom: 2px solid #dc3545;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }}
-        .content {{
-            margin: 20px 0;
-        }}
-        .button-container {{
-            text-align: center;
-            margin: 30px 0;
-        }}
-        .button {{
-            display: inline-block;
-            padding: 12px 30px;
-            background-color: #007bff;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 16px;
-        }}
-        .button:hover {{
-            background-color: #0056b3;
-        }}
-        .footer {{
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e0e0e0;
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-        }}
-    </style>
-</head>
-<body>
-    <div class=""email-container"">
-        <div class=""header"">
-            <h1 style=""color: #dc3545; margin: 0;"">Asset Rejected</h1>
-        </div>
-        <div class=""content"">
-            <p>Your asset has been Rejected</p>
-        </div>
-        <div class=""button-container"">
-            <a href=""{assetDetailsUrl}"" class=""button"">View Asset</a>
-        </div>
-        <div class=""footer"">
-            <p>Regards.<br>Infrabase team</p>
-        </div>
-    </div>
-</body>
-</html>";
+        var link = $"/assets/{assetId}";
+        return Render(
+            messageEn: "Your asset has been rejected.",
+            messageAr: "تم رفض الأصل.",
+            linkUrl: link);
     }
 
     public string BuildNewRequestSubmittedEmail(string companyName, Guid assetId)
     {
-        var assetDetailsUrl = $"/assets/{assetId}";
-        
-        return $@"
-<!DOCTYPE html>
-<html lang=""en"">
-<head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>New request submitted</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }}
-        .email-container {{
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        .header {{
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }}
-        .content {{
-            margin: 20px 0;
-        }}
-        .button-container {{
-            text-align: center;
-            margin: 30px 0;
-        }}
-        .button {{
-            display: inline-block;
-            padding: 12px 30px;
-            background-color: #007bff;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 16px;
-        }}
-        .button:hover {{
-            background-color: #0056b3;
-        }}
-        .footer {{
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e0e0e0;
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-        }}
-    </style>
-</head>
-<body>
-    <div class=""email-container"">
-        <div class=""header"">
-            <h1 style=""color: #007bff; margin: 0;"">New request submitted</h1>
-        </div>
-        <div class=""content"">
-            <p>New request submitted by ""{companyName}"" and waiting your approval</p>
-        </div>
-        <div class=""button-container"">
-            <a href=""{assetDetailsUrl}"" class=""button"">Approve Request</a>
-        </div>
-        <div class=""footer"">
-            <p>Regards.<br>Infrabase team</p>
-        </div>
-    </div>
-</body>
-</html>";
+        var link = $"/assets/{assetId}";
+        return Render(
+            messageEn: $"New request submitted by \"{companyName}\" and waiting your approval.",
+            messageAr: $"تم إرسال طلب جديد من \"{companyName}\" وبانتظار موافقتك.",
+            linkUrl: link);
     }
 
     public string BuildAssetAcceptedByInfrabaseAdminEmail(Guid assetId)
     {
-        var assetDetailsUrl = $"/assets/{assetId}";
-        
-        return $@"
-<!DOCTYPE html>
-<html lang=""en"">
-<head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>Asset Accepted</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }}
-        .email-container {{
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        .header {{
-            border-bottom: 2px solid #28a745;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }}
-        .content {{
-            margin: 20px 0;
-        }}
-        .button-container {{
-            text-align: center;
-            margin: 30px 0;
-        }}
-        .button {{
-            display: inline-block;
-            padding: 12px 30px;
-            background-color: #007bff;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 16px;
-        }}
-        .button:hover {{
-            background-color: #0056b3;
-        }}
-        .footer {{
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e0e0e0;
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-        }}
-    </style>
-</head>
-<body>
-    <div class=""email-container"">
-        <div class=""header"">
-            <h1 style=""color: #28a745; margin: 0;"">Asset Accepted</h1>
-        </div>
-        <div class=""content"">
-            <p>Your asset has been Approved</p>
-        </div>
-        <div class=""button-container"">
-            <a href=""{assetDetailsUrl}"" class=""button"">View Asset</a>
-        </div>
-        <div class=""footer"">
-            <p>Regards.<br>Infrabase team</p>
-        </div>
-    </div>
-</body>
-</html>";
+        var link = $"/assets/{assetId}";
+        return Render(
+            messageEn: "Your asset has been approved.",
+            messageAr: "تمت الموافقة على الأصل.",
+            linkUrl: link);
     }
 
     public string BuildAssetRejectedByInfrabaseAdminEmail(Guid assetId)
     {
-        var assetDetailsUrl = $"/assets/{assetId}";
-        
-        return $@"
-<!DOCTYPE html>
-<html lang=""en"">
-<head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>Asset Rejected</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }}
-        .email-container {{
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        .header {{
-            border-bottom: 2px solid #dc3545;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }}
-        .content {{
-            margin: 20px 0;
-        }}
-        .button-container {{
-            text-align: center;
-            margin: 30px 0;
-        }}
-        .button {{
-            display: inline-block;
-            padding: 12px 30px;
-            background-color: #007bff;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 16px;
-        }}
-        .button:hover {{
-            background-color: #0056b3;
-        }}
-        .footer {{
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e0e0e0;
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-        }}
-    </style>
-</head>
-<body>
-    <div class=""email-container"">
-        <div class=""header"">
-            <h1 style=""color: #dc3545; margin: 0;"">Asset Rejected</h1>
-        </div>
-        <div class=""content"">
-            <p>Your asset has been Rejected</p>
-        </div>
-        <div class=""button-container"">
-            <a href=""{assetDetailsUrl}"" class=""button"">View Asset</a>
-        </div>
-        <div class=""footer"">
-            <p>Regards.<br>Infrabase team</p>
-        </div>
-    </div>
-</body>
-</html>";
+        var link = $"/assets/{assetId}";
+        return Render(
+            messageEn: "Your asset has been rejected and returned for correction.",
+            messageAr: "تم إرجاع الأصل للتعديل.",
+            linkUrl: link);
+    }
+
+    private static string Render(string messageEn, string messageAr, string linkUrl)
+    {
+        // NOTE: The source template is a static HTML file with sample data.
+        // We replace the key text blocks (EN/AR) and set the link target.
+        var html = _baseTemplate.Value;
+
+        // English section replacements
+        html = html.Replace("Dear Bashayr Alghamdi - NEOM,", "Dear,", StringComparison.Ordinal);
+        html = html.Replace("You have been assigned a new Task.", messageEn, StringComparison.Ordinal);
+        html = html.Replace(
+            "Please click on this\u00A0(\u00A0Link\u00A0)\u00A0to access the request.",
+            BuildLinkLineEn(linkUrl),
+            StringComparison.Ordinal);
+
+        // Arabic section replacements
+        html = html.Replace("السلام عليكم Bashayr Alghamdi - NEOM،", "السلام عليكم،", StringComparison.Ordinal);
+        html = html.Replace("تم تكليفك بمهمة جديدة.", messageAr, StringComparison.Ordinal);
+
+        // Replace ONLY the request-link target (the template contains other "#" links e.g. support).
+        html = ReplaceFirst(html, "href=\"#\"", $"href=\"{linkUrl}\"", StringComparison.Ordinal);
+
+        return html;
+    }
+
+    private static string BuildLinkLineEn(string linkUrl)
+    {
+        // Keep the same styling as template (dark green + underline).
+        var sb = new StringBuilder();
+        sb.Append("Please click on this ");
+        sb.Append($"<a href=\"{linkUrl}\" style=\"color: #00342b; text-decoration: underline; font-weight: 600;\">( Link )</a>");
+        sb.Append(" to access the request.");
+        return sb.ToString();
+    }
+
+    private static string ReplaceFirst(string input, string oldValue, string newValue, StringComparison comparison)
+    {
+        var idx = input.IndexOf(oldValue, comparison);
+        if (idx < 0)
+        {
+            return input;
+        }
+
+        return string.Concat(input.AsSpan(0, idx), newValue, input.AsSpan(idx + oldValue.Length));
+    }
+
+    private static string LoadAndInlineTemplate()
+    {
+        var templatePath = Path.Combine(AppContext.BaseDirectory, TemplateFolderName, TemplateFileName);
+        var html = File.ReadAllText(templatePath);
+
+        // Inline images (email clients cannot resolve relative file paths).
+        html = InlineImage(html, "BG.png");
+        html = InlineImage(html, "PIF_Logo.png");
+        html = InlineImage(html, "PIF.png");
+        html = InlineImage(html, "Platform_Logo.png");
+
+        return html;
+    }
+
+    private static string InlineImage(string html, string fileName)
+    {
+        var filePath = Path.Combine(AppContext.BaseDirectory, TemplateFolderName, fileName);
+        if (!File.Exists(filePath))
+        {
+            return html;
+        }
+
+        var base64 = Convert.ToBase64String(File.ReadAllBytes(filePath));
+        var dataUri = $"data:image/png;base64,{base64}";
+
+        // The template references images as "./<fileName>" (both in img src and css url()).
+        return html.Replace($"./{fileName}", dataUri, StringComparison.Ordinal);
     }
 }

@@ -33,18 +33,12 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
     public async Task<Guid> Handle(CreateAssetCommand command, CancellationToken cancellationToken)
     {
         var userName = _tokenService.GetUserName(); // Use username for readable history
-        var userEmail = _tokenService.GetUserEmail(); // Use email for CreatedBy field
-        var companyId = _tokenService.GetCompanyId();
-
-        if (!companyId.HasValue || companyId.Value == Guid.Empty)
-        {
-            throw new ValidationException("Company ID is required to create an asset.");
-        }
+        var companyId = ResolveCompanyId(command);
 
         string? companyName = null;
         try
         {
-            var company = await _middlewareService.GetCompanyByIdAsync(companyId.Value);
+            var company = await _middlewareService.GetCompanyByIdAsync(companyId);
             if (company != null)
             {
                 companyName = company.Name;
@@ -53,7 +47,7 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching company name for {CompanyId}", companyId.Value);
+            _logger.LogError(ex, "Error fetching company name for {CompanyId}", companyId);
         }
 
         var assetResult = Asset.Create(
@@ -81,7 +75,7 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
             command.IRR, 
             command.IsPifGuaranteesRequired, 
             userName, // Use username for history
-            companyId.Value,
+            companyId,
             companyName);
 
         if (assetResult.IsFailure)
@@ -113,5 +107,35 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return asset.Id;
+    }
+
+    private Guid ResolveCompanyId(CreateAssetCommand command)
+    {
+        var tokenCompanyId = _tokenService.GetCompanyId();
+
+        // InfraBase Admin flow: allow creating on behalf of a selected portfolio company.
+        if (_tokenService.IsInfrabaseAdmin())
+        {
+            if (command.PortfolioCompanyId.HasValue && command.PortfolioCompanyId.Value != Guid.Empty)
+            {
+                return command.PortfolioCompanyId.Value;
+            }
+
+            // If admin didn't pass an override, fall back to token company id (if any).
+            if (tokenCompanyId.HasValue && tokenCompanyId.Value != Guid.Empty)
+            {
+                return tokenCompanyId.Value;
+            }
+
+            throw new ValidationException("Portfolio company is required to create an asset on behalf of a company.");
+        }
+
+        // Non-admin flow: company must come from token.
+        if (!tokenCompanyId.HasValue || tokenCompanyId.Value == Guid.Empty)
+        {
+            throw new ValidationException("Company ID is required to create an asset.");
+        }
+
+        return tokenCompanyId.Value;
     }
 }
