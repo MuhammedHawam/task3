@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using PartnersHub.InfraBase.Application.Assets.Commands;
 using PartnersHub.InfraBase.Application.Assets.DTOs;
 using PartnersHub.InfraBase.Application.Assets.Queries;
-using PartnersHub.InfraBase.Application.Common.DTOs;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Models;
 using PartnersHub.InfraBase.Domain.Enums;
@@ -268,32 +267,5 @@ public class AssetsController : ControllerBase
         var query = new GetNextAssetCodeQuery();
         var result = await _mediator.Send(query);
         return Ok(result);
-    }
-
-    // ========== InfraBases Admin - Create Asset on Behalf of PC Company ==========
-
-    /// <summary>
-    /// Search portfolio companies for dropdown selection
-    /// Used by InfraBases Admin when creating assets on behalf of PC Companies
-    /// </summary>
-    [HttpGet("portfolio-companies")]
-    public async Task<ActionResult<List<PortfolioCompanyDto>>> GetPortfolioCompanies(
-        [FromQuery] string? searchTerm = null)
-    {
-        var query = new GetPortfolioCompaniesQuery(searchTerm);
-        var result = await _mediator.Send(query);
-        return Ok(result);
-    }
-
-    /// <summary>
-    /// Create an asset on behalf of a Portfolio Company
-    /// Only accessible by InfraBases Admin
-    /// </summary>
-    [HttpPost("on-behalf-of-pc-company")]
-    public async Task<ActionResult<Guid>> CreateAssetOnBehalfOfPcCompany(
-        [FromBody] CreateAssetOnBehalfOfPcCompanyCommand command)
-    {
-        var assetId = await _mediator.Send(command);
-        return CreatedAtAction(nameof(GetAssetById), new { id = assetId }, assetId);
     }
 }

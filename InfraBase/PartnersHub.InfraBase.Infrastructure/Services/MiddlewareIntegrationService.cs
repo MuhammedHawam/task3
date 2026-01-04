@@ -78,63 +78,6 @@ public class MiddlewareIntegrationService : IMiddlewareIntegrationService
         }
     }
 
-    public async Task<List<PortfolioCompanyDto>> SearchPortfolioCompaniesAsync(string? searchTerm = null, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            _logger.LogInformation("Searching portfolio companies with search term: {SearchTerm}", searchTerm);
-
-            var token = GetAuthorizationToken();
-            if (!string.IsNullOrEmpty(token))
-            {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-
-            var endpoint = $"{_baseUrl}/Networking/get-networking-companies";
-            if (!string.IsNullOrWhiteSpace(searchTerm))
-            {
-                endpoint += $"?searchTerm={Uri.EscapeDataString(searchTerm)}";
-            }
-
-            var response = await _httpClient.GetAsync(endpoint, cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning("Portfolio companies search request failed. Status: {StatusCode}, Reason: {ReasonPhrase}", 
-                    response.StatusCode, response.ReasonPhrase);
-                return new List<PortfolioCompanyDto>();
-            }
-
-            var middlewareResponse = await response.Content.ReadFromJsonAsync<MiddlewareCompanyListResponse>(cancellationToken: cancellationToken);
-            
-            if (middlewareResponse?.Data == null || 
-                middlewareResponse.HttpCode != 200 || 
-                middlewareResponse.Status != "Success")
-            {
-                _logger.LogWarning("Invalid response for portfolio companies search. HttpCode: {HttpCode}, Status: {Status}", 
-                    middlewareResponse?.HttpCode, middlewareResponse?.Status);
-                return new List<PortfolioCompanyDto>();
-            }
-
-            var portfolioCompanies = middlewareResponse.Data.Select(company => new PortfolioCompanyDto
-            {
-                Id = company.Id,
-                Name = company.Name,
-                SectorName = company.Sector?.Name,
-                CompanyAdminRepresentativeName = company.Representative?.Name,
-                CompanyAdminRepresentativeEmail = company.Representative?.Email
-            }).ToList();
-
-            _logger.LogInformation("Successfully fetched {Count} portfolio companies", portfolioCompanies.Count);
-            return portfolioCompanies;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error searching portfolio companies. Exception: {Message}", ex.Message);
-            return new List<PortfolioCompanyDto>();
-        }
-    }
-
     private string? GetAuthorizationToken()
     {
         var authHeader = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault();

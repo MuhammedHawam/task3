@@ -8,5 +8,5 @@ public interface ITokenService
     string? GetCompanyName();
     List<Guid> GetUserRoleIds();
     bool IsPcAdmin();
-    bool IsInfrabaseAdmin();
+    //bool IsInfrabaseAdmin();
 }

@@ -48,26 +48,3 @@ public class CompanyRepresentative
     public string? Mobile { get; set; }
     public string? Photo { get; set; }
 }
-
-/// <summary>
-/// DTO for portfolio company selection in dropdown
-/// </summary>
-public class PortfolioCompanyDto
-{
-    public Guid Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string? SectorName { get; set; }
-    public string? CompanyAdminRepresentativeName { get; set; }
-    public string? CompanyAdminRepresentativeEmail { get; set; }
-}
-
-/// <summary>
-/// Response wrapper for list of companies from middleware
-/// </summary>
-public class MiddlewareCompanyListResponse
-{
-    public int HttpCode { get; set; }
-    public string Status { get; set; } = string.Empty;
-    public List<MiddlewareCompany>? Data { get; set; }
-    public string? Error { get; set; }
-}

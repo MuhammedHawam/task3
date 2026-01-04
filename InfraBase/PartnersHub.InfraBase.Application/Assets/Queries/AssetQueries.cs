@@ -28,5 +28,3 @@ public record GetAssetHistoryQuery(Guid AssetId) : IRequest<List<AssetHistoryDto
 public record GetAssetAttachmentsQuery(Guid AssetId) : IRequest<List<AssetAttachmentDto>>;
 
 public record GetNextAssetCodeQuery() : IRequest<string>;
-
-public record GetPortfolioCompaniesQuery(string? SearchTerm = null) : IRequest<List<PortfolioCompanyDto>>;
