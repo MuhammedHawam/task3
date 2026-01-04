@@ -1,6 +1,7 @@
 using MediatR;
 using PartnersHub.InfraBase.Application.Assets.Commands;
 using PartnersHub.InfraBase.Application.Common.Exceptions;
+using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Repository;
 
 namespace PartnersHub.InfraBase.Application.Assets.Handlers;
