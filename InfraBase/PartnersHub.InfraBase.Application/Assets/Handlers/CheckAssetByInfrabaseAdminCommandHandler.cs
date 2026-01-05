@@ -35,7 +35,7 @@ public class CheckAssetByInfrabaseAdminCommandHandler : IRequestHandler<CheckAss
         var result = asset.CheckByInfrabaseAdmin(userName);
         if (result.IsFailure)
         {
-            throw new ValidationException(result.Error!);
+            throw new ValidationException(result.Error ?? "Asset check failed.");
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

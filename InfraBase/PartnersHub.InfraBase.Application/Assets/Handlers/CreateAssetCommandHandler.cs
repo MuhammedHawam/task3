@@ -80,7 +80,7 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
 
         if (assetResult.IsFailure)
         {
-            throw new ValidationException(assetResult.Error!);
+            throw new ValidationException(assetResult.Error ?? "Asset creation failed.");
         }
 
         var asset = assetResult.Value!;
