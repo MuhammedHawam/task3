@@ -30,6 +30,8 @@ public record AssetDto
     public string TenderingStageDisplayName => TenderingStage?.GetDisplayName() ?? "N/A";
     public DevelopmentTypes? DevelopmentType { get; init; }
     public string DevelopmentTypeDisplayName => DevelopmentType?.GetDisplayName() ?? "N/A";
+    public FinancialEntryMode CapexEntryMode { get; init; }
+    public FinancialEntryMode OpexEntryMode { get; init; }
     public decimal TotalCapex { get; init; }
     public decimal TotalOpex { get; init; }
     public FundingModels? FundingModel { get; init; }

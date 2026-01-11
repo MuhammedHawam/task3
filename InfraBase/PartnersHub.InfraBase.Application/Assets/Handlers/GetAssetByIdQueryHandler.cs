@@ -67,6 +67,8 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             ConstructionCompletionYear = asset.ConstructionCompletionYear,
             TenderingStage = asset.TenderingStage,
             DevelopmentType = asset.DevelopmentType,
+            CapexEntryMode = asset.CapexEntryMode,
+            OpexEntryMode = asset.OpexEntryMode,
             TotalCapex = asset.TotalCapex,
             TotalOpex = asset.TotalOpex,
             FundingModel = asset.FundingModel,

@@ -4,6 +4,7 @@ using PartnersHub.InfraBase.Application.Common.Exceptions;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Repository;
 using PartnersHub.InfraBase.Domain.Aggregates.AssetAggregate;
+using PartnersHub.InfraBase.Domain.Enums;
 
 namespace PartnersHub.InfraBase.Application.Assets.Handlers;
 
@@ -64,11 +65,62 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
             throw new ValidationException(updateResult.Error!);
         }
 
+        if (command.CapexDetails != null)
+        {
+            ValidateYearRows(command.CapexDetails.Select(x => x.Year), "CAPEX");
+            if (command.CapexEntryMode == FinancialEntryMode.SingleYear && command.CapexDetails.Count > 1)
+            {
+                throw new ValidationException("CAPEX Single-Year mode supports only one year row.");
+            }
+        }
+
+        if (command.OpexDetails != null)
+        {
+            ValidateYearRows(command.OpexDetails.Select(x => x.Year), "OPEX");
+            if (command.OpexEntryMode == FinancialEntryMode.SingleYear && command.OpexDetails.Count > 1)
+            {
+                throw new ValidationException("OPEX Single-Year mode supports only one year row.");
+            }
+        }
+
         UpdateCapexDetails(asset, command, userName);
         UpdateOpexDetails(asset, command, userName);
 
+        if (command.CapexEntryMode.HasValue)
+        {
+            var modeResult = asset.SetCapexEntryMode(command.CapexEntryMode.Value, userName);
+            if (modeResult.IsFailure)
+            {
+                throw new ValidationException(modeResult.Error!);
+            }
+        }
+
+        if (command.OpexEntryMode.HasValue)
+        {
+            var modeResult = asset.SetOpexEntryMode(command.OpexEntryMode.Value, userName);
+            if (modeResult.IsFailure)
+            {
+                throw new ValidationException(modeResult.Error!);
+            }
+        }
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    private static void ValidateYearRows(IEnumerable<int> years, string label)
+    {
+        var yearList = years.ToList();
+        var duplicates = yearList
+            .GroupBy(y => y)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToList();
+
+        if (duplicates.Count > 0)
+        {
+            throw new ValidationException($"{label} has duplicate years: {string.Join(", ", duplicates)}");
+        }
     }
 
     private static void UpdateCapexDetails(Asset asset, UpdateAssetCommand command, string userId)
