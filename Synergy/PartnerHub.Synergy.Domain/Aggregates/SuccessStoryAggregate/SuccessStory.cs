@@ -4,6 +4,7 @@ using PartnersHub.Synergy.Domain.Aggregates.Synergy.Lookups;
 using PartnersHub.Synergy.Domain.Common;
 using PartnersHub.Synergy.Domain.Events;
 using PartnersHub.Synergy.Domain.ValueObjects;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace PartnersHub.Synergy.Domain.Aggregates.SuccessStoryAggregate;
@@ -42,12 +43,14 @@ public class SuccessStory : AggregateRoot
     public string? SectorName { get; private set;}
     public string? UserEmail { get; private set; }
 
+    public bool? IsAdminCreated { get; private set; }
+
     public bool IsHide { get; private set; }  = false;
 
     private SuccessStory() { }
 
     private SuccessStory(Guid companyId, Title title, Description description, int successStoryTypeId, string requestId,
-        DateTime startDate, DateTime endDate, int collaborationStatusId, Guid termsAndConditionId, Guid createdBy, Guid? sectorId , string? sectorName, string userEmail)
+        DateTime startDate, DateTime endDate, int collaborationStatusId, Guid termsAndConditionId, Guid createdBy, Guid? sectorId , string? sectorName, string userEmail, bool? isAdminCreated)
     {
         RequestId = requestId;
         CompanyId = companyId;
@@ -63,11 +66,13 @@ public class SuccessStory : AggregateRoot
         SectorName = sectorName;
         MarkAsCreated(createdBy);
         UserEmail = userEmail;
+        IsAdminCreated = isAdminCreated;
+        Status = isAdminCreated == true ? SuccessStoryStatus.Published : SuccessStoryStatus.PendingReview;
     }
 
     public static Result<SuccessStory> Create(Guid companyId, string title, string description,
         int successStoryTypeId, string requestId, DateTime startDate, DateTime endDate, int collaborationStatusId,
-        Guid termsAndConditionId, Guid createdBy, Guid? sectorId , string? sectorName, string UserEmail)
+        Guid termsAndConditionId, Guid createdBy, Guid? sectorId , string? sectorName, string UserEmail,bool? isAdmin)
     {
         if (companyId == Guid.Empty)
             return Result<SuccessStory>.Failure("Company ID is required");
@@ -92,7 +97,7 @@ public class SuccessStory : AggregateRoot
         //    return Result<SuccessStory>.Failure("Terms and condition is required");
 
         var story = new SuccessStory(companyId, titleResult.Value!, descriptionResult.Value!, successStoryTypeId,requestId,
-            startDate, endDate, collaborationStatusId, termsAndConditionId, createdBy, sectorId, sectorName, UserEmail);
+            startDate, endDate, collaborationStatusId, termsAndConditionId, createdBy, sectorId, sectorName, UserEmail,isAdmin);
        
         return Result<SuccessStory>.Success(story);
     }
@@ -119,7 +124,7 @@ public class SuccessStory : AggregateRoot
             return Result<bool>.Failure(ex.Message);
         }
     }
-    public Result<bool> AddAssociatedOpportunities(List<Guid> opportunityIds)
+    public Result<bool> AddAssociatedOpportunities(List<Guid>? opportunityIds)
     {
 
         if(opportunityIds != null && opportunityIds.Count > 0)
@@ -255,9 +260,9 @@ public class SuccessStory : AggregateRoot
         return Result<bool>.Success(true);
     }
     
-    public Result<bool> Publish(Guid userId, string successStoryName, string? companyName, string? companyEmail)
+    public Result<bool> Publish(Guid userId, string successStoryName, string? companyName, string? companyEmail,bool isAdmin =false)
     {
-        if (Status != SuccessStoryStatus.pending)
+        if (Status != SuccessStoryStatus.pending && !isAdmin)
             return Result<bool>.Failure("Only approved stories can be published");
 
         Status = SuccessStoryStatus.Published;
@@ -279,11 +284,106 @@ public class SuccessStory : AggregateRoot
     public Result SetVisibility(bool hide, Guid userId)
     {
         if (IsHide == hide)
-            return Result.Failure("Visibility already set");
+            return Result.Failure(IsHide ? "This success story is already hidden." : "This success story is already unhidden.");
 
         IsHide = hide;
         MarkAsUpdated(userId);
 
         return Result.Success();
     }
+
+    public Result Update( string title,
+                          string description,
+                          DateTime startDate,
+                          DateTime endDate,
+                          int successStoryTypeId,
+                          int collaborationStatusId
+                         )
+    {
+        if (Status != SuccessStoryStatus.Published)
+            return Result.Failure("SuccessStory cannot be edited in the current status");
+
+        if (startDate > endDate)
+            return Result.Failure("End date must be after start date");
+
+        var titleResult = Title.Create(title);
+        if (titleResult.IsFailure)
+            return Result.Failure(titleResult.Error);
+
+        var descriptionResult = Description.Create(description);
+        if (descriptionResult.IsFailure)
+            return Result.Failure(descriptionResult.Error);
+
+        Title = titleResult.Value!;
+        Description = descriptionResult.Value!;
+        StartDate = startDate;
+        EndDate = endDate;
+        SuccessStoryTypeId = successStoryTypeId;
+        CollaborationStatusId = collaborationStatusId;
+
+        AddDomainEvent(new SuccessStoryUpdatedEvent(Id, CompanyId, Status, Title.Value, CompanyName, UserEmail));
+
+
+        return Result.Success();
+    }
+
+
+    public Result UpdateAssociatedOpportunities(List<Guid>? opportunityIds)
+    {
+        if (opportunityIds == null || opportunityIds.Count == 0)
+        {
+            _associatedOpportunities.Clear();
+            return Result.Success();
+        }
+
+        if (opportunityIds.Any(id => id == Guid.Empty))
+            return Result.Failure("Associated opportunity ID cannot be empty");
+
+        var distinctIds = opportunityIds.Distinct().ToList();
+
+
+        _associatedOpportunities.Clear();
+
+        foreach (var opportunityId in distinctIds)
+        {
+            _associatedOpportunities.Add(
+                SuccessStoryOpportunity.Create(
+                    this.Id,
+                    opportunityId));
+        }
+
+        return Result.Success();
+    }
+
+    public Result UpdateCollaboratedCompanies(List<Guid>? companyIds)
+    {
+
+        if (companyIds == null || companyIds.Count == 0)
+        {
+            _collaboratedCompanies.Clear();
+            return Result.Success();
+        }
+
+
+        if (companyIds.Any(id => id == Guid.Empty))
+            return Result.Failure("Collaborated company ID cannot be empty");
+
+        var distinctIds = companyIds.Distinct().ToList();
+
+
+        _collaboratedCompanies.Clear();
+
+        foreach (var companyId in distinctIds)
+        {
+            _collaboratedCompanies.Add(
+                SuccessStorySynergyCompany.Create(
+                    this.Id,
+                    companyId));
+        }
+
+        return Result.Success();
+    }
+
+
+
 }

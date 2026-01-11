@@ -322,7 +322,9 @@ public class OpportunityRepository : IOpportunityRepository
             var term = searchTerm.ToLower();
             query = query.Where(o =>
                 o.Title.Value.ToLower().Contains(term) ||
-                (o.Description != null && o.Description.Value != null && o.Description.Value.ToLower().Contains(term)));
+                (o.Description != null && o.Description.Value != null && o.Description.Value.ToLower().Contains(term))
+                ||(o.Sector != null && o.Sector.Value != null && o.Sector.Value.ToLower().Contains(term)) ||
+                (o.OpportunityType != null && o.OpportunityType.Name != null && o.OpportunityType.Name.ToLower().Contains(term)));
         }
 
         // Apply sector filter

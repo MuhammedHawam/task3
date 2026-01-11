@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PartnersHub.ConfigurationHub.Application.Common.DTOs;
 using PartnersHub.ConfigurationHub.Application.Common.Interfaces.Persistence;
 using PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission;
 using PartnersHub.ConfigurationHub.Infrastructure.Persistence;
@@ -28,6 +29,43 @@ public class RolePermissionRepository : IRolePermissionRepository
         return true;
     }
 
+    public async Task<bool> UpdateBulkAsync(Guid roleId, List<Guid> permissionId)
+    {
+        permissionId = permissionId ?? new List<Guid>();
+
+        using (var transaction = await _context.Database.BeginTransactionAsync())
+        {
+            try
+            {
+                await _context.RolePermissions
+                    .Where(a => a.RoleId == roleId)
+                    .ExecuteDeleteAsync();
+
+                var newPermissions = permissionId.Select(pId => new RolePermission
+                {
+                    RoleId = roleId,
+                    PermissionId = pId
+                }).ToList();
+
+                if (newPermissions.Any())
+                {
+                    _context.RolePermissions.AddRange(newPermissions);
+                    await _context.SaveChangesAsync();
+                }
+
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+                throw; 
+            }
+        }
+    }
+
+
+
     public async Task<bool> RemoveAsync(Guid roleId, Guid permissionId)
     {
         var rolePermission = await _context.RolePermissions
@@ -47,6 +85,19 @@ public class RolePermissionRepository : IRolePermissionRepository
             .Include(rp => rp.Permission)
             .ThenInclude(p => p.Module)
             .Select(rp => rp.Permission)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<LookupDto>> GetPermissionsLookupByRoleIdAsync(Guid roleId)
+    {
+        return await _context.RolePermissions
+            .Where(rp => rp.RoleId == roleId)
+            .Include(rp => rp.Permission)
+            .Select(rp => new LookupDto
+            {
+                Id = rp.PermissionId,
+                Value = rp.Permission.Name
+            })
             .ToListAsync();
     }
 

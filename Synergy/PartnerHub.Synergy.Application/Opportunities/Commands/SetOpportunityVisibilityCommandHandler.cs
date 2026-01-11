@@ -32,13 +32,19 @@ namespace PartnersHub.Synergy.Application.Opportunities.Commands
             SetOpportunityVisibilityCommand request,
             CancellationToken cancellationToken)
         {
+
+
+
             var opportunity =
                 await _opportunityRepository.GetByIdAsync(request.OpportunityId);
 
             if (opportunity == null)
-                return Result.Failure("Opportunity doesn't exist");
+                return Result.Failure("Partnership doesn't exist");
 
-            Result result = opportunity.SetVisibility(request.Hide, _userService.CurrentUserId);
+            if (opportunity.Status != OpportunityStatus.Published)
+                return Result.Failure("Only published Partnership can be hidden.");
+
+            Result result = opportunity.SetVisibility(request.Hide , _userService.CurrentUserId);
                 
 
             if (result.IsFailure)
@@ -47,7 +53,11 @@ namespace PartnersHub.Synergy.Application.Opportunities.Commands
             _opportunityRepository.Update(opportunity);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            return Result.Success();
+
+            return Result.Success(request.Hide == true ? "Partnership has been successfully hidden." : "Partnership has been successfully unhidden.");
+
+            
+
         }
     }
 }

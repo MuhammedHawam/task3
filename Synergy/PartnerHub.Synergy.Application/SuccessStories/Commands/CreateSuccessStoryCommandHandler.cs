@@ -80,7 +80,7 @@ public class CreateSuccessStoryCommandHandler : IRequestHandler<CreateSuccessSto
             _userService.CurrentUserId,
             request.SectorId,
             request.SectorName,
-            request.UserEmail);
+            request.UserEmail,request.IsAdmin);
         if (successStoryResult.IsFailure)
             return Result<Guid>.Failure(successStoryResult.Error);
 
@@ -88,11 +88,14 @@ public class CreateSuccessStoryCommandHandler : IRequestHandler<CreateSuccessSto
         if (result.IsFailure)
             return Result<Guid>.Failure(result.Error);
 
-        result = successStoryResult.Value.AddAssociatedOpportunities(request.AssociatedOpportunities);
+        result = successStoryResult.Value.AddAssociatedOpportunities(request.AssociatedOpportunities != null ? (new List<Guid> { request.AssociatedOpportunities.Value  }) : null);
         if (result.IsFailure)
             return Result<Guid>.Failure(result.Error);
 
         successStoryResult.Value.Submit(_userService.CurrentUserId, request.Title,request.CompanyName);
+
+        if(request.IsAdmin.HasValue && request.IsAdmin.Value) successStoryResult.Value.Publish(_userService.CurrentUserId, successStoryResult.Value.Title.Value, successStoryResult.Value.CompanyName, successStoryResult.Value.UserEmail, request.IsAdmin.Value);
+
         await _successStoryRepository.AddAsync(successStoryResult.Value);
         await _unitOfWork.SaveChangesAsync();
 

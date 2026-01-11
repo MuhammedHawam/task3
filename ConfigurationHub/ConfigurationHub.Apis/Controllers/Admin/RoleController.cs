@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PartnersHub.ConfigurationHub.Application.Common.DTOs;
 using PartnersHub.ConfigurationHub.Application.Common.Interfaces.Services;
 using PartnersHub.ConfigurationHub.Application.Common.Models;
 using PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission;
-using System.Drawing.Printing;
-
 namespace PartnersHub.ConfigurationHub.Apis.Controllers.Admin;
 
 [ApiController]
@@ -20,9 +19,16 @@ public class RoleController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<PaginatedList<Role>>> GetAllRoles(int pageNumber = 1, int pageSize = 9999)
+    public async Task<ActionResult<PaginatedList<Role>>> GetAllRoles(int pageNumber = 1, int pageSize = 10)
     {
         var roles = await _roleService.GetAllRolesAsync(pageSize, pageNumber);
+        return Ok(roles);
+    }
+
+    [HttpGet("{moduleId}/lookup")]
+    public async Task<ActionResult<List<LookupDto>>> GetAllRolesLookup(Guid moduleId)
+    {
+        var roles = await _roleService.GetAllRolesLookupByModuleAsync(moduleId);
         return Ok(roles);
     }
 
@@ -85,6 +91,13 @@ public class RoleController : ControllerBase
         return Ok(permissions);
     }
 
+    [HttpGet("{roleId}/permissions/lookup")]
+    public async Task<ActionResult<IEnumerable<LookupDto>>> GetRolePermissionslookup(Guid roleId)
+    {
+        var permissions = await _roleService.GetRolePermissionsLookupAsync(roleId);
+        return Ok(permissions);
+    }
+
     [HttpPost("users/{userId}")]
     public async Task<IActionResult> AssignRoleToUser(string userId, [FromBody] AssignRoleRequest request)
     {
@@ -127,10 +140,18 @@ public class RoleController : ControllerBase
         var permissions = await _roleService.GetUserPermissionsAsync(cleanUserId);
         return Ok(permissions);
     }
+
+    [HttpPut("{roleId}/permissions")]
+    public async Task<IActionResult> UpdateRolePermissions(Guid roleId, [FromBody] UpdateRolePermissionsRequest request)
+    {
+        var success = await _roleService.UpdateRolePermissionsAsync(roleId, request.PermissionsIds);
+        return success ? Ok(new { message = "Role updated successfully" }) : NotFound(new { message = "Role not found" });
+    }
 }
 
 public record CreateRoleRequest(string Name, string Description, Guid? ModuleId);
 public record UpdateRoleRequest(string Name, string Description);
+public record UpdateRolePermissionsRequest(List<Guid> PermissionsIds);
 public record AssignRoleRequest(Guid RoleId, Guid ModuleId);
 public record UserRoleResponse
 {

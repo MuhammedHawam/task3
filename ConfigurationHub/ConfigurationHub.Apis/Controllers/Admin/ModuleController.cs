@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PartnersHub.ConfigurationHub.Application.Common.DTOs;
 using PartnersHub.ConfigurationHub.Application.Common.Interfaces.Services;
 using PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission;
 
@@ -21,6 +22,13 @@ public class ModuleController : ControllerBase
     public async Task<ActionResult<IEnumerable<Module>>> GetAllModules()
     {
         var modules = await _moduleService.GetAllModulesAsync();
+        return Ok(modules);
+    }
+
+    [HttpGet("Lookup")]
+    public async Task<ActionResult<IEnumerable<LookupDto>>> GetLookup()
+    {
+        var modules = await _moduleService.GetLookupAsync();
         return Ok(modules);
     }
 

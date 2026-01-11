@@ -339,9 +339,9 @@ public class Opportunity : AggregateRoot
         return Result.Success();
     }
 
-    public Result<bool> Publish(Guid userId, string opportunityName, string? companyName, string? companyEmail)
+    public Result<bool> Publish(Guid userId, string opportunityName, string? companyName, string? companyEmail, bool isAdmin = false)
     {
-        if (Status != OpportunityStatus.Pending)
+        if (Status != OpportunityStatus.Pending && !isAdmin)
             return Result<bool>.Failure("Only pending opportunities can be approved");
 
         Status = OpportunityStatus.Published;
@@ -409,7 +409,7 @@ public class Opportunity : AggregateRoot
     public Result SetVisibility(bool hide, Guid userId)
     {
         if (IsHide == hide)
-            return Result.Failure("Visibility already set");
+            return Result.Failure(IsHide ? "This partnership is already hidden" : "This partnership is already unhidden");
 
         IsHide = hide;
         MarkAsUpdated(userId);
@@ -452,8 +452,7 @@ public class Opportunity : AggregateRoot
         if (startDate >= endDate)
             return Result.Failure("End date must be after start date");
 
-        if (string.IsNullOrWhiteSpace(collaborationRationale))
-            return Result.Failure("Collaboration rationale is required");
+
 
         Title = titleResult.Value!;
         Description = descriptionResult.Value!;
@@ -469,6 +468,8 @@ public class Opportunity : AggregateRoot
         ContactMobile = contactMobile;
 
         MarkAsUpdated(userId);
+        AddDomainEvent(new OpportunityUpdatedEvent(Id, CompanyId, Status, Title.Value, CompanyName, UserEmail));
+
 
         return Result.Success();
     }
@@ -492,14 +493,13 @@ public class Opportunity : AggregateRoot
     }
 
     public Result ReplaceCollaborationRequirements(
-    List<CollaborationRequirement>? collaborationRequirements,
-    string? otherCollaborationRequirement,
-    Guid userId)
+        List<CollaborationRequirement>? collaborationRequirements,
+        string? otherCollaborationRequirement,
+        Guid userId)
     {
         collaborationRequirements ??= new List<CollaborationRequirement>();
 
         _collaborationRequirements.Clear();
-        CollaborationRequirementOther = null;
 
         if (!collaborationRequirements.Any())
         {
@@ -517,34 +517,48 @@ public class Opportunity : AggregateRoot
 
             CollaborationRequirementOther = otherCollaborationRequirement;
         }
-
-        foreach (var cr in collaborationRequirements)
+        else
         {
-            _collaborationRequirements.Add(new OpportunityCollaborationRequirement(Id, cr.Id));
+            CollaborationRequirementOther = null;
+        }
+        
+        foreach (var cr in collaborationRequirements
+            .GroupBy(x => x.Id)
+            .Select(g => g.First()))
+        {
+
+            _collaborationRequirements.Add(
+                new OpportunityCollaborationRequirement(Id, cr.Id)
+            );
         }
 
         MarkAsUpdated(userId);
         return Result.Success();
     }
 
+
+
     public Result ReplaceExpectedOutcomes(
-    List<ExpectedOutcome>? expectedOutcomes,
-    string? otherExpectedOutcome,
-    Guid userId)
+        List<ExpectedOutcome>? expectedOutcomes,
+        string? otherExpectedOutcome,
+        Guid userId)
     {
         expectedOutcomes ??= new List<ExpectedOutcome>();
 
         _expectedOutcomes.Clear();
-        ExpectedOutcomeOther = null;
 
-        // If list empty and no other. Accept
-        if (!expectedOutcomes.Any() && string.IsNullOrWhiteSpace(otherExpectedOutcome))
+        var distinctExpectedOutcomes = expectedOutcomes
+            .GroupBy(eo => eo.Id)
+            .Select(g => g.First())
+            .ToList();
+
+        if (!distinctExpectedOutcomes.Any() && string.IsNullOrWhiteSpace(otherExpectedOutcome))
         {
             MarkAsUpdated(userId);
             return Result.Success();
         }
 
-        var hasOther = expectedOutcomes
+        var hasOther = distinctExpectedOutcomes
             .Any(eo => eo.Name.Contains(Constants.Other, StringComparison.OrdinalIgnoreCase));
 
         if (hasOther)
@@ -556,19 +570,23 @@ public class Opportunity : AggregateRoot
         }
         else
         {
-            // If user typed Other but did not select Other. Reject or ignore
             if (!string.IsNullOrWhiteSpace(otherExpectedOutcome))
                 return Result.Failure("Other expected outcome is not allowed unless 'Other' is selected");
         }
 
-        foreach (var eo in expectedOutcomes)
+        
+        foreach (var eo in distinctExpectedOutcomes)
         {
-            _expectedOutcomes.Add(new OpportunityExpectedOutcome(Id, eo.Id));
+
+            _expectedOutcomes.Add(
+                new OpportunityExpectedOutcome(Id, eo.Id)
+            );
         }
 
         MarkAsUpdated(userId);
         return Result.Success();
     }
+
 
 
 

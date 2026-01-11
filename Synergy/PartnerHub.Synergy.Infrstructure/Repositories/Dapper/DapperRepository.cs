@@ -109,7 +109,8 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
                 whereConditions.Add(@"
             (LOWER(s.Title) LIKE LOWER(@SearchTerm)
              OR LOWER(s.Description) LIKE LOWER(@SearchTerm)
-             OR LOWER(c.Name) LIKE LOWER(@SearchTerm))");
+             OR LOWER(c.Name) LIKE LOWER(@SearchTerm)
+             OR LOWER(OT.Name) LIKE LOWER(@SearchTerm))");
                 parameters.Add("@SearchTerm", $"%{searchTerm.Trim()}%");
             }
 
@@ -134,6 +135,9 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
         SELECT COUNT(DISTINCT s.Id)
         FROM SuccessStories s
         JOIN SynergyCompanies c ON c.Id = s.CompanyId
+        LEFT JOIN SuccessStoryOpportunities sso ON sso.SuccessStoryId = s.Id
+        LEFT JOIN Opportunities o ON o.Id = sso.OpportunityId
+        LEFT JOIN OpportunityTypes OT on OT.Id = o.OpportunityTypeId
         {whereClause};";
 
             var totalCount = await connection.ExecuteScalarAsync<int>(countSql, parameters);
@@ -152,6 +156,10 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
             ROW_NUMBER() OVER (ORDER BY {orderByField} {sortOrder}) AS RowNum
         FROM SuccessStories s
         JOIN SynergyCompanies c ON c.Id = s.CompanyId
+        LEFT JOIN SuccessStoryOpportunities sso ON sso.SuccessStoryId = s.Id
+        LEFT JOIN Opportunities o ON o.Id = sso.OpportunityId
+        LEFT JOIN OpportunityTypes OT on OT.Id = o.OpportunityTypeId
+
         {whereClause}
     )
     SELECT
@@ -165,6 +173,7 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
         s.Status AS SuccessStoryStatus,
         s.CreatedAt AS SubmissionDate,
         s.RejectionReason AS RejectionReason, 
+        s.CollaborationStatusId as CollaborationStatus,
         OT.Name as OpportunityTypeName,
 
         c.Id AS CompanyId,
@@ -174,6 +183,7 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
 
         sc.Id AS CollabId,
         sc.Name AS CollabName,
+        sc.Logo as Logo,
 
         o.Id AS OppId,
         o.Title AS OppName,
@@ -203,8 +213,9 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
 
 
 
-    WHERE rs.RowNum > @Offset
+    WHERE   rs.RowNum > @Offset
       AND rs.RowNum <= (@Offset + @PageSize)
+       
 
     ORDER BY {orderByField} {sortOrder};";
 
@@ -231,13 +242,14 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
                         current.Sectors = new();
                         current.SuccessStoryStatusDescription =
                             MapStatusToDisplay(current.SuccessStoryStatus);
+                        current.CollaborationStatusDescription = current.CollaborationStatus.ToString();
 
                         lookup.Add(current.Id, current);
                     }
 
                     if (collab?.CollabId != null && collab.CollabId != Guid.Empty &&
                         !current.CollaboratingPartners.Any(x => x.Id == collab.CollabId))
-                        current.CollaboratingPartners.Add(new(collab.CollabId, collab.CollabName));
+                        current.CollaboratingPartners.Add(new(collab.CollabId, collab.CollabName, collab.Logo));
 
                     if (opp?.OppId != null && opp.OppId != Guid.Empty &&
                         !current.AssociatedOpportunities.Any(x => x.Id == opp.OppId))
@@ -272,7 +284,7 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
             c.Id AS CompanyId, c.Name AS CompanyName,
             t.Name AS SuccessStoryType,
             -- Collaborator fields (T2 mapping)
-            sc.Id AS CollabId, sc.Name AS CollabName,
+            sc.Id AS CollabId, sc.Name AS CollabName,sc.Logo AS Logo,
             -- Opportunity fields (T3 mapping)
             o.Id AS OppId, o.Title AS OppName,
             -- Expected Outcome fields (T4 mapping)
@@ -326,7 +338,7 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
                     if (!storyDictionary.TryGetValue(story.Id, out var currentStory))
                     {
                         currentStory = story;
-                        currentStory.CollaboratingPartners = new List<GuidKeyValueDto>();
+                        currentStory.CollaboratingPartners = new List<PatnerCompany>();
                         currentStory.AssociatedOpportunities = new List<GuidKeyValueDto>();
                         currentStory.ExpectedOutcomes = new List<KeyValueDto>();
                         currentStory.Sectors = new List<GuidKeyValueDto>();
@@ -347,10 +359,11 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
                     {
                         Guid collabId = collaboratorDynamic.CollabId;
                         string collabName = collaboratorDynamic.CollabName;
+                        byte[]? Logo = collaboratorDynamic.Logo;
 
                         if (!currentStory.CollaboratingPartners.Any(cp => cp.Id == collabId))
                         {
-                            currentStory.CollaboratingPartners.Add(new GuidKeyValueDto(collabId, collabName));
+                            currentStory.CollaboratingPartners.Add(new PatnerCompany(collabId, collabName, Logo));
                         }
                     }
 
@@ -415,20 +428,21 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
             var _connection = _connectionFactory.CreateConnection();
             const string mainQuery = @"
         SELECT 
-            s.Id AS Id, s.Title, s.Description, s.StartDate, s.EndDate, s.RejectionReason,
-            s.Status AS SuccessStoryStatus,
-            c.Id AS CompanyId, c.Name AS CompanyName,
-            t.Name AS SuccessStoryType
-        FROM SuccessStories s
-        JOIN SynergyCompanies c ON s.CompanyId = c.Id
-        JOIN SuccessStoryTypes t ON s.SuccessStoryTypeId = t.Id
-        WHERE s.Id = @Id;
+      s.Id AS Id, s.Title, s.Description, s.StartDate, s.EndDate, s.RejectionReason,
+      s.Status AS SuccessStoryStatus,
+      c.Id AS CompanyId, c.Name AS CompanyName, c.Logo as Logo,
+      t.Name AS SuccessStoryType , s.SuccessStoryTypeId as SuccessStoryTypeId,
+	  s.CollaborationStatusId as SuccessStoryCollaborationStatusId
+  FROM SuccessStories s
+  JOIN SynergyCompanies c ON s.CompanyId = c.Id
+  JOIN SuccessStoryTypes t ON s.SuccessStoryTypeId = t.Id
+  WHERE s.Id = @Id;
     ";
 
             // Query 2: Collaborating Partners
             const string collaboratorsQuery = @"
         SELECT 
-            sc.Id, sc.Name 
+            sc.Id, sc.Name ,sc.Logo
         FROM SuccessStorySynergyCompanies ssc
         JOIN SynergyCompanies sc ON ssc.SynergyCompanyId = sc.Id
         WHERE ssc.SuccessStoryId = @Id;
@@ -438,7 +452,7 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
             const string opportunitiesQuery = @"
         SELECT 
          o.Id, o.Title AS Name , o.Description , o.OpportunityTypeId , t.Name as OpportunityTypeName,
-	     o.CompanyId , c.Name as CompanyName, c.Logo as CompanyLogo, o.SectorId , o.SectorName
+	     o.CompanyId , c.Name as CompanyName, c.Logo as CompanyLogo, o.SectorId , o.SectorName , o.StartDate , o.EndDate
         FROM SuccessStoryOpportunities sso
         JOIN Opportunities o ON sso.OpportunityId = o.Id
         JOIN OpportunityTypes t on t.Id = o.OpportunityTypeId
@@ -488,7 +502,7 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
                     return null;
                 }
 
-                var collaborators = await multi.ReadAsync<GuidKeyValueDto>();
+                var collaborators = await multi.ReadAsync<PatnerCompany>();
                 mainStory.CollaboratingPartners = collaborators.ToList();
                 var opportunities = await multi.ReadAsync<OpportunityStoryDto>();
                 mainStory.AssociatedOpportunitiesList = opportunities.ToList();

@@ -1,3 +1,4 @@
+using PartnersHub.ConfigurationHub.Application.Common.DTOs;
 using PartnersHub.ConfigurationHub.Application.Common.Interfaces.Persistence;
 using PartnersHub.ConfigurationHub.Application.Common.Interfaces.Services;
 using PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission;
@@ -28,6 +29,10 @@ public class ModuleService : IModuleService
 
     public async Task<IEnumerable<Module>> GetAllModulesAsync() => 
         await _moduleRepository.GetAllAsync();
+
+    public async Task<IEnumerable<LookupDto>> GetLookupAsync() =>
+    await _moduleRepository.GetLookupAsync();
+
 
     public async Task<IEnumerable<Module>> GetActiveModulesAsync() => 
         await _moduleRepository.GetActiveModulesAsync();

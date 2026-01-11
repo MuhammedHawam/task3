@@ -40,7 +40,7 @@ public record CreateCampaignRequestCommandHandler(
                                                   CampaignRequestStatus.PendingReview,
                                                   request.SponsorsList.Select(el => (Id: el.id, Name: el.name)).ToList(),
                                                   request.LinkedDevCoChallenges,
-                                                  request.SubmitterEmail);
+                                                  string.IsNullOrWhiteSpace(request.SubmitterEmail)?"con-mabdelkareem@pif.gov.sa" :request.SubmitterEmail);
 
         // Return early if creation failed
         if (createResult.IsFailure)

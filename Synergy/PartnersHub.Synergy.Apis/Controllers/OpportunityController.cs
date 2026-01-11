@@ -32,35 +32,36 @@ namespace PartnersHub.Synergy.Apis.Controllers
         [HttpGet("search")]
         [ProducesResponseType(typeof(Result<PaginatedList<OpportunitySearchCardDto>>), StatusCodes.Status200OK)]
         public async Task<ActionResult<Result<PaginatedList<OpportunitySearchCardDto>>>> SearchOpportunities(
+            [FromQuery] string? searchTerm,
+            [FromQuery] List<Guid>? companyIds,
+            [FromQuery] List<Guid>? sectorIds,
+            [FromQuery] List<int>? opportunityTypeIds,
+            [FromQuery] List<int>? thematicAreaIds,
+            [FromQuery] List<int>? collaborationRequirementIds,
+            [FromQuery] List<int>? expectedOutcomeIds,
+            [FromQuery] List<int>? collaborationStatuses,
+            [FromQuery] List<int>? status,
+            [FromQuery] string? startDate,
+            [FromQuery] string? endDate,
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 12,
-            [FromQuery] string? searchTerm = null,
-            [FromQuery] string? companyIds = null,
-            [FromQuery] string? sectorIds = null,
-            [FromQuery] string? opportunityTypeIds = null,
-            [FromQuery] string? thematicAreaIds = null,
-            [FromQuery] string? collaborationRequirementIds = null,
-            [FromQuery] string? expectedOutcomeIds = null,
-            [FromQuery] string? collaborationStatuses = null,
-            [FromQuery] string? status = null,
-            [FromQuery] string? startDate = null,
-            [FromQuery] string? endDate = null,
-            [FromQuery] string? sortBy = "CreatedAt",
-            [FromQuery] bool sortDescending = true)
+            [FromQuery] bool sortDescending = true,
+            [FromQuery] string? sortBy = "CreatedAt"
+            )
         {
             var query = new SearchOpportunitiesQuery
             {
                 PageNumber = pageNumber,
                 PageSize = pageSize,
                 SearchTerm = searchTerm,
-                CompanyIds = ParseGuids(companyIds),
-                SectorIds = ParseGuids(sectorIds),
-                OpportunityTypeIds = ParseInts(opportunityTypeIds),
-                ThematicAreaIds = ParseInts(thematicAreaIds),
-                CollaborationRequirementIds = ParseInts(collaborationRequirementIds),
-                ExpectedOutcomeIds = ParseInts(expectedOutcomeIds),
-                Statuses = ParseInts(status),
-                CollaborationStatuses = ParseInts(collaborationStatuses),
+                CompanyIds = companyIds,
+                SectorIds = sectorIds,
+                OpportunityTypeIds = opportunityTypeIds,
+                ThematicAreaIds = thematicAreaIds,
+                CollaborationRequirementIds = collaborationRequirementIds,
+                ExpectedOutcomeIds = expectedOutcomeIds,
+                Statuses = status,
+                CollaborationStatuses = collaborationStatuses,
                 StartDate = ParseDateOnly(startDate),
                 EndDate = ParseDateOnly(endDate),
                 SortBy = sortBy,
@@ -227,7 +228,7 @@ namespace PartnersHub.Synergy.Apis.Controllers
 
         [HttpPut("visibility/{opportunityId}")]
         public async Task<ActionResult<Result>> SetOpportunityVisibility(
-                                                                         Guid opportunityId,
+                                                                         [FromRoute] Guid opportunityId,
                                                                          [FromQuery] bool hide)
         {
             var command = new SetOpportunityVisibilityCommand(
@@ -235,7 +236,16 @@ namespace PartnersHub.Synergy.Apis.Controllers
                 hide);
 
             var result = await _mediator.Send(command);
-            return Ok(result);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+
+            }
+            
         }
 
         [HttpPut("{opportunityId}")]
@@ -243,7 +253,16 @@ namespace PartnersHub.Synergy.Apis.Controllers
         {
             var updated = command with { OpportunityId = opportunityId };
             var result = await _mediator.Send(updated);
-            return Ok(result);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+
+            }
+           
         }
         #region Helper Methods
 

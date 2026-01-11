@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PartnersHub.ConfigurationHub.Application.Common.DTOs;
 using PartnersHub.ConfigurationHub.Application.Common.Interfaces.Persistence;
 using PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission;
 
@@ -22,6 +23,13 @@ public class ModuleRepository : IModuleRepository
 
     public async Task<IEnumerable<Module>> GetAllAsync() =>
         await _context.Modules.ToListAsync();
+
+    public async Task<IEnumerable<LookupDto>> GetLookupAsync() =>
+    await _context.Modules.Select(a=> new LookupDto
+    {
+        Id = a.Id,
+        Value = a.Name
+    }).ToListAsync();
 
     public async Task<IEnumerable<Module>> GetActiveModulesAsync() =>
         await _context.Modules.Where(m => m.IsActive).ToListAsync();

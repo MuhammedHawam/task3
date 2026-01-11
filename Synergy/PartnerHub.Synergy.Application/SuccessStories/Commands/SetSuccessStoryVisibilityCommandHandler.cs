@@ -37,6 +37,9 @@ public class SetSuccessStoryVisibilityCommandHandler
         if (story == null)
             return Result.Failure("Success story doesn't exist");
 
+        if(story.Status != SuccessStoryStatus.Published)
+            return Result.Failure("Only published success stories can be hidden.");
+
         var result = story.SetVisibility(request.Hide, _userService.CurrentUserId);
 
         if (result.IsFailure)
@@ -45,6 +48,7 @@ public class SetSuccessStoryVisibilityCommandHandler
         _successStoryRepository.Update(story);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result.Success();
+        return Result.Success(request.Hide ? "Success story has been successfully hidden." : "Success story has been successfully unhidden.");
+
     }
 }

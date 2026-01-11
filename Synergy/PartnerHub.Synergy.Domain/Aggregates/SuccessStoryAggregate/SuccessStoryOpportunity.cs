@@ -25,5 +25,17 @@ namespace PartnersHub.Synergy.Domain.Aggregates.SuccessStoryAggregate
             OpportunityId = opportunityId;
             SuccessStoryId = successStoryId;
         }
+
+
+        public static SuccessStoryOpportunity Create(Guid successStoryId, Guid opportunityId)
+        {
+            if (successStoryId == Guid.Empty)
+                throw new ArgumentException("SuccessStoryId is required");
+
+            if (opportunityId == Guid.Empty)
+                throw new ArgumentException("OpportunityId is required");
+
+            return new SuccessStoryOpportunity(successStoryId, opportunityId);
+        }
     }
 }

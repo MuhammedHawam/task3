@@ -1,10 +1,12 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Http;
+using PartnersHub.Synergy.Application.Common.Converters;
 using PartnersHub.Synergy.Domain.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace PartnersHub.Synergy.Application.SuccessStories.Commands
@@ -18,7 +20,9 @@ namespace PartnersHub.Synergy.Application.SuccessStories.Commands
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public List<Guid>? CollaboratedProfiles { get; set; }
-        public List<Guid>? AssociatedOpportunities { get; set; }
+
+        [JsonConverter(typeof(EmptyStringToNullableGuidConverter))]
+        public Guid? AssociatedOpportunities { get; set; }
         public List<IFormFile?> ? Attachments { get; set; }
 
         public bool? IsAdmin { get; set; }

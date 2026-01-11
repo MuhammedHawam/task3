@@ -101,3 +101,28 @@ public class OpportunityPublishedEvent : DomainEvent
         PublishedBy = publishedBy;
     }
 }
+
+
+public class OpportunityUpdatedEvent : DomainEvent
+{
+    public Guid OpportunityId { get; }
+    public Guid CompanyId { get; }
+    public OpportunityStatus NewStatus { get; }
+
+    public Guid UpdatedBy { get; }
+
+    public string OpportunityName { get; }
+
+    public string CompanyName { get; }
+    public string CompanyEmail { get; }
+
+    public OpportunityUpdatedEvent(Guid opportunityId, Guid companyId, OpportunityStatus newStatus,  string opportunityName, string companyName, string companyEmail)
+    {
+        OpportunityId = opportunityId;
+        CompanyId = companyId;
+        NewStatus = newStatus;
+        OpportunityName = opportunityName;
+        CompanyName = companyName;
+        CompanyEmail = companyEmail;
+    }
+}

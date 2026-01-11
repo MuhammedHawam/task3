@@ -56,7 +56,7 @@ public class CreateChallengeRequestCommandHandler : IRequestHandler<CreateChalle
             existingProvider,
             existingSector,
             request.IsDraft,
-            request.SubmitterEmail);
+            string.IsNullOrWhiteSpace(request.SubmitterEmail)? "con-mabdelkareem@pif.gov.sa": request.SubmitterEmail); // make front end send Email 
 
         // Return early if creation failed
         if (createResult.IsFailure)

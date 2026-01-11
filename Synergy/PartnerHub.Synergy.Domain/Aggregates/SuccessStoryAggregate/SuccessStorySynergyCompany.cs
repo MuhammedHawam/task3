@@ -25,5 +25,16 @@ namespace PartnersHub.Synergy.Domain.Aggregates.SuccessStoryAggregate
             SynergyCompanyId = synergyComapanyId;
             SuccessStoryId = successStoryId;
         }
+
+        public static SuccessStorySynergyCompany Create(Guid successStoryId, Guid companyId)
+        {
+            if (successStoryId == Guid.Empty)
+                throw new ArgumentException("SuccessStoryId is required");
+
+            if (companyId == Guid.Empty)
+                throw new ArgumentException("CompanyId is required");
+
+            return new SuccessStorySynergyCompany(successStoryId, companyId);
+        }
     }
 }

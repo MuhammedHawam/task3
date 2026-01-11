@@ -1,4 +1,7 @@
-﻿namespace PartnersHub.Synergy.Application.Models;
+﻿using PartnersHub.Synergy.Application.Common.Helpers;
+using System.Text.Json.Serialization;
+
+namespace PartnersHub.Synergy.Application.Models;
 
 public record KeyValueDto<TKey>(TKey Id, string Name);
 
@@ -15,6 +18,38 @@ public class GuidKeyValueDto
     {
         Id = id;
         Name = name;
+
+    }
+}
+
+public class PatnerCompany
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; }
+
+    [JsonIgnore]
+    public byte[]? Logo
+    {
+        get => _logo;
+        set
+        {
+            _logo = value;
+            LogoImage = LogoHelper.ToBase64String(_logo);
+        }
+    }
+    public string? LogoImage { get; set; }
+    private byte[]? _logo;
+
+    public PatnerCompany()
+    {
+
+    }
+    public PatnerCompany(Guid id, string name, byte[]? logo)
+    {
+        Id = id;
+        Name = name;
+        Logo = logo;
+        LogoImage = LogoHelper.ToBase64String(logo);
 
     }
 }

@@ -100,7 +100,10 @@ public class SuccessStoryRepository : ISuccessStoryRepository
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             var term = searchTerm.ToLower();
-            query = query.Where(s => s.Title.Value.ToLower().Contains(term));
+            query = query.Where(s => s.Title.Value.ToLower().Contains(term)||
+                                     (s.Description != null && s.Description.Value != null && s.Description.Value.ToLower().Contains(term))||
+                                     (s.SectorName != null && s.SectorName.ToLower().Contains(term))
+                                     );
         }
 
         // Get total count

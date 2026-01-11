@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using PartnersHub.ConfigurationHub.Application.Common.DTOs;
 using PartnersHub.ConfigurationHub.Application.Common.Interfaces.Persistence;
+using PartnersHub.ConfigurationHub.Application.Common.Models;
 using PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission;
 using PartnersHub.ConfigurationHub.Infrastructure.Persistence;
 
@@ -55,5 +57,31 @@ public class UserRoleRepository : IUserRoleRepository
     {
         return await _context.UserRoles
             .AnyAsync(ur => ur.UserId == userId && ur.RoleId == roleId && ur.ModuleId == moduleId);
+    }
+
+    public async Task<PaginatedList<AdminUserDto>> GetAdminsPaginatedAsync(int pageNumber = 1, int pageSize = 20)
+    {
+        var users = _context.UserRoles
+            .Include(ur => ur.Role)
+            .Include(ur => ur.Module)
+            .Where(ur => ur.Role.Name.ToLower() == "admin")
+            .Select(a => new AdminUserDto
+            {
+                AssignedAt = a.AssignedAt,
+                AssignedBy = a.AssignedBy,
+                UserId = a.UserId,
+                ProductName = a.Module.Name
+            })
+            .AsNoTracking();
+
+        var totalCount = await users.CountAsync();
+
+        var items = await users
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return PaginatedList<AdminUserDto>.Create(items, totalCount, pageNumber, pageSize);
+
     }
 }

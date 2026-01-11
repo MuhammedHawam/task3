@@ -1,78 +1,220 @@
-﻿<!DOCTYPE html>
-<html>
+﻿
+<!DOCTYPE html>
+<html lang="en" style="height: 100%">
 <head>
-    <meta charset="UTF-8">
-    <title>New Submission Pending Your Review</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            color: #333;
-        }
-
-        .container {
-            padding: 20px;
-        }
-
-        .highlight {
-            font-weight: bold;
-        }
-
-        .english {
-            direction: ltr;
-            text-align: left;
-        }
-
-        .arabic {
-            direction: rtl;
-            text-align: right;
-        }
-    </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PIF</title>
 </head>
-<body>
-    <div class="container">
+<style>
+    @media screen and (max-width: 800px) {
+        .mobile-text {
+            font-size: 16px !important;
+            padding: 0 15px !important;
+        }
+    }
+</style>
 
-        <!-- English Content -->
-        <div class="english">
-            <p>Dear Asset Manager,</p>
+<body style="padding: 0; margin: 0; height: 100%">
+    <div style="
+        background-image: url('./BG.png');
+        background-size: cover;
+        padding: 56px;
+      ">
+        <div style="background-color: #fff; padding: 56px">
+            <div style="display: flex; justify-content: space-between">
+                <div>
+                    <img src="./PIF_Logo.png" width="144" height="144" />
+                    <img src="./PIF.png"
+                         width="144"
+                         height="112"
+                         style="padding: 0 24px" />
+                </div>
+                <div>
+                    <img src="./Platform_Logo.png" width="325" height="122" />
+                </div>
+            </div>
 
-            <p>A new submission has been received from a Portfolio Company and requires your review.</p>
+            <div style="padding: 56px 0">
+                <div class="mobile-text"
+                     style="
+              color: #00342b;
+              font-family: Fund;
+              font-size: 32px;
+              font-style: normal;
+              font-weight: 300;
+              line-height: normal;
+              padding: 15px 0;
+            ">
+                    Dear Asset Manager,
+                </div>
 
-            <p><strong>Details:</strong></p>
-            <ul>
-                <li>Company Name: <span class="highlight">{PC Name}</span></li>
-                <li>Submission Type: <span class="highlight">{Submission Type}</span></li>
-                <li>Title: <span class="highlight">{Title}</span></li>
-                <li>Submission Date: <span class="highlight">{Date}</span></li>
-            </ul>
+                <div class="mobile-text"
+                     style="
+              color: #00342b;
+              font-family: Fund;
+              font-size: 32px;
+              font-style: normal;
+              font-weight: 300;
+              line-height: normal;
+              padding: 15px 0;
+            ">
+                    A new submission has been received from a Portfolio Company and requires your review.
 
-            <p>Please review the request using the link below:</p>
-            <p><a href="{BaseURL}/synergy/{module}/{request-id}">View Request</a></p>
+                    <ul>
+                        <li>Company Name: <span class="highlight">{PC Name}</span></li>
+                        <li>Submission Type: <span class="highlight">{Submission Type}</span></li>
+                        <li>Title: <span class="highlight">{Title}</span></li>
+                        <li>Submission Date: <span class="highlight">{Date}</span></li>
+                    </ul>
 
-            <p>Regards,</p>
-            <p>Synergy Platform</p>
+                </div>
+
+                <div class="mobile-text"
+                     style="
+              color: #00342b;
+              font-family: Fund;
+              font-size: 32px;
+              font-style: normal;
+              font-weight: 300;
+              line-height: normal;
+              padding: 15px 0;
+            ">
+                    Please review the request using the link below: View Request <a style="color: #00342b;
+                                                   text-decoration: underline;
+                                                    font-weight: 600;" href="{BaseURL}/synergy/{module}/{request-id}">( Link )</a> to access the request.
+                </div>
+            </div>
+
+            <hr style="height: 1px; border: none; background-color: #dfe3e6" />
+
+            <div style="padding: 56px 0">
+                <div style="
+              color: #00342b;
+              font-family: Fund;
+              font-size: 32px;
+              font-style: normal;
+              font-weight: 400;
+              line-height: normal;
+              padding: 0 30px;
+            ">
+                    Need help?
+                </div>
+
+                <div style="
+              color: #00342b;
+              font-family: Fund;
+              font-size: 20px;
+              font-style: normal;
+              font-weight: 300;
+              line-height: normal;
+              padding: 0 30px;
+            ">
+                    Contact the support team and they will be happy to assist.
+                </div>
+            </div>
+
+            <hr style="height: 1px; border: none; background-color: #dfe3e6" />
+
+            <div style="padding: 40px 0; text-align: right; direction: rtl">
+                <div class="mobile-text"
+                     style="
+              color: #00342b;
+              font-family: Fund;
+              font-size: 24px;
+              font-weight: 400;
+              line-height: 1.6;
+              margin-bottom: 10px;
+            ">
+                    عزيزي مدير الأصول،
+                </div>
+
+                <div class="mobile-text"
+                     style="
+              color: #00342b;
+              font-family: Fund;
+              font-size: 24px;
+              font-weight: 400;
+              line-height: 1.6;
+              margin-bottom: 10px;
+            ">
+                    تم استلام طلب جديد من إحدى شركات المحفظة ويتطلب مراجعتكم.
+                </div>
+
+
+                <ul>
+                    <li>اسم الشركة: <span class="highlight">{PC Name}</span></li>
+                    <li>نوع الطلب: <span class="highlight">{Submission Type}</span></li>
+                    <li>العنوان: <span class="highlight">{Title}</span></li>
+                    <li>تاريخ التقديم: <span class="highlight">{Date}</span></li>
+                </ul>
+
+                <div class="mobile-text"
+                     style="
+              color: #00342b;
+              font-family: Fund;
+              font-size: 24px;
+              font-weight: 400;
+              line-height: 1.6;
+            ">
+                    يرجى مراجعة الطلب عبر الرابط أدناه:
+                    <a href="{BaseURL}/synergy/{module}/{request-id}"
+                       style="
+                color: #00342b;
+                text-decoration: underline;
+                font-weight: 600;
+              ">( Link )</a>
+                    للدخول إلى الطلب..
+                </div>
+            </div>
+
+            <hr style="height: 1px; border: none; background-color: #dfe3e6" />
+
+            <div style="padding: 20px 0; text-align: right; direction: rtl">
+                <div style="
+              color: #00342b;
+              font-family: Fund;
+              font-size: 24px;
+              font-weight: 700;
+              line-height: normal;
+              margin-bottom: 5px;
+            ">
+                    هل تحتاج المساعدة؟
+                </div>
+
+                <div style="
+              color: #00342b;
+              font-family: Fund;
+              font-size: 18px;
+              font-weight: 400;
+              line-height: normal;
+            ">
+                    <a href="#" style="color: #00342b; text-decoration: underline">اتصل بفريق الدعم الفني</a>
+                    يسرهم مساعدتك.
+                </div>
+            </div>
+
+            <hr style="height: 1px; border: none; background-color: #dfe3e6" />
+
+            <p style="color: #00342b; font-size: 16px; font-family: Fund">
+                This is an automated email, please do not respond. Disclaimer Notice:
+                This e-mail message, including any attachments, is for the sole use of
+                the intended recipient(s) and may contain confidential and privileged
+                information or otherwise protected by law. If you are not the intended
+                recipient, you are notified that any unauthorized review, use,
+                disclosure or distribution is strictly prohibited. Please notify the
+                sender by replying to this email and destroy all copies of the
+                original message. Statements and opinions expressed in this Email are
+                those of the sender, and do not necessarily reflect those of the
+                Public Investment Fund (PIF). تنبيه بإخلاء المسؤولية: هذه الرسالة
+                ومرفقاتها معدة لاستخدام المُرسَل إليه المقصود بالرسالة فقط و قد تحتوي
+                على معلومات سرية أو محمية قانونيا إن لم تكن الشخص المقصود، فإنه يُمنع
+                منعا باتا عرض أو نشر أو أي استخدام غير مصرح به للمحتوى نرجو إخطار
+                المُرسِل عن طريق الرد على هذا البريد الإلكتروني وإتلاف جميع النسخ
+                الموجودة لديك تُعد التصريحات والآراء المذكورة في الرسالة خاصة
+                بالمُرسِل ولا تمثل بالضرورة رأي صندوق الاستثمارات العامة
+            </p>
         </div>
-
-        <!-- Arabic Content -->
-        <div class="arabic">
-            <p>عزيزي مدير الأصول،</p>
-
-            <p>تم استلام طلب جديد من إحدى شركات المحفظة ويتطلب مراجعتكم.</p>
-
-            <p><strong>التفاصيل:</strong></p>
-            <ul>
-                <li>اسم الشركة: <span class="highlight">{PC Name}</span></li>
-                <li>نوع الطلب: <span class="highlight">{Submission Type}</span></li>
-                <li>العنوان: <span class="highlight">{Title}</span></li>
-                <li>تاريخ التقديم: <span class="highlight">{Date}</span></li>
-            </ul>
-
-            <p>يرجى مراجعة الطلب عبر الرابط أدناه:</p>
-            <p><a href="{BaseURL}/synergy/{module}/{request-id}">عرض الطلب</a></p>
-
-            <p>مع التحية،</p>
-            <p>منصة سينرجي</p>
-        </div>
-
     </div>
 </body>
 </html>

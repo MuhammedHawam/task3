@@ -1,3 +1,4 @@
+using PartnersHub.ConfigurationHub.Application.Common.DTOs;
 using PartnersHub.ConfigurationHub.Application.Common.Models;
 using PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission;
 
@@ -16,12 +17,15 @@ public interface IRoleService
     Task<Role?> GetRoleByNameAsync(string roleName);
     Task<bool> UpdateRoleAsync(Guid roleId, string name, string description);
     Task<bool> DeleteRoleAsync(Guid roleId);
-    
+    Task<List<LookupDto>> GetAllRolesLookupByModuleAsync(Guid moduleId);
+
     // Role-Permission Management
     Task<bool> AssignPermissionToRoleAsync(Guid roleId, Guid permissionId);
     Task<bool> RemovePermissionFromRoleAsync(Guid roleId, Guid permissionId);
     Task<IEnumerable<Permission>> GetRolePermissionsAsync(Guid roleId);
-    
+
+    Task<IEnumerable<LookupDto>> GetRolePermissionsLookupAsync(Guid roleId);
+
     // User-Role Management
     Task<bool> AssignRoleToUserAsync(string userId, Guid roleId, Guid moduleId, string assignedBy);
     Task<bool> RemoveRoleFromUserAsync(string userId, Guid roleId, Guid moduleId);
@@ -32,4 +36,5 @@ public interface IRoleService
     Task<bool> UserHasRoleAsync(string userId, string roleName);
     Task<bool> UserHasPermissionAsync(string userId, string permissionName);
     Task<IEnumerable<string>> GetUserPermissionsAsync(string userId);
+    Task<bool> UpdateRolePermissionsAsync(Guid roleId, List<Guid> permissionId);
 }

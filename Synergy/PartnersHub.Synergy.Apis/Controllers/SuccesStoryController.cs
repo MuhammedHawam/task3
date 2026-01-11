@@ -42,9 +42,9 @@ namespace PartnersHub.Synergy.Apis.Controllers
         [HttpGet("search")]
         [ProducesResponseType(typeof(Result<PaginatedList<SuccessStoryResponseDto>>), StatusCodes.Status200OK)]
         public async Task<ActionResult<Result<PaginatedList<SuccessStoryResponseDto>>>> Search(
-        [FromQuery] string? companyIds = null,
-        [FromQuery] string? collaborationTypes = null,
-        [FromQuery] string? sectorIds = null,
+        [FromQuery] List<Guid>? companyIds ,
+        [FromQuery] List<int>? collaborationTypes ,
+        [FromQuery] List<Guid>? sectorIds,
         [FromQuery] string? status = null,
         [FromQuery] DateTime? startDate = null,
         [FromQuery] DateTime? endDate = null,
@@ -57,9 +57,9 @@ namespace PartnersHub.Synergy.Apis.Controllers
         {
             var query = new SearchSuccessStoriesQuery
             {
-                CompanyIds = ParseGuids(companyIds),
-                CollaborationTypes = ParseInts(collaborationTypes),
-                SectorIds = ParseGuids(sectorIds),
+                CompanyIds = companyIds,
+                CollaborationTypes = collaborationTypes,
+                SectorIds = sectorIds,
                 Status = status,
                 StartDate = startDate,
                 EndDate = endDate,
@@ -219,7 +219,7 @@ namespace PartnersHub.Synergy.Apis.Controllers
 
         [HttpPut("visibility/{successStoryId}")]
         public async Task<ActionResult<Result>> SetSuccessStoryVisibility(
-                                                                     Guid successStoryId,
+                                                                     [FromRoute] Guid successStoryId,
                                                                      [FromQuery] bool hide)
         {
             var command = new SetSuccessStoryVisibilityCommand(
@@ -227,6 +227,29 @@ namespace PartnersHub.Synergy.Apis.Controllers
                 hide);
 
             var result = await _mediator.Send(command);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result);
+
+            }
+        }
+
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult<Result<Guid>>> Update(Guid id,[FromBody] UpdateSuccessStoryCommand command)
+        {
+            if (id != command.Id)
+                return BadRequest("Invalid request");
+
+            var result = await _mediator.Send(command);
+
+            if (result.IsFailure)
+                return BadRequest(result);
+
             return Ok(result);
         }
     }

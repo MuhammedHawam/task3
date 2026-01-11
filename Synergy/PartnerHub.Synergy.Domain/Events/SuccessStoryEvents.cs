@@ -105,3 +105,25 @@ public class SuccessStoryPublishedEvent : DomainEvent
         CompanyName = companyName;
     }
 }
+
+
+public class SuccessStoryUpdatedEvent : DomainEvent
+{
+    public Guid SuccessStoryId { get; }
+    public Guid CompanyId { get; }
+    public SuccessStoryStatus NewStatus { get; }
+    public Guid UpdatedBy { get; }
+    public string SuccessStoryName { get; }
+    public string CompanyName { get; }
+    public string CompanyEmail { get; }
+
+    public SuccessStoryUpdatedEvent(Guid successStoryId, Guid companyId, SuccessStoryStatus newStatus, string successStoryName, string companyName, string companyEmail)
+    {
+        SuccessStoryId = successStoryId;
+        CompanyId = companyId;
+        NewStatus = newStatus;
+        SuccessStoryName = successStoryName;
+        CompanyName = companyName;
+        CompanyEmail = companyEmail;
+    }
+}

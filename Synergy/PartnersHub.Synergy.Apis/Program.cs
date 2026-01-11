@@ -147,7 +147,7 @@ builder.Services.AddHttpClient("MiddlewareApi", client =>
 
 builder.Services.AddHttpClient(Constants.NotificationClient, client =>
 {
-    var notificationBaseUrl = builder.Configuration["Norification:BaseUrl"];
+    var notificationBaseUrl = builder.Configuration["NotificationSettings:BaseUrl"];
     client.BaseAddress = new Uri(notificationBaseUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });

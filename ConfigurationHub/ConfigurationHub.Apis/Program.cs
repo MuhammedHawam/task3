@@ -111,7 +111,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(ADFS_SCHEME, ConfigureAdfsAuthentication)
 .AddJwtBearer(CIAM_SCHEME, ConfigureCiamAuthentication)
-.AddJwtBearer(EXTERNAL_ALT_SCHEME, ConfigureExternalAltAuthentication)
+//.AddJwtBearer(EXTERNAL_ALT_SCHEME, ConfigureExternalAltAuthentication)
 .AddScheme<AuthenticationSchemeOptions, MultiAuthHandler>("MultiAuth", null);
 
 // CORS
@@ -189,26 +189,26 @@ void ConfigureCiamAuthentication(JwtBearerOptions options)
     };
 }
 
-void ConfigureExternalAltAuthentication(JwtBearerOptions options)
-{
-    var issuer = builder.Configuration["Authentication:ExternalPortal:Issuer"] ;
-    var audience = builder.Configuration["Authentication:ExternalPortal:Audience"] ;
+//void ConfigureExternalAltAuthentication(JwtBearerOptions options)
+//{
+//    var issuer = builder.Configuration["Authentication:ExternalPortal:Issuer"] ;
+//    var audience = builder.Configuration["Authentication:ExternalPortal:Audience"] ;
     
-    var publicKey = builder.Configuration["Authentication:ExternalPortal:PublicKey"];
-    var rsa = RSA.Create();
-    rsa.ImportRSAPrivateKey(Convert.FromBase64String(builder.Configuration["Authentication:ExternalPortal:PrivateKey"]), out _);
+//    var publicKey = builder.Configuration["Authentication:ExternalPortal:PublicKey"];
+//    var rsa = RSA.Create();
+//    rsa.ImportRSAPrivateKey(Convert.FromBase64String(builder.Configuration["Authentication:ExternalPortal:PrivateKey"]), out _);
 
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = issuer,
-        ValidAudience = audience,
-        IssuerSigningKey = new RsaSecurityKey(rsa)
-    };
-}
+//    options.TokenValidationParameters = new TokenValidationParameters
+//    {
+//        ValidateIssuer = true,
+//        ValidateAudience = true,
+//        ValidateLifetime = true,
+//        ValidateIssuerSigningKey = true,
+//        ValidIssuer = issuer,
+//        ValidAudience = audience,
+//        IssuerSigningKey = new RsaSecurityKey(rsa)
+//    };
+//}
 
 async Task InitializeDatabaseAsync(WebApplication application)
 {

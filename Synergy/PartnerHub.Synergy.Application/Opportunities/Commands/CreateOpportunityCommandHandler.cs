@@ -192,6 +192,9 @@ public class CreateOpportunityCommandHandler : IRequestHandler<CreateOpportunity
         result = opportunity.Value.Submit(_userService.CurrentUserId, command.Title, command.CompanyName);
         if (result.IsFailure) return Result<Guid>.Failure(result.Error);
 
+        if (command.IsAdmin.HasValue && command.IsAdmin.Value) opportunity.Value.Publish(_userService.CurrentUserId, opportunity.Value.Title.Value, opportunity.Value.CompanyName, opportunity.Value.UserEmail, command.IsAdmin.Value);
+
+
         await _opportunityRepository.AddAsync(opportunity.Value);
         await _unitOfWork.SaveChangesAsync();
 

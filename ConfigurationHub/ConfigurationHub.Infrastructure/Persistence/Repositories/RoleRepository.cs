@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PartnersHub.ConfigurationHub.Application.Common.DTOs;
 using PartnersHub.ConfigurationHub.Application.Common.Interfaces.Persistence;
 using PartnersHub.ConfigurationHub.Application.Common.Models;
 using PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission;
@@ -51,6 +52,20 @@ public class RoleRepository : IRoleRepository
             .ToListAsync();
 
         return PaginatedList<Role>.Create(items, totalCount, pageNumber, pageSize);
+    }
+
+    public async Task<List<LookupDto>> GetAllLookUpByModuleAsync(Guid moduleId)
+    {
+        return await _context.Roles
+            .Where(r => r.IsActive)
+            .Include(r => r.Module)
+            .Where(r => r.ModuleId == moduleId)
+            .Select(a=>new LookupDto
+            {
+                Id = a.Id,
+                Value = a.Name
+            })
+            .AsNoTracking().ToListAsync();
     }
 
     public async Task<IEnumerable<Role>> GetByModuleIdAsync(Guid moduleId)

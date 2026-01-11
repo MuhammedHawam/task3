@@ -33,22 +33,22 @@ public class SynergyCompaniesController : ApiBaseController<SynergyCompaniesCont
     /// <returns>Paginated list of companies</returns>
     [HttpGet]
     public async Task<ActionResult<Result<PaginatedList<RegisteredCompanyCardDto>>>> GetRegisteredCompanies(
-        [FromQuery] int pageNumber = 1,
-        [FromQuery] int pageSize = 12,
         [FromQuery] string? searchTerm = null,
-        [FromQuery] string? sectorIds = null,
-        [FromQuery] string? countries = null,
-        [FromQuery] string? cities = null,
-        [FromQuery] bool includeInactive = false)
+        [FromQuery] List<Guid>? sectorIds = null,
+        [FromQuery] List<string>? countries = null,
+        [FromQuery] List<string>? cities = null,
+        [FromQuery] bool includeInactive = false,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 12)
     {
         var query = new GetRegisteredCompaniesQuery
         {
             PageNumber = pageNumber,
             PageSize = pageSize,
             SearchTerm = searchTerm,
-            SectorIds = ParseGuids(sectorIds),
-            Countries = ParseCommaSeparated(countries),
-            Cities = ParseCommaSeparated(cities),
+            SectorIds = sectorIds,
+            Countries = countries,
+            Cities = cities,
             IncludeInactive = includeInactive
         };
 
@@ -166,4 +166,19 @@ public class SynergyCompaniesController : ApiBaseController<SynergyCompaniesCont
 
         return Ok(result);
     }
+
+
+    [HttpGet("{companyId}/is-active")]
+    public async Task<ActionResult<Result<bool>>> IsCompanyActive(Guid companyId)
+    {
+        var result = await _mediator.Send(
+            new CheckCompanyActiveStatusQuery(companyId)
+        );
+
+        if (result.IsFailure)
+            return NotFound(new { message = result.Error });
+
+        return Ok(result);
+    }
+
 }

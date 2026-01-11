@@ -66,7 +66,7 @@ public class GetRegisteredCompaniesQueryHandler : IRequestHandler<GetRegisteredC
         }
 
 
-        return Result<PaginatedList<RegisteredCompanyCardDto>>.Success(new PaginatedList<RegisteredCompanyCardDto>(companyDtos, companyDtos.Count, request.PageNumber, request.PageSize));
+        return Result<PaginatedList<RegisteredCompanyCardDto>>.Success(new PaginatedList<RegisteredCompanyCardDto>(companyDtos, companiesPaginatedList.TotalCount, request.PageNumber, request.PageSize));
     }
 
 

@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using PartnersHub.Synergy.Application.Interfaces;
 using PartnersHub.Synergy.Domain.Common;
 
@@ -9,16 +10,17 @@ public class UnitOfWork : IUnitOfWork
 {
     private readonly SynergyDbContext _context;
     private readonly IMediator _mediator;
+    private readonly ILogger<UnitOfWork> _logger;
 
-    public UnitOfWork(SynergyDbContext context, IMediator mediator)
+    public UnitOfWork(SynergyDbContext context, IMediator mediator , ILogger<UnitOfWork> logger)
     {
         _context = context;
         _mediator = mediator;
+        _logger = logger;
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        // Get all domain events before saving
         var domainEntities = _context.ChangeTracker
             .Entries<AggregateRoot>()
             .Where(e => e.Entity.DomainEvents.Any())
@@ -29,16 +31,20 @@ public class UnitOfWork : IUnitOfWork
             .SelectMany(e => e.DomainEvents)
             .ToList();
 
-        // Clear domain events to prevent re-processing
         domainEntities.ForEach(e => e.ClearDomainEvents());
 
-        // Save changes to database
         var result = await _context.SaveChangesAsync(cancellationToken);
 
-        // Publish domain events after successful save
-        foreach (var domainEvent in domainEvents)
-        {
-            await _mediator.Publish(domainEvent, cancellationToken);
+          foreach (var domainEvent in domainEvents)
+         {
+            try
+            {
+                await _mediator.Publish(domainEvent, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error publishing domain event {EventName}", domainEvent.GetType().Name);
+            }
         }
 
         return result;

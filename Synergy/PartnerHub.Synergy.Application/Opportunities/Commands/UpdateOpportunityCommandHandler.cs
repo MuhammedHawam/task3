@@ -40,7 +40,16 @@ public class UpdateOpportunityCommandHandler : IRequestHandler<UpdateOpportunity
 
     public async Task<Result> Handle(UpdateOpportunityCommand request, CancellationToken cancellationToken)
     {
-        var opportunity = await _opportunityRepository.GetByIdAsync(request.OpportunityId);
+        var opportunity = await _opportunityRepository.GetByIdAsync(request.OpportunityId, false,
+        o => o.OpportunityType,
+        o => o.ThematicArea,
+        o => o.Sector,
+        o => o.ExpectedOutcomes,
+        o => o.CollaborationRequirements,
+        o => o.OpportunityType,
+        o => o.CollaboratedCompanies,
+        o => o.RepresentativeInformation,
+        o => o.Attachments);
         if (opportunity == null)
             return Result.Failure("Opportunity doesn't exist");
 

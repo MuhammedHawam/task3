@@ -44,7 +44,12 @@ public class AddAssetAttachmentCommandHandler : IRequestHandler<AddAssetAttachme
             throw new ValidationException(attachmentResult.Error!);
         }
 
+        if (attachmentResult.Value == null)
+        {
+            throw new InvalidOperationException("Attachment value is null");
+        }
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-        return attachmentResult.Value!.Id;
+        return attachmentResult.Value.Id;
     }
 }

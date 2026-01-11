@@ -1,3 +1,4 @@
+using PartnersHub.ConfigurationHub.Application.Common.DTOs;
 using PartnersHub.ConfigurationHub.Application.Common.Interfaces.Persistence;
 using PartnersHub.ConfigurationHub.Application.Common.Interfaces.Services;
 using PartnersHub.ConfigurationHub.Application.Common.Models;
@@ -46,6 +47,11 @@ public class RoleService : IRoleService
     public async Task<PaginatedList<Role>> GetAllRolesAsync(int pageSize,int pageNumber)
     {
         return await _roleRepository.GetAllAsync(pageNumber, pageSize);
+    }
+
+    public async Task<List<LookupDto>> GetAllRolesLookupByModuleAsync(Guid moduleId)
+    {
+        return await _roleRepository.GetAllLookUpByModuleAsync(moduleId);
     }
 
     public async Task<IEnumerable<Role>> GetRolesByModuleAsync(Guid moduleId)
@@ -108,6 +114,11 @@ public class RoleService : IRoleService
     public async Task<IEnumerable<Permission>> GetRolePermissionsAsync(Guid roleId)
     {
         return await _rolePermissionRepository.GetPermissionsByRoleIdAsync(roleId);
+    }
+
+    public async Task<IEnumerable<LookupDto>> GetRolePermissionsLookupAsync(Guid roleId)
+    {
+        return await _rolePermissionRepository.GetPermissionsLookupByRoleIdAsync(roleId);
     }
 
     // User-Role Management
@@ -195,5 +206,10 @@ public class RoleService : IRoleService
         }
 
         return allPermissions;
+    }
+
+    public async Task<bool> UpdateRolePermissionsAsync(Guid roleId, List<Guid> permissionId)
+    {
+        return await _rolePermissionRepository.UpdateBulkAsync(roleId, permissionId);
     }
 }

@@ -10,7 +10,7 @@ public record class CompaniesListQuery : IRequest<Result<PaginatedList<CompanyIn
 {
 
     public int PageNumber { get; set; } = 1;
-    public int PageSize { get; set; } = 10;
+    public int PageSize { get; set; } = 50;
     public string? SearchText { get; set; }
     public List<Guid>? SectorIds { get; set; }
     public List<Guid>? CityIds { get; set; }

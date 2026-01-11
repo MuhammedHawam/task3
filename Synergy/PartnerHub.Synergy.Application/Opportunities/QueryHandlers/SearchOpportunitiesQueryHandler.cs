@@ -96,9 +96,9 @@ public class SearchOpportunitiesQueryHandler : IRequestHandler<SearchOpportuniti
                 Title = o.Title.Value,
                 Description = o.Description?.Value ?? string.Empty,
                 Status =o.Status,
-                //Status = (o.StartDate > DateOnly.FromDateTime(DateTime.Now)) ? CollaborationStatusFilter.Upcoming :
-                //                                                   ((o.StartDate <= DateOnly.FromDateTime(DateTime.Now) && (o.EndDate == null || o.EndDate >= DateOnly.FromDateTime(DateTime.Now))) ?
-                //                                                   CollaborationStatusFilter.Active : (o.StartDate == null ? CollaborationStatusFilter.Upcoming : CollaborationStatusFilter.Closed)),
+                State = (o.StartDate > DateOnly.FromDateTime(DateTime.Now)) ? CollaborationStatusFilter.Upcoming.ToString() :
+                                                                   ((o.StartDate <= DateOnly.FromDateTime(DateTime.Now) && (o.EndDate == null || o.EndDate >= DateOnly.FromDateTime(DateTime.Now))) ?
+                                                                   CollaborationStatusFilter.Active.ToString() : (o.StartDate == null ? CollaborationStatusFilter.Upcoming.ToString() : CollaborationStatusFilter.Closed.ToString())),
                 StatusDescription = MapStatusToDisplay(o.Status),
                 CompanyId = o.CompanyId,
                 CompanyName = company?.Name.Value ?? "Unknown Company",

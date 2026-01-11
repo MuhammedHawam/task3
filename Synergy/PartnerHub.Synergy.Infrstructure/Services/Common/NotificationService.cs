@@ -95,7 +95,7 @@ public class NotificationService : INotificationService
         var placeholders = new Dictionary<string, string>
                               {
                                 { "{PC Name}", companyName },
-                                { "{Submission Type}", "Collaboration" },  
+                                { "{Submission Type}", moduleName },  
                                 { "{Title}", name },  
                                 { "{Date}", DateTime.UtcNow.ToString("yyyy-MM-dd") },  
                                 { "{BaseURL}", _emailParams.BaseURL },  
@@ -107,13 +107,13 @@ public class NotificationService : INotificationService
 
         var assetManager = _emailParams.AssetManagersList.FirstOrDefault(x => x.PCName.Equals(companyName, StringComparison.OrdinalIgnoreCase));
 
-        //await SendEmail(new EmailNotificationModel
-        //{
-        //    to = new List<string> { assetManager?.AssetManagerEmail },
-        //    subject = _emailParams.OpportunitySubmittedSubject,
-        //    body = emailBody,
-        //    isHtml = true
-        //});
+        await SendEmail(new EmailNotificationModel
+        {
+            to = new List<string> { assetManager?.AssetManagerEmail },
+            subject = _emailParams.OpportunitySubmittedSubject,
+            body = emailBody,
+            isHtml = true
+        });
     }
 
     public async Task SendApprovedByAssetManagerNotificationAsync(string moduleName, Guid Id, Guid companyId, Guid approverId,string name, string? companyName, CancellationToken cancellationToken = default)
@@ -123,7 +123,7 @@ public class NotificationService : INotificationService
         var placeholders = new Dictionary<string, string>
                          {
                            { "{PC Name}", companyName },
-                           { "{Submission Type}", "Collaboration" }, 
+                           { "{Submission Type}", moduleName }, 
                            { "{Title}", name },
                            { "{BaseURL}", _emailParams.BaseURL },
                            { "{module}", moduleName},
@@ -133,13 +133,13 @@ public class NotificationService : INotificationService
         var emailBody = LoadTemplate("PendingFinalApproval.html", placeholders);
 
 
-        //await SendEmail(new EmailNotificationModel
-        //{
-        //    to =  _emailParams.SynergyTeam.Select(e => e.Email).ToList(),
-        //    subject = _emailParams.OpportunityApprovedSubject,
-        //    body = emailBody,
-        //    isHtml = true
-        //});
+        await SendEmail(new EmailNotificationModel
+        {
+            to = _emailParams.SynergyTeam.Select(e => e.Email).ToList(),
+            subject = _emailParams.OpportunityApprovedSubject,
+            body = emailBody,
+            isHtml = true
+        });
     }
 
     public async Task SendPublishedNotificationAsync(string moduleName, Guid Id, Guid companyId, Guid publisherId, string name, string? companyName,string? companyEmail, CancellationToken cancellationToken = default)
@@ -148,7 +148,7 @@ public class NotificationService : INotificationService
         var placeholders = new Dictionary<string, string>
                             {
                                { "{PC Name}", companyName },
-                               { "{Submission Type}", "Collaboration" }, 
+                               { "{Submission Type}", moduleName }, 
                                { "{Title}", name },
                                { "{BaseURL}", _emailParams.BaseURL },
                                { "{module}", moduleName},
@@ -158,7 +158,7 @@ public class NotificationService : INotificationService
         var emailBody = LoadTemplate("FinalApproved.html", placeholders);
         await SendEmail(new EmailNotificationModel
         {
-            to = new List<string> { _emailParams.SynergyModuleReviever },
+            to = new List<string> { companyEmail ?? ""},
             subject = _emailParams.OpportunityPublishedSubject,
             body = emailBody,
             isHtml = true
@@ -173,7 +173,7 @@ public class NotificationService : INotificationService
         var placeholders = new Dictionary<string, string>
                          {
                            { "{PC Name}", companyName },
-                           { "{Submission Type}", "Collaboration" },
+                           { "{Submission Type}", moduleName },
                            { "{Title}", name },
                            { "{Reason}", rejectionReason ?? "—" },
                            { "{BaseURL}", _emailParams.BaseURL },
@@ -183,14 +183,42 @@ public class NotificationService : INotificationService
 
         var emailBody = LoadTemplate("Rejected.html", placeholders);
 
-        //await SendEmail(new EmailNotificationModel
-        //{
-        //    to = new List<string> { _emailParams.SynergyModuleReviever },
-        //    subject = _emailParams.OpportunityRejectedSubject,
-        //    body = emailBody,
-        //    isHtml = true
-        //});
+        await SendEmail(new EmailNotificationModel
+        {
+            to = new List<string> { companyEmail ?? "" },
+            subject = _emailParams.OpportunityRejectedSubject,
+            body = emailBody,
+            isHtml = true
+        });
     }
+
+
+    public async Task SendUpdatedNotificationAsync(string moduleName, Guid Id, Guid companyId,  string title, string companyName, string companyEmail, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("{moduleName} {Id} updated.", moduleName, Id);
+
+
+        var placeholders = new Dictionary<string, string>
+                         {
+                           { "{PC Name}", companyName },
+                           { "{Submission Type}", moduleName },
+                           { "{Title}", title },
+                           { "{BaseURL}", _emailParams.BaseURL },
+                           { "{module}", moduleName},
+                           { "{request-id}", Id.ToString() }
+                         };
+
+        var emailBody = LoadTemplate("Updated.html", placeholders);
+
+        await SendEmail(new EmailNotificationModel
+        {
+            to = new List<string> { companyEmail  },
+            subject = _emailParams.OpportunityRejectedSubject,
+            body = emailBody,
+            isHtml = true
+        });
+    }
+
 
     public async Task SendSuccessStorySubmittedNotificationAsync(Guid successStoryId, Guid companyId, Guid submitterId, CancellationToken cancellationToken = default)
     {
