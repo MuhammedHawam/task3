@@ -28,6 +28,8 @@ public record CreateAssetCommand : IRequest<Guid>
     public int? ConstructionCompletionYear { get; init; }
     public TenderingStages? TenderingStage { get; init; }
     public DevelopmentTypes? DevelopmentType { get; init; }
+    public FinancialEntryMode? CapexEntryMode { get; init; }
+    public FinancialEntryMode? OpexEntryMode { get; init; }
     public FundingModels? FundingModel { get; init; }
     public decimal? ExpectedDebt { get; init; }
     public decimal? ExpectedEquity { get; init; }
@@ -58,6 +60,8 @@ public record UpdateAssetCommand : IRequest<bool>
     public int? ConstructionCompletionYear { get; init; }
     public TenderingStages? TenderingStage { get; init; }
     public DevelopmentTypes? DevelopmentType { get; init; }
+    public FinancialEntryMode? CapexEntryMode { get; init; }
+    public FinancialEntryMode? OpexEntryMode { get; init; }
     public FundingModels? FundingModel { get; init; }
     public decimal? ExpectedDebt { get; init; }
     public decimal? ExpectedEquity { get; init; }

@@ -61,6 +61,16 @@ public class AssetConfiguration : IEntityTypeConfiguration<Asset>
             .IsRequired(false)
             .HasConversion<string>();
 
+        builder.Property(a => a.CapexEntryMode)
+            .IsRequired()
+            .HasMaxLength(20)
+            .HasConversion<string>();
+
+        builder.Property(a => a.OpexEntryMode)
+            .IsRequired()
+            .HasMaxLength(20)
+            .HasConversion<string>();
+
         builder.Property(a => a.FundingModel)
             .IsRequired(false)
             .HasConversion<string>();

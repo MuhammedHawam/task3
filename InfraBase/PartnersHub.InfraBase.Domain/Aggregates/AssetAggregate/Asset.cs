@@ -36,6 +36,8 @@ public class Asset : AggregateRoot
 
     public TenderingStages? TenderingStage { get; private set; }
     public DevelopmentTypes? DevelopmentType { get; private set; }
+    public FinancialEntryMode CapexEntryMode { get; private set; } = FinancialEntryMode.MultiYear;
+    public FinancialEntryMode OpexEntryMode { get; private set; } = FinancialEntryMode.MultiYear;
     public decimal TotalCapex => _capexDetails.Sum(c => c.Amount);
     public decimal TotalOpex => _opexDetails.Sum(o => o.Amount);
     public FundingModels? FundingModel { get; private set; }
@@ -91,6 +93,8 @@ public class Asset : AggregateRoot
         ConstructionCompletionYear = constructionCompletionYear;
         TenderingStage = tenderingStage;
         DevelopmentType = developmentType;
+        CapexEntryMode = FinancialEntryMode.MultiYear;
+        OpexEntryMode = FinancialEntryMode.MultiYear;
         FundingModel = fundingModel;
         ExpectedDebt = expectedDebt;
         ExpectedEquity = expectedEquity;
@@ -304,6 +308,11 @@ public class Asset : AggregateRoot
 
     public Result<bool> AddCapexDetail(int year, decimal amount, string userId)
     {
+        if (CapexEntryMode == FinancialEntryMode.SingleYear && _capexDetails.Count >= 1)
+        {
+            return Result<bool>.Failure("CAPEX entry mode is Single-Year; only one year row is allowed");
+        }
+
         if (_capexDetails.Any(c => c.Year == year))
         {
             return Result<bool>.Failure($"CAPEX for year {year} already exists");
@@ -363,6 +372,11 @@ public class Asset : AggregateRoot
 
     public Result<bool> AddOpexDetail(int year, decimal amount, string userId)
     {
+        if (OpexEntryMode == FinancialEntryMode.SingleYear && _opexDetails.Count >= 1)
+        {
+            return Result<bool>.Failure("OPEX entry mode is Single-Year; only one year row is allowed");
+        }
+
         if (_opexDetails.Any(o => o.Year == year))
         {
             return Result<bool>.Failure($"OPEX for year {year} already exists");
@@ -434,6 +448,44 @@ public class Asset : AggregateRoot
         return Result<bool>.Success(true);
     }
 
+    public Result<bool> SetCapexEntryMode(FinancialEntryMode mode, string userId)
+    {
+        if (mode == FinancialEntryMode.SingleYear && _capexDetails.Count > 1)
+        {
+            return Result<bool>.Failure("CAPEX Single-Year mode supports only one year row");
+        }
+
+        if (CapexEntryMode == mode)
+        {
+            return Result<bool>.Success(true);
+        }
+
+        CapexEntryMode = mode;
+        UpdatedBy = userId;
+        UpdatedAt = DateTime.Now;
+        AddHistory("CAPEX Entry Mode Updated", userId, $"CAPEX entry mode changed to {mode}");
+        return Result<bool>.Success(true);
+    }
+
+    public Result<bool> SetOpexEntryMode(FinancialEntryMode mode, string userId)
+    {
+        if (mode == FinancialEntryMode.SingleYear && _opexDetails.Count > 1)
+        {
+            return Result<bool>.Failure("OPEX Single-Year mode supports only one year row");
+        }
+
+        if (OpexEntryMode == mode)
+        {
+            return Result<bool>.Success(true);
+        }
+
+        OpexEntryMode = mode;
+        UpdatedBy = userId;
+        UpdatedAt = DateTime.Now;
+        AddHistory("OPEX Entry Mode Updated", userId, $"OPEX entry mode changed to {mode}");
+        return Result<bool>.Success(true);
+    }
+
     public Result<bool> Submit(string userId, string assetCode, bool isPcAdmin = false)
     {
         if (Status != AssetStatuses.Draft && Status != AssetStatuses.RejectedByPcAdmin &&
@@ -445,6 +497,16 @@ public class Asset : AggregateRoot
         if (_capexDetails.Count == 0)
         {
             return Result<bool>.Failure("Cannot submit asset without CAPEX details");
+        }
+
+        if (CapexEntryMode == FinancialEntryMode.SingleYear && _capexDetails.Count != 1)
+        {
+            return Result<bool>.Failure("CAPEX Single-Year mode requires exactly one year row");
+        }
+
+        if (OpexEntryMode == FinancialEntryMode.SingleYear && _opexDetails.Count > 1)
+        {
+            return Result<bool>.Failure("OPEX Single-Year mode supports only one year row");
         }
 
         var previousStatus = Status;
