@@ -38,6 +38,9 @@ public record CreateAssetCommand : IRequest<Guid>
     public bool? IsPifGuaranteesRequired { get; init; }
     public List<CapexDetailDto> CapexDetails { get; init; } = new();
     public List<OpexDetailDto> OpexDetails { get; init; } = new();
+
+    public Guid CompanyId { get; init; }
+    public string CompanyName { get; init; }
 }
 
 public record UpdateAssetCommand : IRequest<bool>

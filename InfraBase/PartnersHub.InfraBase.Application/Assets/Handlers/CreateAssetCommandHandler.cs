@@ -34,7 +34,7 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
     public async Task<Guid> Handle(CreateAssetCommand command, CancellationToken cancellationToken)
     {
         var userName = _tokenService.GetUserName(); // Use username for readable history
-        var companyId = ResolveCompanyId(command);
+      //  var companyId = ResolveCompanyId(command);
 
         ValidateYearRows(command.CapexDetails.Select(x => x.Year), "CAPEX");
         ValidateYearRows(command.OpexDetails.Select(x => x.Year), "OPEX");
@@ -52,7 +52,7 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
         string? companyName = null;
         try
         {
-            var company = await _middlewareService.GetCompanyByIdAsync(companyId);
+            var company = await _middlewareService.GetCompanyByIdAsync(command.CompanyId);
             if (company != null)
             {
                 companyName = company.Name;
@@ -61,7 +61,7 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching company name for {CompanyId}", companyId);
+            _logger.LogError(ex, "Error fetching company name for {CompanyId}", command.CompanyId);
         }
 
         var assetResult = Asset.Create(
@@ -89,8 +89,8 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
             command.IRR, 
             command.IsPifGuaranteesRequired, 
             userName, // Use username for history
-            companyId,
-            companyName);
+            command.CompanyId,
+            command.CompanyName);
 
         if (assetResult.IsFailure)
         {
