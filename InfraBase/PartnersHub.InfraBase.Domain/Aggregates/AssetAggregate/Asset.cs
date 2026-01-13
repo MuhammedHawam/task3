@@ -143,6 +143,17 @@ public class Asset : AggregateRoot
             return Result<Asset>.Failure("User is required");
         }
 
+        // Normalize lookup IDs: treat empty GUID as "not set"
+        if (!sectorId.HasValue || sectorId.Value == Guid.Empty)
+        {
+            sectorId = null;
+        }
+
+        if (!subSectorId.HasValue || subSectorId.Value == Guid.Empty)
+        {
+            subSectorId = null;
+        }
+
         // Set AssetTypeId to null if empty or if AssetTypeOther is provided
         if (!assetTypeId.HasValue || assetTypeId.Value == Guid.Empty)
         {
