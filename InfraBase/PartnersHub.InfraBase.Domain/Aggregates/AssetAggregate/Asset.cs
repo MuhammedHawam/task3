@@ -143,6 +143,17 @@ public class Asset : AggregateRoot
             return Result<Asset>.Failure("User is required");
         }
 
+        // Normalize lookup IDs sent as empty GUIDs
+        if (sectorId.HasValue && sectorId.Value == Guid.Empty)
+        {
+            sectorId = null;
+        }
+
+        if (subSectorId.HasValue && subSectorId.Value == Guid.Empty)
+        {
+            subSectorId = null;
+        }
+
         // Set AssetTypeId to null if empty or if AssetTypeOther is provided
         if (!assetTypeId.HasValue || assetTypeId.Value == Guid.Empty)
         {
@@ -690,28 +701,41 @@ public class Asset : AggregateRoot
             }
         }
 
-        if (sectorId.HasValue && sectorId.Value != Guid.Empty && SectorId != sectorId.Value)
+        // Allow clearing lookup IDs by sending Guid.Empty; treat it as null.
+        if (sectorId.HasValue)
         {
-            changes.Add("SectorId");
-            oldValues.Add(SectorId.ToString());
-            newValues.Add(sectorId.Value.ToString());
-            SectorId = sectorId.Value;
+            var normalizedSectorId = sectorId.Value == Guid.Empty ? (Guid?)null : sectorId.Value;
+            if (SectorId != normalizedSectorId)
+            {
+                changes.Add("SectorId");
+                oldValues.Add(SectorId?.ToString() ?? "Not set");
+                newValues.Add(normalizedSectorId?.ToString() ?? "Not set");
+                SectorId = normalizedSectorId;
+            }
         }
 
-        if (subSectorId.HasValue && subSectorId.Value != Guid.Empty && SubSectorId != subSectorId.Value)
+        if (subSectorId.HasValue)
         {
-            changes.Add("SubSectorId");
-            oldValues.Add(SubSectorId.ToString());
-            newValues.Add(subSectorId.Value.ToString());
-            SubSectorId = subSectorId.Value;
+            var normalizedSubSectorId = subSectorId.Value == Guid.Empty ? (Guid?)null : subSectorId.Value;
+            if (SubSectorId != normalizedSubSectorId)
+            {
+                changes.Add("SubSectorId");
+                oldValues.Add(SubSectorId?.ToString() ?? "Not set");
+                newValues.Add(normalizedSubSectorId?.ToString() ?? "Not set");
+                SubSectorId = normalizedSubSectorId;
+            }
         }
 
-        if (assetTypeId.HasValue && AssetTypeId != assetTypeId.Value)
+        if (assetTypeId.HasValue)
         {
-            changes.Add("AssetTypeId");
-            oldValues.Add(AssetTypeId?.ToString() ?? "Not set");
-            newValues.Add(assetTypeId.Value.ToString());
-            AssetTypeId = assetTypeId.Value;
+            var normalizedAssetTypeId = assetTypeId.Value == Guid.Empty ? (Guid?)null : assetTypeId.Value;
+            if (AssetTypeId != normalizedAssetTypeId)
+            {
+                changes.Add("AssetTypeId");
+                oldValues.Add(AssetTypeId?.ToString() ?? "Not set");
+                newValues.Add(normalizedAssetTypeId?.ToString() ?? "Not set");
+                AssetTypeId = normalizedAssetTypeId;
+            }
         }
 
         if (assetTypeOther != null && AssetTypeOther != assetTypeOther)
@@ -771,12 +795,16 @@ public class Asset : AggregateRoot
             }
         }
 
-        if (unitOfMeasurementId.HasValue && UnitOfMeasurementId != unitOfMeasurementId.Value)
+        if (unitOfMeasurementId.HasValue)
         {
-            changes.Add("UnitOfMeasurementId");
-            oldValues.Add(UnitOfMeasurementId?.ToString() ?? "Not set");
-            newValues.Add(unitOfMeasurementId.Value.ToString());
-            UnitOfMeasurementId = unitOfMeasurementId.Value;
+            var normalizedUomId = unitOfMeasurementId.Value == Guid.Empty ? (Guid?)null : unitOfMeasurementId.Value;
+            if (UnitOfMeasurementId != normalizedUomId)
+            {
+                changes.Add("UnitOfMeasurementId");
+                oldValues.Add(UnitOfMeasurementId?.ToString() ?? "Not set");
+                newValues.Add(normalizedUomId?.ToString() ?? "Not set");
+                UnitOfMeasurementId = normalizedUomId;
+            }
         }
 
         if (unitOfMeasurementOther != null && UnitOfMeasurementOther != unitOfMeasurementOther)

@@ -26,6 +26,8 @@ public record AssetDto
     public int? ConstructionStartingYear { get; init; }
     public int? ConstructionCompletionQuarter { get; init; }
     public int? ConstructionCompletionYear { get; init; }
+    public string ConstructionStartingPeriodDisplayName => FormatQuarterYear(ConstructionStartingQuarter, ConstructionStartingYear);
+    public string ConstructionCompletionPeriodDisplayName => FormatQuarterYear(ConstructionCompletionQuarter, ConstructionCompletionYear);
     public TenderingStages? TenderingStage { get; init; }
     public string TenderingStageDisplayName => TenderingStage?.GetDisplayName() ?? "N/A";
     public DevelopmentTypes? DevelopmentType { get; init; }
@@ -59,6 +61,27 @@ public record AssetDto
     public List<AssetOpexDto> OpexDetails { get; init; } = new();
     public List<AssetHistoryDto> History { get; init; } = new();
     public List<AssetAttachmentDto> Attachments { get; init; } = new();
+
+    private static string FormatQuarterYear(int? quarter, int? year)
+    {
+        if (!year.HasValue && !quarter.HasValue)
+        {
+            return "N/A";
+        }
+
+        if (year.HasValue && quarter.HasValue)
+        {
+            return $"Q{quarter} {year}";
+        }
+
+        if (year.HasValue)
+        {
+            return year.Value.ToString();
+        }
+
+        // Quarter without year shouldn't happen, but keep it safe.
+        return quarter.HasValue ? $"Q{quarter}" : "N/A";
+    }
 }
 
 public record AssetCapexDto
@@ -132,17 +155,7 @@ public record AssetListDto
     /// <summary>
     /// User-friendly status display name matching user story terminology
     /// </summary>
-    public string StatusDisplayName => Status switch
-    {
-        // Match Partner Hub "Request" tab wording (short, PC-friendly, uses PIF terminology)
-        AssetStatuses.Draft => "Pending",
-        AssetStatuses.Submitted => "Pending",
-        AssetStatuses.AcceptedByPcAdmin => "Pending PIF Review",
-        AssetStatuses.RejectedByPcAdmin => "Returned",
-        AssetStatuses.AcceptedByInfrabase => "Completed",
-        AssetStatuses.RejectedByInfrabase => "Returned",
-        _ => Status.ToString()
-    };
+    public string StatusDisplayName => Status.GetDisplayName();
     
     /// <summary>Submission date - Required for grid display</summary>
     public DateTime? SubmittedAt { get; init; }
