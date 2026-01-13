@@ -9,11 +9,11 @@ using PartnersHub.InfraBase.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace PartnersHub.InfraBase.Infrastructure.Persistence.Migrations
+namespace PartnersHub.InfraBase.Infrastructure.Persistence.Migrations._20260112145353
 {
     [DbContext(typeof(InfrabaseDbContext))]
     [Migration("20260112145353_InitialCreate")]
-    partial class InitialCreate_20260112145353
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
