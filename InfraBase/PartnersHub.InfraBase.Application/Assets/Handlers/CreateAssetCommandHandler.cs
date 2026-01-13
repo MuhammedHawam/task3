@@ -139,6 +139,19 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
             }
         }
 
+        // InfraBase Admin: assets created by InfraBase admin should be marked as checked immediately.
+        if (_tokenService.IsInfrabaseAdmin())
+        {
+            var nextNumber = await _repository.GetNextAssetNumberAsync(cancellationToken);
+            var assetCode = $"Infra-{nextNumber:D6}";
+
+            var checkResult = asset.MarkAsCheckedByInfrabaseAdminOnCreate(userName, assetCode);
+            if (checkResult.IsFailure)
+            {
+                throw new ValidationException(checkResult.Error!);
+            }
+        }
+
         await _repository.AddAsync(asset, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
