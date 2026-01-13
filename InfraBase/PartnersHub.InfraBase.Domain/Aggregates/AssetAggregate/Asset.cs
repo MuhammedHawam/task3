@@ -509,11 +509,6 @@ public class Asset : AggregateRoot
             return Result<bool>.Failure("Cannot submit asset without CAPEX details");
         }
 
-        if (_opexDetails.Count == 0)
-        {
-            return Result<bool>.Failure("Cannot submit asset without OPEX details");
-        }
-
         if (CapexEntryMode == FinancialEntryMode.SingleYear && _capexDetails.Count != 1)
         {
             return Result<bool>.Failure("CAPEX Single-Year mode requires exactly one year row");
