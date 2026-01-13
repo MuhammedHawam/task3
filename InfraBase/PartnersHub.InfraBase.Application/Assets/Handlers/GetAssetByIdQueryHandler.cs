@@ -81,13 +81,15 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             SubSectorName = subSectorName,
             AssetTypeId = asset.AssetTypeId,
             AssetTypeName = assetTypeName,
-            AssetTypeOther = asset.AssetTypeOther,
+            // Only expose "Other" when no predefined lookup is selected.
+            AssetTypeOther = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty ? null : asset.AssetTypeOther,
             QuantityOfAsset = asset.QuantityOfAsset,
             CapacityPerAsset = asset.CapacityPerAsset,
             TotalCapacity = asset.TotalCapacity,
             UnitOfMeasurementId = asset.UnitOfMeasurementId,
             UnitOfMeasurementName = uomName,
-            UnitOfMeasurementOther = asset.UnitOfMeasurementOther,
+            // Only expose "Other" when no predefined lookup is selected.
+            UnitOfMeasurementOther = asset.UnitOfMeasurementId.HasValue && asset.UnitOfMeasurementId.Value != Guid.Empty ? null : asset.UnitOfMeasurementOther,
             Description = asset.Description?.Value,
             ConstructionStartingQuarter = asset.ConstructionStartingQuarter,
             ConstructionStartingYear = asset.ConstructionStartingYear,
