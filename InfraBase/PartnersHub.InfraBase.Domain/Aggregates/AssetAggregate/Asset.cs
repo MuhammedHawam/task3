@@ -143,15 +143,14 @@ public class Asset : AggregateRoot
             return Result<Asset>.Failure("User is required");
         }
 
-        // Normalize lookup IDs sent as empty GUIDs
-        if (sectorId.HasValue && sectorId.Value == Guid.Empty)
+        if (!sectorId.HasValue || sectorId.Value == Guid.Empty)
         {
-            sectorId = null;
+            return Result<Asset>.Failure("Sector is required");
         }
 
-        if (subSectorId.HasValue && subSectorId.Value == Guid.Empty)
+        if (!subSectorId.HasValue || subSectorId.Value == Guid.Empty)
         {
-            subSectorId = null;
+            return Result<Asset>.Failure("Sub sector is required");
         }
 
         // Set AssetTypeId to null if empty or if AssetTypeOther is provided
@@ -180,7 +179,7 @@ public class Asset : AggregateRoot
         {
             if (normalizedQuantity.Value < 0)
             {
-                return Result<Asset>.Failure("Quantity of asset cannot be negative");
+                return Result<Asset>.Failure("Quantity of asset must be greater than zero");
             }
 
             if (normalizedQuantity.Value.ToString().Replace(".", "").Replace(",", "").Length > 5)
@@ -510,6 +509,11 @@ public class Asset : AggregateRoot
             return Result<bool>.Failure("Cannot submit asset without CAPEX details");
         }
 
+        if (_opexDetails.Count == 0)
+        {
+            return Result<bool>.Failure("Cannot submit asset without OPEX details");
+        }
+
         if (CapexEntryMode == FinancialEntryMode.SingleYear && _capexDetails.Count != 1)
         {
             return Result<bool>.Failure("CAPEX Single-Year mode requires exactly one year row");
@@ -701,27 +705,36 @@ public class Asset : AggregateRoot
             }
         }
 
-        // Allow clearing lookup IDs by sending Guid.Empty; treat it as null.
         if (sectorId.HasValue)
         {
-            var normalizedSectorId = sectorId.Value == Guid.Empty ? (Guid?)null : sectorId.Value;
+            if (sectorId.Value == Guid.Empty)
+            {
+                return Result<bool>.Failure("Sector is required");
+            }
+
+            var normalizedSectorId = sectorId.Value;
             if (SectorId != normalizedSectorId)
             {
                 changes.Add("SectorId");
                 oldValues.Add(SectorId?.ToString() ?? "Not set");
-                newValues.Add(normalizedSectorId?.ToString() ?? "Not set");
+                newValues.Add(normalizedSectorId.ToString());
                 SectorId = normalizedSectorId;
             }
         }
 
         if (subSectorId.HasValue)
         {
-            var normalizedSubSectorId = subSectorId.Value == Guid.Empty ? (Guid?)null : subSectorId.Value;
+            if (subSectorId.Value == Guid.Empty)
+            {
+                return Result<bool>.Failure("Sub sector is required");
+            }
+
+            var normalizedSubSectorId = subSectorId.Value;
             if (SubSectorId != normalizedSubSectorId)
             {
                 changes.Add("SubSectorId");
                 oldValues.Add(SubSectorId?.ToString() ?? "Not set");
-                newValues.Add(normalizedSubSectorId?.ToString() ?? "Not set");
+                newValues.Add(normalizedSubSectorId.ToString());
                 SubSectorId = normalizedSubSectorId;
             }
         }
