@@ -59,6 +59,13 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
         {
             uomName = (await _lookupService.GetUomNameByCodeAsync(asset.UnitOfMeasurementCode, cancellationToken)) ?? "N/A";
         }
+        
+        static string? ToQuarterYear(int? quarter, int? year)
+        {
+            if (!year.HasValue) return null;
+            if (!quarter.HasValue || quarter.Value <= 0) return year.Value.ToString();
+            return $"Q{quarter.Value} {year.Value}";
+        }
 
         return new AssetDto
         {
@@ -84,6 +91,8 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             ConstructionStartingYear = asset.ConstructionStartingYear,
             ConstructionCompletionQuarter = asset.ConstructionCompletionQuarter,
             ConstructionCompletionYear = asset.ConstructionCompletionYear,
+            ConstructionStartingPeriod = ToQuarterYear(asset.ConstructionStartingQuarter, asset.ConstructionStartingYear),
+            ConstructionCompletionPeriod = ToQuarterYear(asset.ConstructionCompletionQuarter, asset.ConstructionCompletionYear),
             TenderingStage = asset.TenderingStage,
             DevelopmentType = asset.DevelopmentType,
             CapexEntryMode = asset.CapexEntryMode,

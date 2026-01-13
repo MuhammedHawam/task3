@@ -26,6 +26,16 @@ public record AssetDto
     public int? ConstructionStartingYear { get; init; }
     public int? ConstructionCompletionQuarter { get; init; }
     public int? ConstructionCompletionYear { get; init; }
+    
+    /// <summary>
+    /// Convenience display field for UI: "Q{quarter} {year}" (or just "{year}" if quarter missing).
+    /// </summary>
+    public string? ConstructionStartingPeriod { get; init; }
+    
+    /// <summary>
+    /// Convenience display field for UI: "Q{quarter} {year}" (or just "{year}" if quarter missing).
+    /// </summary>
+    public string? ConstructionCompletionPeriod { get; init; }
     public TenderingStages? TenderingStage { get; init; }
     public string TenderingStageDisplayName => TenderingStage?.GetDisplayName() ?? "N/A";
     public DevelopmentTypes? DevelopmentType { get; init; }
@@ -42,6 +52,21 @@ public record AssetDto
     public decimal? IRR { get; init; }
     public bool? IsPifGuaranteesRequired { get; init; }
     public AssetStatuses Status { get; init; }
+    
+    /// <summary>
+    /// Partner Hub display label (short, PC-friendly). Do not use for logic.
+    /// </summary>
+    public string StatusDisplayName => Status.GetDisplayName();
+    
+    /// <summary>
+    /// Internal status name for UI logic (stable even if display names change).
+    /// </summary>
+    public string StatusInternalName => Status.ToString();
+    
+    /// <summary>
+    /// Convenience flag for UI to show draft actions.
+    /// </summary>
+    public bool IsDraft => Status == AssetStatuses.Draft;
     public string? SubmittedBy { get; init; }
     public DateTime? SubmittedAt { get; init; }
     public string? RejectionReason { get; init; }
