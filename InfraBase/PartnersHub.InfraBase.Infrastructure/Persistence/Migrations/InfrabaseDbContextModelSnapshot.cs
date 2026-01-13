@@ -42,6 +42,10 @@ namespace PartnersHub.InfraBase.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("AssetTypeId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AssetTypeCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<string>("AssetTypeOther")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
@@ -119,11 +123,19 @@ namespace PartnersHub.InfraBase.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("SectorId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("SectorCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<byte>("Status")
                         .HasColumnType("tinyint");
 
                     b.Property<Guid?>("SubSectorId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SubSectorCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime?>("SubmittedAt")
                         .HasColumnType("datetime2");
@@ -137,6 +149,10 @@ namespace PartnersHub.InfraBase.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid?>("UnitOfMeasurementId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("UnitOfMeasurementCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("UnitOfMeasurementOther")
                         .HasMaxLength(200)

@@ -10,11 +10,9 @@ public static class DbInitializer {
 
     public static async Task InitializeDatabaseAsync(ConfigurationHubDbContext context) {
         try {
-            // IMPORTANT:
-            // This initializer is executed on app startup (see ConfigurationHub.Apis/Program.cs).
-            // Do NOT delete and recreate lookup data (Sectors/SubSectors/AssetTypes/UoMs) here,
-            // otherwise existing InfraBase assets will keep lookup GUIDs that no longer exist,
-            // causing Sector/SubSector/AssetType names to resolve as empty.
+            // Clear and reseed lookups on startup.
+            // InfraBase relies on lookup "Code" to resolve names even if lookup IDs change.
+            await ClearExistingDataAsync(context);
 
             await SeedWhiteListIPsAsync(context);
             await SeedSectorsAsync(context);
@@ -27,6 +25,28 @@ public static class DbInitializer {
             System.Diagnostics.Debug.WriteLine($"Error initializing database: {ex.Message}");
             throw;
         }
+    }
+
+    private static async Task ClearExistingDataAsync(ConfigurationHubDbContext context) {
+        if (context.WhiteListIPs.Any())
+            context.WhiteListIPs.RemoveRange(context.WhiteListIPs);
+
+        if (context.TermsAndConditions.Any())
+            context.TermsAndConditions.RemoveRange(context.TermsAndConditions);
+
+        if (context.SubSectors.Any())
+            context.SubSectors.RemoveRange(context.SubSectors);
+
+        if (context.Sectors.Any())
+            context.Sectors.RemoveRange(context.Sectors);
+
+        if (context.AssetTypes.Any())
+            context.AssetTypes.RemoveRange(context.AssetTypes);
+
+        if (context.UnitsOfMeasurement.Any())
+            context.UnitsOfMeasurement.RemoveRange(context.UnitsOfMeasurement);
+
+        await context.SaveChangesAsync();
     }
 
     private static async Task SeedWhiteListIPsAsync(ConfigurationHubDbContext context) {
