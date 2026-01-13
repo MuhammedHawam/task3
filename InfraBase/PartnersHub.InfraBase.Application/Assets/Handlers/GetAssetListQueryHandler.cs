@@ -13,13 +13,16 @@ public class GetAssetListQueryHandler : IRequestHandler<GetAssetListQuery, Pagin
 {
     private readonly IAssetRepository _repository;
     private readonly IConfigurationLookupService _lookupService;
+    private readonly IMiddlewareIntegrationService _middlewareService;
 
     public GetAssetListQueryHandler(
         IAssetRepository repository,
-        IConfigurationLookupService lookupService)
+        IConfigurationLookupService lookupService,
+        IMiddlewareIntegrationService middlewareService)
     {
         _repository = repository;
         _lookupService = lookupService;
+        _middlewareService = middlewareService;
     }
 
     public async Task<PaginatedList<AssetListDto>> Handle(GetAssetListQuery query, 
@@ -60,6 +63,10 @@ public class GetAssetListQueryHandler : IRequestHandler<GetAssetListQuery, Pagin
             (id, ct) => _lookupService.GetAssetTypeNameAsync(id, ct),
             cancellationToken);
 
+        var companyNamesById = await LoadCompanyNamesAsync(
+            paginatedAssets.Items.Select(a => a.CompanyId).Distinct(),
+            cancellationToken);
+
         foreach (var asset in paginatedAssets.Items)
         {
             var sectorName = asset.SectorId.HasValue &&
@@ -76,6 +83,10 @@ public class GetAssetListQueryHandler : IRequestHandler<GetAssetListQuery, Pagin
                 ? foundAssetType
                 : asset.AssetTypeOther ?? "N/A";
 
+            var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
+                ? resolvedCompanyName
+                : asset.CompanyName;
+
             items.Add(new AssetListDto
             {
                 Id = asset.Id,
@@ -89,7 +100,7 @@ public class GetAssetListQueryHandler : IRequestHandler<GetAssetListQuery, Pagin
                 SubmittedBy = asset.SubmittedBy,
                 TotalCapex = asset.TotalCapex,
                 TotalOpex = asset.TotalOpex,
-                CompanyName = asset.CompanyName,
+                CompanyName = companyName,
                 CreatedAt = asset.CreatedAt
             });
         }
@@ -121,6 +132,41 @@ public class GetAssetListQueryHandler : IRequestHandler<GetAssetListQuery, Pagin
                 if (!string.IsNullOrWhiteSpace(name))
                 {
                     dict.TryAdd(id, name);
+                }
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        });
+
+        await Task.WhenAll(tasks);
+        return dict;
+    }
+
+    private async Task<IReadOnlyDictionary<Guid, string>> LoadCompanyNamesAsync(
+        IEnumerable<Guid> companyIds,
+        CancellationToken cancellationToken)
+    {
+        const int maxConcurrency = 8;
+        using var semaphore = new SemaphoreSlim(maxConcurrency, maxConcurrency);
+
+        var dict = new ConcurrentDictionary<Guid, string>();
+
+        var tasks = companyIds.Select(async companyId =>
+        {
+            if (companyId == Guid.Empty)
+            {
+                return;
+            }
+
+            await semaphore.WaitAsync(cancellationToken);
+            try
+            {
+                var company = await _middlewareService.GetCompanyByIdAsync(companyId);
+                if (!string.IsNullOrWhiteSpace(company?.Name))
+                {
+                    dict.TryAdd(companyId, company.Name);
                 }
             }
             finally

@@ -44,6 +44,7 @@ public record AssetDto
     public decimal? IRR { get; init; }
     public bool? IsPifGuaranteesRequired { get; init; }
     public AssetStatuses Status { get; init; }
+    public string StatusDisplayName => Status.GetDisplayName();
     public string? SubmittedBy { get; init; }
     public DateTime? SubmittedAt { get; init; }
     public string? RejectionReason { get; init; }

@@ -10,13 +10,16 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
 {
     private readonly IAssetRepository _repository;
     private readonly IConfigurationLookupService _lookupService;
+    private readonly IMiddlewareIntegrationService _middlewareService;
 
     public GetAssetByIdQueryHandler(
         IAssetRepository repository,
-        IConfigurationLookupService lookupService)
+        IConfigurationLookupService lookupService,
+        IMiddlewareIntegrationService middlewareService)
     {
         _repository = repository;
         _lookupService = lookupService;
+        _middlewareService = middlewareService;
     }
 
     public async Task<AssetDto?> Handle(GetAssetByIdQuery query, 
@@ -51,6 +54,20 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
         uomName = string.IsNullOrWhiteSpace(uomName)
             ? (asset.UnitOfMeasurementOther ?? "N/A")
             : uomName;
+
+        var companyName = asset.CompanyName;
+        try
+        {
+            var company = await _middlewareService.GetCompanyByIdAsync(asset.CompanyId);
+            if (!string.IsNullOrWhiteSpace(company?.Name))
+            {
+                companyName = company.Name;
+            }
+        }
+        catch
+        {
+            // ignore and fall back to stored name
+        }
 
         return new AssetDto
         {
@@ -97,7 +114,7 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             ApprovedBy = asset.ApprovedBy,
             ApprovedAt = asset.ApprovedAt,
             CompanyId = asset.CompanyId,
-            CompanyName = asset.CompanyName,
+            CompanyName = companyName,
             CreatedBy = asset.CreatedBy,
             CreatedAt = asset.CreatedAt,
             UpdatedBy = asset.UpdatedBy,

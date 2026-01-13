@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 
@@ -6,13 +8,15 @@ namespace PartnersHub.InfraBase.Infrastructure.Services;
 public class ConfigurationLookupService : IConfigurationLookupService
 {
     private readonly HttpClient _httpClient;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private Task<List<LookupDto>?>? _subSectorsTask;
     private Task<List<LookupDto>?>? _assetTypesTask;
     private Task<List<LookupDto>?>? _uomsTask;
 
-    public ConfigurationLookupService(HttpClient httpClient)
+    public ConfigurationLookupService(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
     {
         _httpClient = httpClient;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<string?> GetSectorNameAsync(Guid sectorId, CancellationToken cancellationToken = default)
@@ -57,7 +61,23 @@ public class ConfigurationLookupService : IConfigurationLookupService
 
     private async Task<T?> GetAsync<T>(string url, CancellationToken cancellationToken)
     {
-        using var response = await _httpClient.GetAsync(url, cancellationToken);
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        var authHeader = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(authHeader))
+        {
+            // Forward the caller's token to ConfigurationHub (endpoints are [Authorize]).
+            if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authHeader["Bearer ".Length..].Trim());
+            }
+            else
+            {
+                // If it's already a token string, keep it as Bearer.
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authHeader.Trim());
+            }
+        }
+
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
             return default;
