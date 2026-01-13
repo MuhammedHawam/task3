@@ -34,10 +34,14 @@ public class AssetConfiguration : IEntityTypeConfiguration<Asset>
         builder.Property(a => a.SectorId).IsRequired(false);
         builder.Property(a => a.SubSectorId).IsRequired(false);
         builder.Property(a => a.AssetTypeId).IsRequired(false);
+        builder.Property(a => a.SectorCode).HasMaxLength(50).IsRequired(false);
+        builder.Property(a => a.SubSectorCode).HasMaxLength(50).IsRequired(false);
+        builder.Property(a => a.AssetTypeCode).HasMaxLength(50).IsRequired(false);
         builder.Property(a => a.AssetTypeOther).HasMaxLength(200).IsRequired(false);
         builder.Property(a => a.QuantityOfAsset).HasColumnType("decimal(18,2)").IsRequired(false);
         builder.Property(a => a.CapacityPerAsset).HasColumnType("decimal(18,2)").IsRequired();
         builder.Property(a => a.UnitOfMeasurementId).IsRequired(false);
+        builder.Property(a => a.UnitOfMeasurementCode).HasMaxLength(50).IsRequired(false);
         builder.Property(a => a.UnitOfMeasurementOther).HasMaxLength(200).IsRequired(false);
 
         builder.OwnsOne(a => a.Description, d =>

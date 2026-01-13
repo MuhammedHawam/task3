@@ -49,7 +49,7 @@ public class AssetIntegrationTests
     [Test]
     public void CreateAsset_WithoutAssetName_FailsValidation()
     {
-        var result = Asset.Create(
+        var result = CreateAssetLegacy(
             "", // Empty asset name
             "Riyadh", 
             Guid.NewGuid(), 
@@ -84,7 +84,7 @@ public class AssetIntegrationTests
     [Test]
     public void CreateAsset_WithoutLocationCity_FailsValidation()
     {
-        var result = Asset.Create(
+        var result = CreateAssetLegacy(
             "Test Asset", 
             "", // Empty location
             Guid.NewGuid(), 
@@ -119,7 +119,7 @@ public class AssetIntegrationTests
     [Test]
     public void CreateAsset_WithoutSectorId_FailsValidation()
     {
-        var result = Asset.Create(
+        var result = CreateAssetLegacy(
             "Test Asset", 
             "Riyadh", 
             Guid.Empty, // Empty sector
@@ -154,7 +154,7 @@ public class AssetIntegrationTests
     [Test]
     public void CreateAsset_WithoutSubSectorId_FailsValidation()
     {
-        var result = Asset.Create(
+        var result = CreateAssetLegacy(
             "Test Asset", 
             "Riyadh", 
             Guid.NewGuid(), 
@@ -189,7 +189,7 @@ public class AssetIntegrationTests
     [Test]
     public void CreateAsset_WithoutCapacityPerAsset_FailsValidation()
     {
-        var result = Asset.Create(
+        var result = CreateAssetLegacy(
             "Test Asset", 
             "Riyadh", 
             Guid.NewGuid(), 
@@ -224,7 +224,7 @@ public class AssetIntegrationTests
     [Test]
     public void CreateAsset_WithOptionalQuantityAsNull_Succeeds()
     {
-        var result = Asset.Create(
+        var result = CreateAssetLegacy(
             "Test Asset", 
             "Riyadh", 
             Guid.NewGuid(), 
@@ -260,7 +260,7 @@ public class AssetIntegrationTests
     [Test]
     public void CreateAsset_WithOptionalConstructionDatesAsNull_Succeeds()
     {
-        var result = Asset.Create(
+        var result = CreateAssetLegacy(
             "Test Asset", 
             "Riyadh", 
             Guid.NewGuid(), 
@@ -296,7 +296,7 @@ public class AssetIntegrationTests
     [Test]
     public void CreateAsset_WithInvalidQuantity_FailsValidation()
     {
-        var result = Asset.Create(
+        var result = CreateAssetLegacy(
             "Test Asset", 
             "Riyadh", 
             Guid.NewGuid(), 
@@ -325,13 +325,13 @@ public class AssetIntegrationTests
             "Test Company");
 
         Assert.That(result.IsFailure, Is.True);
-        Assert.That(result.Error, Does.Contain("Quantity of asset must be greater than zero"));
+        Assert.That(result.Error, Does.Contain("Quantity of asset cannot be negative"));
     }
 
     [Test]
     public void CreateAsset_WithInvalidConstructionYear_FailsValidation()
     {
-        var result = Asset.Create(
+        var result = CreateAssetLegacy(
             "Test Asset", 
             "Riyadh", 
             Guid.NewGuid(), 
@@ -366,7 +366,7 @@ public class AssetIntegrationTests
     [Test]
     public void CreateAsset_WithEndDateBeforeStartDate_FailsValidation()
     {
-        var result = Asset.Create(
+        var result = CreateAssetLegacy(
             "Test Asset", 
             "Riyadh", 
             Guid.NewGuid(), 
@@ -406,7 +406,7 @@ public class AssetIntegrationTests
     public async Task CreateAsset_WithAllRequiredFields_Succeeds()
     {
         var userId = "test@example.com";
-        var assetResult = Asset.Create(
+        var assetResult = CreateAssetLegacy(
             "Test Infrastructure Asset", 
             "Riyadh", 
             Guid.NewGuid(), 
@@ -737,9 +737,70 @@ public class AssetIntegrationTests
 
     #region Helper Methods
 
+    private static Result<Asset> CreateAssetLegacy(
+        string assetName,
+        string locationCity,
+        Guid? sectorId,
+        Guid? subSectorId,
+        Guid? assetTypeId,
+        string? assetTypeOther,
+        decimal? quantityOfAsset,
+        decimal capacityPerAsset,
+        Guid? unitOfMeasurementId,
+        string? unitOfMeasurementOther,
+        string? description,
+        int? constructionStartingQuarter,
+        int? constructionStartingYear,
+        int? constructionCompletionQuarter,
+        int? constructionCompletionYear,
+        TenderingStages? tenderingStage,
+        DevelopmentTypes? developmentType,
+        FundingModels? fundingModel,
+        decimal? expectedDebt,
+        decimal? expectedEquity,
+        bool? isRevenueGenerating,
+        decimal? irr,
+        bool? isPifGuaranteesRequired,
+        string createdBy,
+        Guid companyId,
+        string? companyName = null)
+    {
+        return Asset.Create(
+            assetName,
+            locationCity,
+            sectorId,
+            subSectorId,
+            assetTypeId,
+            sectorCode: null,
+            subSectorCode: null,
+            assetTypeCode: null,
+            assetTypeOther: assetTypeOther,
+            quantityOfAsset: quantityOfAsset,
+            capacityPerAsset: capacityPerAsset,
+            unitOfMeasurementId: unitOfMeasurementId,
+            unitOfMeasurementOther: unitOfMeasurementOther,
+            unitOfMeasurementCode: null,
+            description: description,
+            constructionStartingQuarter: constructionStartingQuarter,
+            constructionStartingYear: constructionStartingYear,
+            constructionCompletionQuarter: constructionCompletionQuarter,
+            constructionCompletionYear: constructionCompletionYear,
+            tenderingStage: tenderingStage,
+            developmentType: developmentType,
+            fundingModel: fundingModel,
+            expectedDebt: expectedDebt,
+            expectedEquity: expectedEquity,
+            isRevenueGenerating: isRevenueGenerating,
+            irr: irr,
+            isPifGuaranteesRequired: isPifGuaranteesRequired,
+            createdBy: createdBy,
+            companyId: companyId,
+            companyName: companyName);
+    }
+
     private Asset CreateTestAsset()
     {
-        var result = Asset.Create(
+        var result = CreateAssetLegacy(
             "Test Asset", 
             "Riyadh", 
             Guid.NewGuid(), 

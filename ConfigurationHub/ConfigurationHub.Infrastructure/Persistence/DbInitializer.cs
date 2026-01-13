@@ -10,10 +10,10 @@ public static class DbInitializer {
 
     public static async Task InitializeDatabaseAsync(ConfigurationHubDbContext context) {
         try {
-            // Clear existing data
+            // Clear and reseed lookups on startup.
+            // InfraBase relies on lookup "Code" to resolve names even if lookup IDs change.
             await ClearExistingDataAsync(context);
 
-            // Seed data
             await SeedWhiteListIPsAsync(context);
             await SeedSectorsAsync(context);
             await SeedAssetTypesAsync(context);
@@ -50,6 +50,11 @@ public static class DbInitializer {
     }
 
     private static async Task SeedWhiteListIPsAsync(ConfigurationHubDbContext context) {
+        if (context.WhiteListIPs.Any())
+        {
+            return;
+        }
+
         var whitelistIPs = new[]
         {
             WhiteListIP.Create("127.0.0.1", DateTime.UtcNow.AddYears(1), "Localhost", SystemUserId).Value!,
@@ -66,22 +71,48 @@ public static class DbInitializer {
         var sectorNames = DistinctInOrder(lookupTriples.Select(x => x.Sector));
         var usedSectorCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        var sectors = sectorNames
-            .Select((nameEn, i) => Sector.Create(
-                code: EnsureUniqueCode(ToBaseCode(nameEn), usedSectorCodes),
+        var existingSectors = context.Sectors.ToList();
+        Sector? FindExistingSector(string nameEn, string code)
+            => existingSectors.FirstOrDefault(s =>
+                   s.Code.Equals(code, StringComparison.OrdinalIgnoreCase) ||
+                   s.NameEn.Equals(nameEn, StringComparison.OrdinalIgnoreCase));
+
+        var sectors = new List<Sector>();
+        foreach (var (nameEn, i) in sectorNames.Select((n, idx) => (n, idx)))
+        {
+            var code = EnsureUniqueCode(ToBaseCode(nameEn), usedSectorCodes);
+            var existing = FindExistingSector(nameEn, code);
+            if (existing != null)
+            {
+                existing.Update(
+                    nameAr: nameEn,
+                    nameEn: nameEn,
+                    descriptionAr: null,
+                    descriptionEn: null,
+                    displayOrder: i + 1,
+                    updatedBy: SystemUserId);
+                sectors.Add(existing);
+                continue;
+            }
+
+            var created = Sector.Create(
+                code: code,
                 nameAr: nameEn,
                 nameEn: nameEn,
                 descriptionAr: null,
                 descriptionEn: null,
                 displayOrder: i + 1,
-                createdBy: SystemUserId).Value!)
-            .ToArray();
+                createdBy: SystemUserId).Value!;
 
-        await context.Sectors.AddRangeAsync(sectors);
-        await context.SaveChangesAsync(); // Save to get IDs for subsectors
+            await context.Sectors.AddAsync(created);
+            sectors.Add(created);
+        }
+
+        await context.SaveChangesAsync(); // Ensure sector IDs exist for subsectors
 
         var sectorIdByName = sectors.ToDictionary(s => s.NameEn, s => s.Id, StringComparer.OrdinalIgnoreCase);
 
+        var existingSubSectors = context.SubSectors.ToList();
         var subSectors = new List<SubSector>();
         foreach (var sectorName in sectorNames)
         {
@@ -96,15 +127,36 @@ public static class DbInitializer {
 
             foreach (var subSectorName in subSectorNames)
             {
-                subSectors.Add(SubSector.Create(
+                var code = EnsureUniqueCode(ToBaseCode(subSectorName), usedSubSectorCodes);
+                var existing = existingSubSectors.FirstOrDefault(ss =>
+                    ss.SectorId == sectorId &&
+                    (ss.Code.Equals(code, StringComparison.OrdinalIgnoreCase) ||
+                     ss.NameEn.Equals(subSectorName, StringComparison.OrdinalIgnoreCase)));
+
+                if (existing != null)
+                {
+                    existing.Update(
+                        nameAr: subSectorName,
+                        nameEn: subSectorName,
+                        descriptionAr: null,
+                        descriptionEn: null,
+                        displayOrder: displayOrder++,
+                        updatedBy: SystemUserId);
+                    subSectors.Add(existing);
+                    continue;
+                }
+
+                var created = SubSector.Create(
                     sectorId: sectorId,
-                    code: EnsureUniqueCode(ToBaseCode(subSectorName), usedSubSectorCodes),
+                    code: code,
                     nameAr: subSectorName,
                     nameEn: subSectorName,
                     descriptionAr: null,
                     descriptionEn: null,
                     displayOrder: displayOrder++,
-                    createdBy: SystemUserId).Value!);
+                    createdBy: SystemUserId).Value!;
+
+                subSectors.Add(created);
             }
         }
 
@@ -116,21 +168,46 @@ public static class DbInitializer {
         var assetNames = DistinctInOrder(lookupTriples.Select(x => x.Asset));
 
         var usedAssetCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var assetTypes = assetNames
-            .Select((nameEn, i) => AssetType.Create(
-                code: EnsureUniqueCode(ToBaseCode(nameEn), usedAssetCodes),
+        var existingAssetTypes = context.AssetTypes.ToList();
+
+        foreach (var (nameEn, i) in assetNames.Select((n, idx) => (n, idx)))
+        {
+            var code = EnsureUniqueCode(ToBaseCode(nameEn), usedAssetCodes);
+            var existing = existingAssetTypes.FirstOrDefault(a =>
+                a.Code.Equals(code, StringComparison.OrdinalIgnoreCase) ||
+                a.NameEn.Equals(nameEn, StringComparison.OrdinalIgnoreCase));
+
+            if (existing != null)
+            {
+                existing.Update(
+                    nameAr: nameEn,
+                    nameEn: nameEn,
+                    descriptionAr: null,
+                    descriptionEn: null,
+                    displayOrder: i + 1,
+                    updatedBy: SystemUserId);
+                continue;
+            }
+
+            var created = AssetType.Create(
+                code: code,
                 nameAr: nameEn,
                 nameEn: nameEn,
                 descriptionAr: null,
                 descriptionEn: null,
                 displayOrder: i + 1,
-                createdBy: SystemUserId).Value!)
-            .ToArray();
+                createdBy: SystemUserId).Value!;
 
-        await context.AssetTypes.AddRangeAsync(assetTypes);
+            await context.AssetTypes.AddAsync(created);
+        }
     }
 
     private static async Task SeedUnitsOfMeasurementAsync(ConfigurationHubDbContext context) {
+        if (context.UnitsOfMeasurement.Any())
+        {
+            return;
+        }
+
         var uoms = new[]
         {
             UnitOfMeasurement.Create("SQM", "??? ????", "Square Meter", "?²", 1, SystemUserId).Value!,
@@ -149,6 +226,11 @@ public static class DbInitializer {
     }
 
     private static async Task SeedTermsAndConditionsAsync(ConfigurationHubDbContext context) {
+        if (context.TermsAndConditions.Any())
+        {
+            return;
+        }
+
         // Global Terms
         var globalTermsResult = TermsAndCondition.Create(
             version: "1.0",

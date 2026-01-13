@@ -28,18 +28,37 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             return null;
         }
 
-        var sectorName = asset.SectorId.HasValue 
-            ? await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)
+        var sectorName = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty
+            ? (await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)) ?? "N/A"
             : "N/A";
-        var subSectorName = asset.SubSectorId.HasValue 
-            ? await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)
+        if (sectorName == "N/A" && !string.IsNullOrWhiteSpace(asset.SectorCode))
+        {
+            sectorName = (await _lookupService.GetSectorNameByCodeAsync(asset.SectorCode, cancellationToken)) ?? "N/A";
+        }
+
+        var subSectorName = asset.SubSectorId.HasValue && asset.SubSectorId.Value != Guid.Empty
+            ? (await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)) ?? "N/A"
             : "N/A";
-        var assetTypeName = asset.AssetTypeId.HasValue 
-            ? await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)
+        if (subSectorName == "N/A" && !string.IsNullOrWhiteSpace(asset.SectorCode) && !string.IsNullOrWhiteSpace(asset.SubSectorCode))
+        {
+            subSectorName = (await _lookupService.GetSubSectorNameByCodeAsync(asset.SectorCode, asset.SubSectorCode, cancellationToken)) ?? "N/A";
+        }
+
+        var assetTypeName = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty
+            ? (await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)) ?? "N/A"
             : asset.AssetTypeOther ?? "N/A";
-        var uomName = asset.UnitOfMeasurementId.HasValue 
-            ? await _lookupService.GetUomNameAsync(asset.UnitOfMeasurementId.Value, cancellationToken)
+        if (assetTypeName == "N/A" && !string.IsNullOrWhiteSpace(asset.AssetTypeCode))
+        {
+            assetTypeName = (await _lookupService.GetAssetTypeNameByCodeAsync(asset.AssetTypeCode, cancellationToken)) ?? "N/A";
+        }
+
+        var uomName = asset.UnitOfMeasurementId.HasValue && asset.UnitOfMeasurementId.Value != Guid.Empty
+            ? (await _lookupService.GetUomNameAsync(asset.UnitOfMeasurementId.Value, cancellationToken)) ?? "N/A"
             : asset.UnitOfMeasurementOther ?? "N/A";
+        if (uomName == "N/A" && !string.IsNullOrWhiteSpace(asset.UnitOfMeasurementCode))
+        {
+            uomName = (await _lookupService.GetUomNameByCodeAsync(asset.UnitOfMeasurementCode, cancellationToken)) ?? "N/A";
+        }
 
         return new AssetDto
         {

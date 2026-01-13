@@ -19,6 +19,10 @@ public class Asset : AggregateRoot
     public Guid? SectorId { get; private set; }
     public Guid? SubSectorId { get; private set; }
     public Guid? AssetTypeId { get; private set; }
+    // Stable references (ConfigurationHub reseeding-safe). Stored alongside IDs.
+    public string? SectorCode { get; private set; }
+    public string? SubSectorCode { get; private set; }
+    public string? AssetTypeCode { get; private set; }
     public string? AssetTypeOther { get; private set; }
     public decimal? QuantityOfAsset { get; private set; }
     public decimal CapacityPerAsset { get; private set; }
@@ -26,6 +30,7 @@ public class Asset : AggregateRoot
         ? QuantityOfAsset.Value * CapacityPerAsset
         : (decimal?)null;
     public Guid? UnitOfMeasurementId { get; private set; }
+    public string? UnitOfMeasurementCode { get; private set; }
     public string? UnitOfMeasurementOther { get; private set; }
     public AssetDescription? Description { get; private set; }
 
@@ -66,8 +71,11 @@ public class Asset : AggregateRoot
     private Asset() { }
 
     private Asset(AssetName assetName, LocationCity locationCity, Guid? sectorId,
-        Guid? subSectorId, Guid? assetTypeId, string? assetTypeOther, decimal? quantityOfAsset,
+        Guid? subSectorId, Guid? assetTypeId,
+        string? sectorCode, string? subSectorCode, string? assetTypeCode,
+        string? assetTypeOther, decimal? quantityOfAsset,
         decimal capacityPerAsset, Guid? unitOfMeasurementId, string? unitOfMeasurementOther,
+        string? unitOfMeasurementCode,
         AssetDescription? description,
         int? constructionStartingQuarter, int? constructionStartingYear,
         int? constructionCompletionQuarter, int? constructionCompletionYear,
@@ -81,11 +89,15 @@ public class Asset : AggregateRoot
         SectorId = sectorId;
         SubSectorId = subSectorId;
         AssetTypeId = assetTypeId;
+        SectorCode = NormalizeCode(sectorCode);
+        SubSectorCode = NormalizeCode(subSectorCode);
+        AssetTypeCode = NormalizeCode(assetTypeCode);
         AssetTypeOther = assetTypeOther;
         QuantityOfAsset = quantityOfAsset;
         CapacityPerAsset = capacityPerAsset;
         UnitOfMeasurementId = unitOfMeasurementId;
         UnitOfMeasurementOther = unitOfMeasurementOther;
+        UnitOfMeasurementCode = NormalizeCode(unitOfMeasurementCode);
         Description = description;
         ConstructionStartingQuarter = constructionStartingQuarter;
         ConstructionStartingYear = constructionStartingYear;
@@ -111,9 +123,11 @@ public class Asset : AggregateRoot
     }
 
     public static Result<Asset> Create(string assetName, string locationCity,
-        Guid? sectorId, Guid? subSectorId, Guid? assetTypeId, string? assetTypeOther,
+        Guid? sectorId, Guid? subSectorId, Guid? assetTypeId,
+        string? sectorCode, string? subSectorCode, string? assetTypeCode,
+        string? assetTypeOther,
         decimal? quantityOfAsset, decimal capacityPerAsset, Guid? unitOfMeasurementId,
-        string? unitOfMeasurementOther, string? description,
+        string? unitOfMeasurementOther, string? unitOfMeasurementCode, string? description,
         int? constructionStartingQuarter, int? constructionStartingYear,
         int? constructionCompletionQuarter, int? constructionCompletionYear,
         TenderingStages? tenderingStage, DevelopmentTypes? developmentType,
@@ -143,6 +157,17 @@ public class Asset : AggregateRoot
             return Result<Asset>.Failure("User is required");
         }
 
+        // Normalize lookup IDs: treat empty GUID as "not set"
+        if (!sectorId.HasValue || sectorId.Value == Guid.Empty)
+        {
+            sectorId = null;
+        }
+
+        if (!subSectorId.HasValue || subSectorId.Value == Guid.Empty)
+        {
+            subSectorId = null;
+        }
+
         // Set AssetTypeId to null if empty or if AssetTypeOther is provided
         if (!assetTypeId.HasValue || assetTypeId.Value == Guid.Empty)
         {
@@ -162,6 +187,12 @@ public class Asset : AggregateRoot
         {
             unitOfMeasurementId = null;
         }
+
+        // If ID is not set, clear its stable code too.
+        if (!sectorId.HasValue) sectorCode = null;
+        if (!subSectorId.HasValue) subSectorCode = null;
+        if (!assetTypeId.HasValue) assetTypeCode = null;
+        if (!unitOfMeasurementId.HasValue) unitOfMeasurementCode = null;
 
         var normalizedQuantity = quantityOfAsset == 0 ? null : quantityOfAsset;
 
@@ -281,8 +312,10 @@ public class Asset : AggregateRoot
         }
 
         var asset = new Asset(assetNameResult.Value!, locationCityResult.Value!,
-            sectorId, subSectorId, assetTypeId, assetTypeOther, normalizedQuantity,
-            capacityPerAsset, unitOfMeasurementId, unitOfMeasurementOther,
+            sectorId, subSectorId, assetTypeId,
+            sectorCode, subSectorCode, assetTypeCode,
+            assetTypeOther, normalizedQuantity,
+            capacityPerAsset, unitOfMeasurementId, unitOfMeasurementOther, unitOfMeasurementCode,
             descriptionResult.Value!,
             normalizedStartQuarter, normalizedStartYear,
             normalizedEndQuarter, normalizedEndYear,
@@ -291,6 +324,53 @@ public class Asset : AggregateRoot
             createdBy, companyId, companyName);
 
         return Result<Asset>.Success(asset);
+    }
+
+    /// <summary>
+    /// Update stored lookup codes without changing business data.
+    /// Useful when ConfigurationHub is reseeded and IDs change but codes stay stable.
+    /// </summary>
+    public void SyncLookupCodes(
+        string? sectorCode,
+        string? subSectorCode,
+        string? assetTypeCode,
+        string? unitOfMeasurementCode,
+        string userId)
+    {
+        var normalizedSectorCode = NormalizeCode(sectorCode);
+        var normalizedSubSectorCode = NormalizeCode(subSectorCode);
+        var normalizedAssetTypeCode = NormalizeCode(assetTypeCode);
+        var normalizedUomCode = NormalizeCode(unitOfMeasurementCode);
+
+        if (normalizedSectorCode != null && SectorCode != normalizedSectorCode)
+        {
+            SectorCode = normalizedSectorCode;
+        }
+
+        if (normalizedSubSectorCode != null && SubSectorCode != normalizedSubSectorCode)
+        {
+            SubSectorCode = normalizedSubSectorCode;
+        }
+
+        if (normalizedAssetTypeCode != null && AssetTypeCode != normalizedAssetTypeCode)
+        {
+            AssetTypeCode = normalizedAssetTypeCode;
+        }
+
+        if (normalizedUomCode != null && UnitOfMeasurementCode != normalizedUomCode)
+        {
+            UnitOfMeasurementCode = normalizedUomCode;
+        }
+
+        UpdatedBy = userId;
+        UpdatedAt = DateTime.Now;
+    }
+
+    private static string? NormalizeCode(string? code)
+    {
+        if (string.IsNullOrWhiteSpace(code)) return null;
+        var trimmed = code.Trim();
+        return trimmed.Length == 0 ? null : trimmed.ToUpperInvariant();
     }
 
     public void AssignAssetCode(string code)
@@ -637,9 +717,11 @@ public class Asset : AggregateRoot
     }
 
     public Result<bool> UpdateAssetInformation(string? assetName, string? locationCity,
-        Guid? sectorId, Guid? subSectorId, Guid? assetTypeId, string? assetTypeOther,
+        Guid? sectorId, Guid? subSectorId, Guid? assetTypeId,
+        string? sectorCode, string? subSectorCode, string? assetTypeCode,
+        string? assetTypeOther,
         decimal? quantityOfAsset, decimal? capacityPerAsset, Guid? unitOfMeasurementId,
-        string? unitOfMeasurementOther, string? description,
+        string? unitOfMeasurementOther, string? unitOfMeasurementCode, string? description,
         int? constructionStartingQuarter, int? constructionStartingYear,
         int? constructionCompletionQuarter, int? constructionCompletionYear,
         TenderingStages? tenderingStage, DevelopmentTypes? developmentType,
@@ -696,6 +778,7 @@ public class Asset : AggregateRoot
             oldValues.Add(SectorId.ToString());
             newValues.Add(sectorId.Value.ToString());
             SectorId = sectorId.Value;
+            SectorCode = NormalizeCode(sectorCode);
         }
 
         if (subSectorId.HasValue && subSectorId.Value != Guid.Empty && SubSectorId != subSectorId.Value)
@@ -704,6 +787,7 @@ public class Asset : AggregateRoot
             oldValues.Add(SubSectorId.ToString());
             newValues.Add(subSectorId.Value.ToString());
             SubSectorId = subSectorId.Value;
+            SubSectorCode = NormalizeCode(subSectorCode);
         }
 
         if (assetTypeId.HasValue && AssetTypeId != assetTypeId.Value)
@@ -712,6 +796,7 @@ public class Asset : AggregateRoot
             oldValues.Add(AssetTypeId?.ToString() ?? "Not set");
             newValues.Add(assetTypeId.Value.ToString());
             AssetTypeId = assetTypeId.Value;
+            AssetTypeCode = NormalizeCode(assetTypeCode);
         }
 
         if (assetTypeOther != null && AssetTypeOther != assetTypeOther)
@@ -724,6 +809,7 @@ public class Asset : AggregateRoot
             if (!string.IsNullOrWhiteSpace(assetTypeOther))
             {
                 AssetTypeId = null;
+                AssetTypeCode = null;
             }
         }
 
@@ -777,6 +863,7 @@ public class Asset : AggregateRoot
             oldValues.Add(UnitOfMeasurementId?.ToString() ?? "Not set");
             newValues.Add(unitOfMeasurementId.Value.ToString());
             UnitOfMeasurementId = unitOfMeasurementId.Value;
+            UnitOfMeasurementCode = NormalizeCode(unitOfMeasurementCode);
         }
 
         if (unitOfMeasurementOther != null && UnitOfMeasurementOther != unitOfMeasurementOther)
@@ -789,6 +876,7 @@ public class Asset : AggregateRoot
             if (!string.IsNullOrWhiteSpace(unitOfMeasurementOther))
             {
                 UnitOfMeasurementId = null;
+                UnitOfMeasurementCode = null;
             }
         }
 
