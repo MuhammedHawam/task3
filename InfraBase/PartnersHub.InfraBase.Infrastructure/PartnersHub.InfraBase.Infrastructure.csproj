@@ -18,13 +18,4 @@
     <ProjectReference Include="..\PartnersHub.InfraBase.Application\PartnersHub.InfraBase.Application.csproj" />
   </ItemGroup>
 
-  <!--
-    Avoid duplicate migration type conflict without editing migration files.
-    There are two InitialCreate migrations in this repository; exclude the older one from compilation.
-  -->
-  <ItemGroup>
-    <Compile Remove="Persistence/Migrations/20251123004903_InitialCreate.cs" />
-    <Compile Remove="Persistence/Migrations/20251123004903_InitialCreate.Designer.cs" />
-  </ItemGroup>
-
 </Project>
