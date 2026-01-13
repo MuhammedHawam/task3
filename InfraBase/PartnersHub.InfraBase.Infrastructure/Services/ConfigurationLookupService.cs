@@ -46,14 +46,53 @@ public class ConfigurationLookupService : IConfigurationLookupService
         return dto?.NameEn ?? dto?.NameAr;
     }
 
-    private Task<List<LookupDto>?> GetSubSectorsAsync(CancellationToken cancellationToken)
-        => _subSectorsTask ??= GetAsync<List<LookupDto>>("api/lookups/subsectors", cancellationToken);
+    private async Task<List<LookupDto>?> GetSubSectorsAsync(CancellationToken cancellationToken)
+    {
+        // Cache successful results only; if a previous call failed (null), allow retry.
+        if (_subSectorsTask != null)
+        {
+            var cached = await _subSectorsTask;
+            if (cached != null)
+            {
+                return cached;
+            }
+        }
 
-    private Task<List<LookupDto>?> GetAssetTypesAsync(CancellationToken cancellationToken)
-        => _assetTypesTask ??= GetAsync<List<LookupDto>>("api/lookups/assettypes", cancellationToken);
+        _subSectorsTask = GetAsync<List<LookupDto>>("api/lookups/subsectors", cancellationToken);
+        return await _subSectorsTask;
+    }
 
-    private Task<List<LookupDto>?> GetUomsAsync(CancellationToken cancellationToken)
-        => _uomsTask ??= GetAsync<List<LookupDto>>("api/lookups/uoms", cancellationToken);
+    private async Task<List<LookupDto>?> GetAssetTypesAsync(CancellationToken cancellationToken)
+    {
+        // Cache successful results only; if a previous call failed (null), allow retry.
+        if (_assetTypesTask != null)
+        {
+            var cached = await _assetTypesTask;
+            if (cached != null)
+            {
+                return cached;
+            }
+        }
+
+        _assetTypesTask = GetAsync<List<LookupDto>>("api/lookups/assettypes", cancellationToken);
+        return await _assetTypesTask;
+    }
+
+    private async Task<List<LookupDto>?> GetUomsAsync(CancellationToken cancellationToken)
+    {
+        // Cache successful results only; if a previous call failed (null), allow retry.
+        if (_uomsTask != null)
+        {
+            var cached = await _uomsTask;
+            if (cached != null)
+            {
+                return cached;
+            }
+        }
+
+        _uomsTask = GetAsync<List<LookupDto>>("api/lookups/uoms", cancellationToken);
+        return await _uomsTask;
+    }
 
     private async Task<T?> GetAsync<T>(string url, CancellationToken cancellationToken)
     {

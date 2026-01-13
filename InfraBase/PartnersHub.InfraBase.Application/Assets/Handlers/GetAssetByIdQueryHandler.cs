@@ -37,8 +37,8 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
         var assetTypeName = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty
             ? (await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)) ?? "N/A"
             : asset.AssetTypeOther ?? "N/A";
-        var uomName = asset.UnitOfMeasurementId.HasValue 
-            ? await _lookupService.GetUomNameAsync(asset.UnitOfMeasurementId.Value, cancellationToken)
+        var uomName = asset.UnitOfMeasurementId.HasValue && asset.UnitOfMeasurementId.Value != Guid.Empty
+            ? (await _lookupService.GetUomNameAsync(asset.UnitOfMeasurementId.Value, cancellationToken)) ?? "N/A"
             : asset.UnitOfMeasurementOther ?? "N/A";
 
         return new AssetDto
