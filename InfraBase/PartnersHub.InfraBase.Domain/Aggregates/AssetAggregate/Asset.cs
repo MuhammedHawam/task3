@@ -543,6 +543,51 @@ public class Asset : AggregateRoot
         return Result<bool>.Success(true);
     }
 
+    /// <summary>
+    /// InfraBase Admin flow: when an InfraBase admin creates an asset, it should be marked as checked immediately.
+    /// This bypasses the normal contributor/PC-admin approval workflow.
+    /// </summary>
+    public Result<bool> MarkAsCheckedByInfrabaseAdminOnCreate(string userId, string assetCode)
+    {
+        if (Status != AssetStatuses.Draft)
+        {
+            return Result<bool>.Failure("Only draft assets can be marked as checked on creation");
+        }
+
+        if (string.IsNullOrWhiteSpace(assetCode))
+        {
+            return Result<bool>.Failure("Asset must have an asset code");
+        }
+
+        AssignAssetCode(assetCode);
+
+        Status = AssetStatuses.AcceptedByInfrabase;
+        ApprovedBy = userId;
+        ApprovedAt = DateTime.Now;
+
+        SubmittedBy = userId;
+        SubmittedAt = DateTime.Now;
+
+        UpdatedBy = userId;
+        UpdatedAt = DateTime.Now;
+
+        RejectionReason = null;
+        RejectedBy = null;
+        RejectedAt = null;
+
+        AddHistory("Checked by Infrabase Admin", !string.IsNullOrWhiteSpace(userId) ? userId : "Admin",
+            "Asset created by Infrabase Admin and marked as checked");
+
+        AddDomainEvent(new AssetCheckedByInfrabaseAdminEvent(
+            Id,
+            AssetCode!,
+            !string.IsNullOrWhiteSpace(userId) ? userId : "Admin",
+            CreatedBy ?? userId ?? "Admin",
+            CompanyId));
+
+        return Result<bool>.Success(true);
+    }
+
     public Result<bool> AcceptByPcAdmin(string userId)
     {
         //TODO: Review
