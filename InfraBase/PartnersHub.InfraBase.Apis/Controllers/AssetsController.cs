@@ -77,8 +77,18 @@ public class AssetsController : ControllerBase
         [FromQuery] string? sortBy = null,
         [FromQuery] bool sortDescending = false)
     {
-        var tokenCompanyId = _tokenService.GetCompanyId();
-        var effectiveCompanyId = companyId ?? tokenCompanyId;
+        // Non-admins should always be scoped to their token company.
+        // Infrabase admins can view all companies unless a companyId filter is explicitly provided.
+        Guid? effectiveCompanyId;
+        if (_tokenService.IsInfrabaseAdmin())
+        {
+            effectiveCompanyId = companyId;
+        }
+        else
+        {
+            var tokenCompanyId = _tokenService.GetCompanyId();
+            effectiveCompanyId = companyId ?? tokenCompanyId;
+        }
         
         var query = new GetAssetListQuery
         {

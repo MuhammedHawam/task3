@@ -143,6 +143,16 @@ public class Asset : AggregateRoot
             return Result<Asset>.Failure("User is required");
         }
 
+        if (!sectorId.HasValue || sectorId.Value == Guid.Empty)
+        {
+            return Result<Asset>.Failure("Sector is required");
+        }
+
+        if (!subSectorId.HasValue || subSectorId.Value == Guid.Empty)
+        {
+            return Result<Asset>.Failure("Sub sector is required");
+        }
+
         // Set AssetTypeId to null if empty or if AssetTypeOther is provided
         if (!assetTypeId.HasValue || assetTypeId.Value == Guid.Empty)
         {
@@ -169,7 +179,7 @@ public class Asset : AggregateRoot
         {
             if (normalizedQuantity.Value < 0)
             {
-                return Result<Asset>.Failure("Quantity of asset cannot be negative");
+                return Result<Asset>.Failure("Quantity of asset must be greater than zero");
             }
 
             if (normalizedQuantity.Value.ToString().Replace(".", "").Replace(",", "").Length > 5)
@@ -499,6 +509,11 @@ public class Asset : AggregateRoot
             return Result<bool>.Failure("Cannot submit asset without CAPEX details");
         }
 
+        if (_opexDetails.Count == 0)
+        {
+            return Result<bool>.Failure("Cannot submit asset without OPEX details");
+        }
+
         if (CapexEntryMode == FinancialEntryMode.SingleYear && _capexDetails.Count != 1)
         {
             return Result<bool>.Failure("CAPEX Single-Year mode requires exactly one year row");
@@ -690,28 +705,50 @@ public class Asset : AggregateRoot
             }
         }
 
-        if (sectorId.HasValue && sectorId.Value != Guid.Empty && SectorId != sectorId.Value)
+        if (sectorId.HasValue)
         {
-            changes.Add("SectorId");
-            oldValues.Add(SectorId.ToString());
-            newValues.Add(sectorId.Value.ToString());
-            SectorId = sectorId.Value;
+            if (sectorId.Value == Guid.Empty)
+            {
+                return Result<bool>.Failure("Sector is required");
+            }
+
+            var normalizedSectorId = sectorId.Value;
+            if (SectorId != normalizedSectorId)
+            {
+                changes.Add("SectorId");
+                oldValues.Add(SectorId?.ToString() ?? "Not set");
+                newValues.Add(normalizedSectorId.ToString());
+                SectorId = normalizedSectorId;
+            }
         }
 
-        if (subSectorId.HasValue && subSectorId.Value != Guid.Empty && SubSectorId != subSectorId.Value)
+        if (subSectorId.HasValue)
         {
-            changes.Add("SubSectorId");
-            oldValues.Add(SubSectorId.ToString());
-            newValues.Add(subSectorId.Value.ToString());
-            SubSectorId = subSectorId.Value;
+            if (subSectorId.Value == Guid.Empty)
+            {
+                return Result<bool>.Failure("Sub sector is required");
+            }
+
+            var normalizedSubSectorId = subSectorId.Value;
+            if (SubSectorId != normalizedSubSectorId)
+            {
+                changes.Add("SubSectorId");
+                oldValues.Add(SubSectorId?.ToString() ?? "Not set");
+                newValues.Add(normalizedSubSectorId.ToString());
+                SubSectorId = normalizedSubSectorId;
+            }
         }
 
-        if (assetTypeId.HasValue && AssetTypeId != assetTypeId.Value)
+        if (assetTypeId.HasValue)
         {
-            changes.Add("AssetTypeId");
-            oldValues.Add(AssetTypeId?.ToString() ?? "Not set");
-            newValues.Add(assetTypeId.Value.ToString());
-            AssetTypeId = assetTypeId.Value;
+            var normalizedAssetTypeId = assetTypeId.Value == Guid.Empty ? (Guid?)null : assetTypeId.Value;
+            if (AssetTypeId != normalizedAssetTypeId)
+            {
+                changes.Add("AssetTypeId");
+                oldValues.Add(AssetTypeId?.ToString() ?? "Not set");
+                newValues.Add(normalizedAssetTypeId?.ToString() ?? "Not set");
+                AssetTypeId = normalizedAssetTypeId;
+            }
         }
 
         if (assetTypeOther != null && AssetTypeOther != assetTypeOther)
@@ -771,12 +808,16 @@ public class Asset : AggregateRoot
             }
         }
 
-        if (unitOfMeasurementId.HasValue && UnitOfMeasurementId != unitOfMeasurementId.Value)
+        if (unitOfMeasurementId.HasValue)
         {
-            changes.Add("UnitOfMeasurementId");
-            oldValues.Add(UnitOfMeasurementId?.ToString() ?? "Not set");
-            newValues.Add(unitOfMeasurementId.Value.ToString());
-            UnitOfMeasurementId = unitOfMeasurementId.Value;
+            var normalizedUomId = unitOfMeasurementId.Value == Guid.Empty ? (Guid?)null : unitOfMeasurementId.Value;
+            if (UnitOfMeasurementId != normalizedUomId)
+            {
+                changes.Add("UnitOfMeasurementId");
+                oldValues.Add(UnitOfMeasurementId?.ToString() ?? "Not set");
+                newValues.Add(normalizedUomId?.ToString() ?? "Not set");
+                UnitOfMeasurementId = normalizedUomId;
+            }
         }
 
         if (unitOfMeasurementOther != null && UnitOfMeasurementOther != unitOfMeasurementOther)

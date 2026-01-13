@@ -28,18 +28,29 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             return null;
         }
 
-        var sectorName = asset.SectorId.HasValue 
+        var sectorName = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty
             ? await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)
-            : "N/A";
-        var subSectorName = asset.SubSectorId.HasValue 
+            : null;
+        sectorName = string.IsNullOrWhiteSpace(sectorName) ? "N/A" : sectorName;
+
+        var subSectorName = asset.SubSectorId.HasValue && asset.SubSectorId.Value != Guid.Empty
             ? await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)
-            : "N/A";
-        var assetTypeName = asset.AssetTypeId.HasValue 
+            : null;
+        subSectorName = string.IsNullOrWhiteSpace(subSectorName) ? "N/A" : subSectorName;
+
+        var assetTypeName = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty
             ? await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)
-            : asset.AssetTypeOther ?? "N/A";
-        var uomName = asset.UnitOfMeasurementId.HasValue 
+            : null;
+        assetTypeName = string.IsNullOrWhiteSpace(assetTypeName)
+            ? (asset.AssetTypeOther ?? "N/A")
+            : assetTypeName;
+
+        var uomName = asset.UnitOfMeasurementId.HasValue && asset.UnitOfMeasurementId.Value != Guid.Empty
             ? await _lookupService.GetUomNameAsync(asset.UnitOfMeasurementId.Value, cancellationToken)
-            : asset.UnitOfMeasurementOther ?? "N/A";
+            : null;
+        uomName = string.IsNullOrWhiteSpace(uomName)
+            ? (asset.UnitOfMeasurementOther ?? "N/A")
+            : uomName;
 
         return new AssetDto
         {

@@ -42,15 +42,22 @@ public class GetContributorDashboardQueryHandler
         
         foreach (var asset in paginatedAssets.Items)
         {
-            var sectorName = asset.SectorId.HasValue 
+            var sectorName = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty
                 ? await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)
-                : "N/A";
-            var subSectorName = asset.SubSectorId.HasValue 
+                : null;
+            sectorName = string.IsNullOrWhiteSpace(sectorName) ? "N/A" : sectorName;
+
+            var subSectorName = asset.SubSectorId.HasValue && asset.SubSectorId.Value != Guid.Empty
                 ? await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)
-                : "N/A";
-            var assetTypeName = asset.AssetTypeId.HasValue 
+                : null;
+            subSectorName = string.IsNullOrWhiteSpace(subSectorName) ? "N/A" : subSectorName;
+
+            var assetTypeName = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty
                 ? await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)
-                : asset.AssetTypeOther ?? "N/A";
+                : null;
+            assetTypeName = string.IsNullOrWhiteSpace(assetTypeName)
+                ? (asset.AssetTypeOther ?? "N/A")
+                : assetTypeName;
             
             assetDtos.Add(new AssetListDto
             {
@@ -125,15 +132,22 @@ public class GetPcAdminDashboardQueryHandler
         
         foreach (var asset in paginatedAssets.Items)
         {
-            var sectorName = asset.SectorId.HasValue 
+            var sectorName = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty
                 ? await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)
-                : "N/A";
-            var subSectorName = asset.SubSectorId.HasValue 
+                : null;
+            sectorName = string.IsNullOrWhiteSpace(sectorName) ? "N/A" : sectorName;
+
+            var subSectorName = asset.SubSectorId.HasValue && asset.SubSectorId.Value != Guid.Empty
                 ? await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)
-                : "N/A";
-            var assetTypeName = asset.AssetTypeId.HasValue 
+                : null;
+            subSectorName = string.IsNullOrWhiteSpace(subSectorName) ? "N/A" : subSectorName;
+
+            var assetTypeName = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty
                 ? await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)
-                : asset.AssetTypeOther ?? "N/A";
+                : null;
+            assetTypeName = string.IsNullOrWhiteSpace(assetTypeName)
+                ? (asset.AssetTypeOther ?? "N/A")
+                : assetTypeName;
             
             assetDtos.Add(new AssetListDto
             {
@@ -209,15 +223,22 @@ public class GetTeamAssetsDashboardQueryHandler
         
         foreach (var asset in paginatedAssets.Items)
         {
-            var sectorName = asset.SectorId.HasValue 
+            var sectorName = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty
                 ? await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)
-                : "N/A";
-            var subSectorName = asset.SubSectorId.HasValue 
+                : null;
+            sectorName = string.IsNullOrWhiteSpace(sectorName) ? "N/A" : sectorName;
+
+            var subSectorName = asset.SubSectorId.HasValue && asset.SubSectorId.Value != Guid.Empty
                 ? await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)
-                : "N/A";
-            var assetTypeName = asset.AssetTypeId.HasValue 
+                : null;
+            subSectorName = string.IsNullOrWhiteSpace(subSectorName) ? "N/A" : subSectorName;
+
+            var assetTypeName = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty
                 ? await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)
-                : asset.AssetTypeOther ?? "N/A";
+                : null;
+            assetTypeName = string.IsNullOrWhiteSpace(assetTypeName)
+                ? (asset.AssetTypeOther ?? "N/A")
+                : assetTypeName;
             
             assetDtos.Add(new AssetListDto
             {
@@ -290,15 +311,22 @@ public class GetInfrabaseAdminDashboardQueryHandler
         
         foreach (var asset in paginatedAssets.Items)
         {
-            var sectorName = asset.SectorId.HasValue 
+            var sectorName = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty
                 ? await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)
-                : "N/A";
-            var subSectorName = asset.SubSectorId.HasValue 
+                : null;
+            sectorName = string.IsNullOrWhiteSpace(sectorName) ? "N/A" : sectorName;
+
+            var subSectorName = asset.SubSectorId.HasValue && asset.SubSectorId.Value != Guid.Empty
                 ? await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)
-                : "N/A";
-            var assetTypeName = asset.AssetTypeId.HasValue 
+                : null;
+            subSectorName = string.IsNullOrWhiteSpace(subSectorName) ? "N/A" : subSectorName;
+
+            var assetTypeName = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty
                 ? await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)
-                : asset.AssetTypeOther ?? "N/A";
+                : null;
+            assetTypeName = string.IsNullOrWhiteSpace(assetTypeName)
+                ? (asset.AssetTypeOther ?? "N/A")
+                : assetTypeName;
             
             assetDtos.Add(new AssetListDto
             {

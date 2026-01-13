@@ -34,7 +34,7 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
     public async Task<Guid> Handle(CreateAssetCommand command, CancellationToken cancellationToken)
     {
         var userName = _tokenService.GetUserName(); // Use username for readable history
-      //  var companyId = ResolveCompanyId(command);
+        var companyId = ResolveCompanyId(command);
 
         ValidateYearRows(command.CapexDetails.Select(x => x.Year), "CAPEX");
         ValidateYearRows(command.OpexDetails.Select(x => x.Year), "OPEX");
@@ -52,7 +52,7 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
         string? companyName = null;
         try
         {
-            var company = await _middlewareService.GetCompanyByIdAsync(command.CompanyId);
+            var company = await _middlewareService.GetCompanyByIdAsync(companyId);
             if (company != null)
             {
                 companyName = company.Name;
@@ -61,8 +61,12 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching company name for {CompanyId}", command.CompanyId);
+            _logger.LogError(ex, "Error fetching company name for {CompanyId}", companyId);
         }
+
+        // Fallback to token/company name from request if middleware lookup fails.
+        companyName ??= _tokenService.GetCompanyName();
+        companyName ??= string.IsNullOrWhiteSpace(command.CompanyName) ? null : command.CompanyName;
 
         var assetResult = Asset.Create(
             command.AssetName, 
@@ -89,8 +93,8 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
             command.IRR, 
             command.IsPifGuaranteesRequired, 
             userName, // Use username for history
-            command.CompanyId,
-            command.CompanyName);
+            companyId,
+            companyName);
 
         if (assetResult.IsFailure)
         {

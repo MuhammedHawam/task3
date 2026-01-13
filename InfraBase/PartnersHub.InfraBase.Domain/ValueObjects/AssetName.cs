@@ -13,18 +13,18 @@ public class AssetName : ValueObject
 
     public static Result<AssetName> Create(string? value)
     {
-        // Allow empty or null values - AssetName is optional
         if (string.IsNullOrWhiteSpace(value))
         {
-            return Result<AssetName>.Success(new AssetName(string.Empty));
+            return Result<AssetName>.Failure("Asset name is required");
         }
 
-        if (value.Length > 500)
+        var trimmed = value.Trim();
+        if (trimmed.Length > 300)
         {
-            return Result<AssetName>.Failure("Asset name cannot exceed 500 characters");
+            return Result<AssetName>.Failure("Asset name cannot exceed 300 characters");
         }
 
-        return Result<AssetName>.Success(new AssetName(value));
+        return Result<AssetName>.Success(new AssetName(trimmed));
     }
 
     protected override IEnumerable<object> GetEqualityComponents()

@@ -13,10 +13,11 @@ public static class DbInitializer
     {
         try
         {
-            // Clear existing data
-            await ClearExistingDataAsync(context);
+            // IMPORTANT:
+            // This initializer is executed on application startup.
+            // It must be idempotent and MUST NOT wipe lookup tables (Sectors/SubSectors/AssetTypes/UOMs),
+            // otherwise existing records in downstream services (InfraBase assets) will reference stale GUIDs.
 
-            // Seed data
             await SeedWhiteListIPsAsync(context);
             await SeedSectorsAsync(context);
             await SeedAssetTypesAsync(context);
@@ -32,31 +33,13 @@ public static class DbInitializer
         }
     }
 
-    private static async Task ClearExistingDataAsync(ConfigurationHubDbContext context)
-    {
-        if (context.WhiteListIPs.Any())
-            context.WhiteListIPs.RemoveRange(context.WhiteListIPs);
-
-        if (context.TermsAndConditions.Any())
-            context.TermsAndConditions.RemoveRange(context.TermsAndConditions);
-
-        if (context.SubSectors.Any())
-            context.SubSectors.RemoveRange(context.SubSectors);
-
-        if (context.Sectors.Any())
-            context.Sectors.RemoveRange(context.Sectors);
-
-        if (context.AssetTypes.Any())
-            context.AssetTypes.RemoveRange(context.AssetTypes);
-
-        if (context.UnitsOfMeasurement.Any())
-            context.UnitsOfMeasurement.RemoveRange(context.UnitsOfMeasurement);
-
-        await context.SaveChangesAsync();
-    }
-
     private static async Task SeedWhiteListIPsAsync(ConfigurationHubDbContext context)
     {
+        if (context.WhiteListIPs.Any())
+        {
+            return;
+        }
+
         var whitelistIPs = new[]
         {
             WhiteListIP.Create("127.0.0.1", DateTime.UtcNow.AddYears(1), "Localhost", SystemUserId).Value!,
@@ -74,21 +57,56 @@ public static class DbInitializer
         var sectorNames = DistinctInOrder(lookupTriples.Select(x => x.Sector));
         var usedSectorCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        var sectors = sectorNames
-            .Select((nameEn, i) => Sector.Create(
-                code: EnsureUniqueCode(ToBaseCode(nameEn), usedSectorCodes),
-                nameAr: nameEn,
-                nameEn: nameEn,
-                descriptionAr: null,
-                descriptionEn: null,
-                displayOrder: i + 1,
-                createdBy: SystemUserId).Value!)
-            .ToArray();
+        var desiredSectors = sectorNames
+            .Select((nameEn, i) => new
+            {
+                Code = EnsureUniqueCode(ToBaseCode(nameEn), usedSectorCodes),
+                NameEn = nameEn,
+                DisplayOrder = i + 1
+            })
+            .ToList();
 
-        await context.Sectors.AddRangeAsync(sectors);
-        await context.SaveChangesAsync(); // Save to get IDs for subsectors
+        var existingSectors = context.Sectors.ToList();
+        var existingSectorByCode = existingSectors.ToDictionary(s => s.Code, s => s, StringComparer.OrdinalIgnoreCase);
 
-        var sectorIdByName = sectors.ToDictionary(s => s.NameEn, s => s.Id, StringComparer.OrdinalIgnoreCase);
+        foreach (var desired in desiredSectors)
+        {
+            if (existingSectorByCode.TryGetValue(desired.Code, out var existing))
+            {
+                existing.Update(
+                    nameAr: desired.NameEn,
+                    nameEn: desired.NameEn,
+                    descriptionAr: null,
+                    descriptionEn: null,
+                    displayOrder: desired.DisplayOrder,
+                    updatedBy: SystemUserId);
+
+                if (!existing.IsActive)
+                {
+                    existing.Activate(SystemUserId);
+                }
+            }
+            else
+            {
+                var created = Sector.Create(
+                    code: desired.Code,
+                    nameAr: desired.NameEn,
+                    nameEn: desired.NameEn,
+                    descriptionAr: null,
+                    descriptionEn: null,
+                    displayOrder: desired.DisplayOrder,
+                    createdBy: SystemUserId).Value!;
+                await context.Sectors.AddAsync(created);
+            }
+        }
+
+        await context.SaveChangesAsync(); // ensure sectors exist before seeding subsectors
+
+        // Rebuild sector lookup by name to get persisted IDs (without relying on new GUIDs).
+        var sectorIdByName = context.Sectors
+            .Where(s => desiredSectors.Select(d => d.Code).Contains(s.Code))
+            .ToList()
+            .ToDictionary(s => s.NameEn, s => s.Id, StringComparer.OrdinalIgnoreCase);
 
         var subSectors = new List<SubSector>();
         foreach (var sectorName in sectorNames)
@@ -102,21 +120,46 @@ public static class DbInitializer
             var usedSubSectorCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var displayOrder = 1;
 
+            var existingSubSectors = context.SubSectors.Where(ss => ss.SectorId == sectorId).ToList();
+            var existingSubSectorByCode = existingSubSectors.ToDictionary(ss => ss.Code, ss => ss, StringComparer.OrdinalIgnoreCase);
+
             foreach (var subSectorName in subSectorNames)
             {
-                subSectors.Add(SubSector.Create(
-                    sectorId: sectorId,
-                    code: EnsureUniqueCode(ToBaseCode(subSectorName), usedSubSectorCodes),
-                    nameAr: subSectorName,
-                    nameEn: subSectorName,
-                    descriptionAr: null,
-                    descriptionEn: null,
-                    displayOrder: displayOrder++,
-                    createdBy: SystemUserId).Value!);
+                var code = EnsureUniqueCode(ToBaseCode(subSectorName), usedSubSectorCodes);
+                if (existingSubSectorByCode.TryGetValue(code, out var existing))
+                {
+                    existing.Update(
+                        nameAr: subSectorName,
+                        nameEn: subSectorName,
+                        descriptionAr: null,
+                        descriptionEn: null,
+                        displayOrder: displayOrder++,
+                        updatedBy: SystemUserId);
+
+                    if (!existing.IsActive)
+                    {
+                        existing.Activate(SystemUserId);
+                    }
+                }
+                else
+                {
+                    subSectors.Add(SubSector.Create(
+                        sectorId: sectorId,
+                        code: code,
+                        nameAr: subSectorName,
+                        nameEn: subSectorName,
+                        descriptionAr: null,
+                        descriptionEn: null,
+                        displayOrder: displayOrder++,
+                        createdBy: SystemUserId).Value!);
+                }
             }
         }
 
-        await context.SubSectors.AddRangeAsync(subSectors);
+        if (subSectors.Count > 0)
+        {
+            await context.SubSectors.AddRangeAsync(subSectors);
+        }
     }
 
     private static async Task SeedAssetTypesAsync(ConfigurationHubDbContext context)
@@ -125,18 +168,48 @@ public static class DbInitializer
         var assetNames = DistinctInOrder(lookupTriples.Select(x => x.Asset));
 
         var usedAssetCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var assetTypes = assetNames
-            .Select((nameEn, i) => AssetType.Create(
-                code: EnsureUniqueCode(ToBaseCode(nameEn), usedAssetCodes),
-                nameAr: nameEn,
-                nameEn: nameEn,
-                descriptionAr: null,
-                descriptionEn: null,
-                displayOrder: i + 1,
-                createdBy: SystemUserId).Value!)
-            .ToArray();
+        var desiredAssetTypes = assetNames
+            .Select((nameEn, i) => new
+            {
+                Code = EnsureUniqueCode(ToBaseCode(nameEn), usedAssetCodes),
+                NameEn = nameEn,
+                DisplayOrder = i + 1
+            })
+            .ToList();
 
-        await context.AssetTypes.AddRangeAsync(assetTypes);
+        var existing = context.AssetTypes.ToList();
+        var existingByCode = existing.ToDictionary(a => a.Code, a => a, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var desired in desiredAssetTypes)
+        {
+            if (existingByCode.TryGetValue(desired.Code, out var found))
+            {
+                found.Update(
+                    nameAr: desired.NameEn,
+                    nameEn: desired.NameEn,
+                    descriptionAr: null,
+                    descriptionEn: null,
+                    displayOrder: desired.DisplayOrder,
+                    updatedBy: SystemUserId);
+
+                if (!found.IsActive)
+                {
+                    found.Activate(SystemUserId);
+                }
+            }
+            else
+            {
+                var created = AssetType.Create(
+                    code: desired.Code,
+                    nameAr: desired.NameEn,
+                    nameEn: desired.NameEn,
+                    descriptionAr: null,
+                    descriptionEn: null,
+                    displayOrder: desired.DisplayOrder,
+                    createdBy: SystemUserId).Value!;
+                await context.AssetTypes.AddAsync(created);
+            }
+        }
     }
 
     private static async Task SeedUnitsOfMeasurementAsync(ConfigurationHubDbContext context)
@@ -155,11 +228,39 @@ public static class DbInitializer
             UnitOfMeasurement.Create("MW", "???????", "Megawatt", "???????", 10, SystemUserId).Value!
         };
 
-        await context.UnitsOfMeasurement.AddRangeAsync(uoms);
+        var existing = context.UnitsOfMeasurement.ToList();
+        var existingByCode = existing.ToDictionary(u => u.Code, u => u, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var desired in uoms)
+        {
+            if (existingByCode.TryGetValue(desired.Code, out var found))
+            {
+                found.Update(
+                    nameAr: desired.NameAr,
+                    nameEn: desired.NameEn,
+                    symbol: desired.Symbol,
+                    displayOrder: desired.DisplayOrder,
+                    updatedBy: SystemUserId);
+
+                if (!found.IsActive)
+                {
+                    found.Activate(SystemUserId);
+                }
+            }
+            else
+            {
+                await context.UnitsOfMeasurement.AddAsync(desired);
+            }
+        }
     }
 
     private static async Task SeedTermsAndConditionsAsync(ConfigurationHubDbContext context)
     {
+        if (context.TermsAndConditions.Any())
+        {
+            return;
+        }
+
         // Global Terms
         var globalTermsResult = TermsAndCondition.Create(
             version: "1.0",
