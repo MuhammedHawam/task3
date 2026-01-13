@@ -56,6 +56,12 @@ public class AssetAttachmentConfiguration : IEntityTypeConfiguration<AssetAttach
         builder.Property(a => a.DeletedAt)
             .IsRequired(false);
 
+        // Configure the relationship from the child side
+        builder.HasOne<Asset>()
+            .WithMany(a => a.Attachments)
+            .HasForeignKey(att => att.AssetId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasIndex(a => new { a.AssetId, a.IsDeleted });
     }
 }

@@ -55,7 +55,7 @@ namespace PartnersHub.Synergy.Application.SuccessStories.DTOs
 
         public bool IsHide { get; set; }
 
-        public OpportunityStatus CollaborationStatus { get; set; }
+        public SuccessStroyCollaborationStatus CollaborationStatus { get; set; }
 
         public string CollaborationStatusDescription { get; set; }
 

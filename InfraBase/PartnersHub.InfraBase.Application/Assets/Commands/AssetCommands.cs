@@ -1,5 +1,7 @@
 using MediatR;
+using PartnersHub.InfraBase.Application.Common.Converters;
 using PartnersHub.InfraBase.Domain.Enums;
+using System.Text.Json.Serialization;
 
 namespace PartnersHub.InfraBase.Application.Assets.Commands;
 
@@ -26,7 +28,11 @@ public record CreateAssetCommand : IRequest<Guid>
     public int? ConstructionStartingYear { get; init; }
     public int? ConstructionCompletionQuarter { get; init; }
     public int? ConstructionCompletionYear { get; init; }
+
+    [JsonConverter(typeof(TenderingStagesConverter))]
     public TenderingStages? TenderingStage { get; init; }
+
+    [JsonConverter(typeof(EmptyStringToNullableDevelopmentTypeConverter))]
     public DevelopmentTypes? DevelopmentType { get; init; }
     public FinancialEntryMode? CapexEntryMode { get; init; }
     public FinancialEntryMode? OpexEntryMode { get; init; }

@@ -13,18 +13,15 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
     private readonly IAssetRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITokenService _tokenService;
-    private readonly IConfigurationLookupService _lookupService;
 
     public UpdateAssetCommandHandler(
         IAssetRepository repository, 
         IUnitOfWork unitOfWork,
-        ITokenService tokenService,
-        IConfigurationLookupService lookupService)
+        ITokenService tokenService)
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
         _tokenService = tokenService;
-        _lookupService = lookupService;
     }
 
     public async Task<bool> Handle(UpdateAssetCommand command, CancellationToken cancellationToken)
@@ -37,34 +34,17 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
             throw new NotFoundException("Asset", command.Id);
         }
 
-        var sectorCode = command.SectorId.HasValue && command.SectorId.Value != Guid.Empty
-            ? await _lookupService.GetSectorCodeAsync(command.SectorId.Value, cancellationToken)
-            : null;
-        var subSectorCode = command.SubSectorId.HasValue && command.SubSectorId.Value != Guid.Empty
-            ? await _lookupService.GetSubSectorCodeAsync(command.SubSectorId.Value, cancellationToken)
-            : null;
-        var assetTypeCode = command.AssetTypeId.HasValue && command.AssetTypeId.Value != Guid.Empty
-            ? await _lookupService.GetAssetTypeCodeAsync(command.AssetTypeId.Value, cancellationToken)
-            : null;
-        var uomCode = command.UnitOfMeasurementId.HasValue && command.UnitOfMeasurementId.Value != Guid.Empty
-            ? await _lookupService.GetUomCodeAsync(command.UnitOfMeasurementId.Value, cancellationToken)
-            : null;
-
         var updateResult = asset.UpdateAssetInformation(
             command.AssetName, 
             command.LocationCity, 
             command.SectorId, 
             command.SubSectorId, 
             command.AssetTypeId, 
-            sectorCode,
-            subSectorCode,
-            assetTypeCode,
             command.AssetTypeOther, 
             command.QuantityOfAsset, 
             command.CapacityPerAsset, 
             command.UnitOfMeasurementId, 
             command.UnitOfMeasurementOther,
-            uomCode,
             command.Description, 
             command.ConstructionStartingQuarter, 
             command.ConstructionStartingYear, 

@@ -26,7 +26,6 @@ namespace PartnersHub.Synergy.Application.Interfaces.Repository.Dapper
           List<int>? collaborationTypeIds = null,
           string? searchTerm = null,
           string? sortBy = null,
-          bool sortDescending = true,
           bool asNoTracking = false);
         Task<List<EngagementTrend>> FetchYTDMonthlyEngagementTrends();
         Task<List<CompanyKPI>> FetchCompanyKPIsAsync(DateTime? startDate = null, int? topCount = null);

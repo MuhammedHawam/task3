@@ -74,7 +74,6 @@ public class SearchOpportunitiesQueryHandler : IRequestHandler<SearchOpportuniti
             startDate:request.StartDate, 
             endDate:request.EndDate,
             sortBy: request.SortBy,
-            sortDescending: request.SortDescending,
             asNoTracking: true);
 
         // Get company information for the opportunities

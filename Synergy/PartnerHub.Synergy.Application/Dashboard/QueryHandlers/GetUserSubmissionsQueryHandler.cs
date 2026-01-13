@@ -34,7 +34,6 @@ public class GetUserSubmissionsQueryHandler : IRequestHandler<GetUserSubmissions
             expectedOutcomeIds: null,
             statuses: statuses,
             sortBy: request.SortBy ?? "CreatedAt",
-            sortDescending: request.SortDescending,
             asNoTracking: true);
 
         var dtos = paginatedResult.Items.Select(o => new UserOpportunitySubmissionDto

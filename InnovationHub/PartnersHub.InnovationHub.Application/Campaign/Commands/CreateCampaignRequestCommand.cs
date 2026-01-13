@@ -17,7 +17,7 @@ public record CreateCampaignRequestCommand : IRequest<Results<Guid>>
     public CampaignType Type { get; init; }
     public Guid SubmitterId { get; init; }
     public string SubmitterName { get; init; }
-    public string SubmitterEmail { get; init; }
+    public string SubmitterEmail { get; init; }= "na@pif.gov.sa";
     public List<Guid>? LinkedDevCoChallenges { get; init; }
     public DateTime? LaunchDate { get; init; }
     public string? Comment { get; init; } = string.Empty;

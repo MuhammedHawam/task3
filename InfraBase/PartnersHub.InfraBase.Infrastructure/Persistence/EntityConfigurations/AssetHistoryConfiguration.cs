@@ -19,9 +19,9 @@ public class AssetHistoryConfiguration : IEntityTypeConfiguration<AssetHistory>
             .IsRequired();
 
         builder.Property(h => h.Status)
-            .HasConversion<string>()
             .HasMaxLength(50)
-            .IsRequired();
+            .IsRequired()
+            .HasConversion<string>();
 
         builder.Property(h => h.Action)
             .HasMaxLength(200)
@@ -35,16 +35,26 @@ public class AssetHistoryConfiguration : IEntityTypeConfiguration<AssetHistory>
             .IsRequired();
 
         builder.Property(h => h.Comments)
-            .HasMaxLength(3000);
+            .HasMaxLength(3000)
+            .IsRequired(false);
 
         builder.Property(h => h.FieldsChanged)
-            .HasMaxLength(1000);
+            .HasMaxLength(1000)
+            .IsRequired(false);
 
         builder.Property(h => h.OldValues)
-            .HasMaxLength(2000);
+            .HasMaxLength(2000)
+            .IsRequired(false);
 
         builder.Property(h => h.NewValues)
-            .HasMaxLength(2000);
+            .HasMaxLength(2000)
+            .IsRequired(false);
+
+        // Configure the relationship from the child side
+        builder.HasOne<Asset>()
+            .WithMany(a => a.History)
+            .HasForeignKey(h => h.AssetId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(h => new { h.AssetId, h.PerformedAt });
     }

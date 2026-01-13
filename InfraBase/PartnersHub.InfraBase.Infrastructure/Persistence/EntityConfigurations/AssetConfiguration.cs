@@ -34,14 +34,10 @@ public class AssetConfiguration : IEntityTypeConfiguration<Asset>
         builder.Property(a => a.SectorId).IsRequired(false);
         builder.Property(a => a.SubSectorId).IsRequired(false);
         builder.Property(a => a.AssetTypeId).IsRequired(false);
-        builder.Property(a => a.SectorCode).HasMaxLength(50).IsRequired(false);
-        builder.Property(a => a.SubSectorCode).HasMaxLength(50).IsRequired(false);
-        builder.Property(a => a.AssetTypeCode).HasMaxLength(50).IsRequired(false);
         builder.Property(a => a.AssetTypeOther).HasMaxLength(200).IsRequired(false);
         builder.Property(a => a.QuantityOfAsset).HasColumnType("decimal(18,2)").IsRequired(false);
         builder.Property(a => a.CapacityPerAsset).HasColumnType("decimal(18,2)").IsRequired();
         builder.Property(a => a.UnitOfMeasurementId).IsRequired(false);
-        builder.Property(a => a.UnitOfMeasurementCode).HasMaxLength(50).IsRequired(false);
         builder.Property(a => a.UnitOfMeasurementOther).HasMaxLength(200).IsRequired(false);
 
         builder.OwnsOne(a => a.Description, d =>
@@ -109,25 +105,19 @@ public class AssetConfiguration : IEntityTypeConfiguration<Asset>
         builder.Property(a => a.UpdatedBy).HasMaxLength(255).IsRequired(false);
         builder.Property(a => a.UpdatedAt).IsRequired(false);
 
-        builder.HasMany<AssetCapex>()
-            .WithOne()
-            .HasForeignKey(c => c.AssetId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasMany<AssetOpex>()
-            .WithOne()
-            .HasForeignKey(o => o.AssetId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasMany<AssetHistory>()
-            .WithOne()
-            .HasForeignKey(h => h.AssetId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasMany<AssetAttachment>()
-            .WithOne()
-            .HasForeignKey(a => a.AssetId)
-            .OnDelete(DeleteBehavior.Cascade);
+        // Configure child entities - use Metadata() to access backing fields
+        // This prevents EF Core from creating shadow navigation properties (AssetId1)
+        builder.Navigation(a => a.CapexDetails)
+            .Metadata.SetField("_capexDetails");
+        
+        builder.Navigation(a => a.OpexDetails)
+            .Metadata.SetField("_opexDetails");
+        
+        builder.Navigation(a => a.History)
+            .Metadata.SetField("_history");
+        
+        builder.Navigation(a => a.Attachments)
+            .Metadata.SetField("_attachments");
 
         // Ignore calculated properties and domain events
         builder.Ignore(a => a.DomainEvents);

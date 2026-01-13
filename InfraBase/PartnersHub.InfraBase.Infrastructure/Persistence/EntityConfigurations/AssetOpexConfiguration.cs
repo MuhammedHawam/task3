@@ -25,6 +25,12 @@ public class AssetOpexConfiguration : IEntityTypeConfiguration<AssetOpex>
             .HasPrecision(18, 2)
             .IsRequired();
 
+        // Configure the relationship from the child side
+        builder.HasOne<Asset>()
+            .WithMany(a => a.OpexDetails)
+            .HasForeignKey(o => o.AssetId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasIndex(o => new { o.AssetId, o.Year })
             .IsUnique();
     }

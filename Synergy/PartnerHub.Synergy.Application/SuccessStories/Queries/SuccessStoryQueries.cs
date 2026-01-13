@@ -40,8 +40,7 @@ namespace PartnersHub.Synergy.Application.SuccessStories.Queries
         public DateTime? EndDate { get; set; }
         public string? PartnerCompanyName { get; set; }
         public string? SearchTerm { get; set; }
-        public string? SortBy { get; set; } = "CreatedAt";
-        public bool SortDescending { get; set; } = true;
+        public string? SortBy { get; set; } = "CreatedAt:desc";
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 10;
     }

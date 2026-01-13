@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using PartnersHub.Synergy.Application.Common.Helpers;
 using PartnersHub.Synergy.Application.Dashboard.DTOs;
 using PartnersHub.Synergy.Application.Interfaces.Repository.Dapper;
 using PartnersHub.Synergy.Application.Models;
@@ -9,6 +10,7 @@ using PartnersHub.Synergy.Domain.Common;
 using PartnersHub.Synergy.Infrastructure.Persistence.Interfaces;
 using System.Data;
 using System.Text;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
 {
@@ -33,7 +35,6 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
             List<int>? collaborationTypeIds = null,
             string? searchTerm = null,
             string? sortBy = null,
-            bool sortDescending = true,
             bool asNoTracking = false)
         {
             var parameters = new DynamicParameters();
@@ -120,14 +121,22 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
                 ? "WHERE " + string.Join(" AND ", whereConditions)
                 : string.Empty;
 
-            var orderByField = sortBy?.ToLower() switch
+
+            var (field, descending) = ParseHelper.ParseSort(sortBy);
+
+            var orderByField = field?.ToLower() switch
             {
                 "title" => "s.Title",
                 "status" => "s.Status",
+                "id" => "s.Id",
+                "startdate" => "s.StartDate",
+                "enddate" => "s.EndDate",
+                "submissiondate" => "s.CreatedAt",
                 _ => "s.CreatedAt"
             };
 
-            var sortOrder = sortDescending ? "DESC" : "ASC";
+            var sortOrder = descending ? "DESC" : "ASC";
+
 
             #region Count Query
 
@@ -242,7 +251,7 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
                         current.Sectors = new();
                         current.SuccessStoryStatusDescription =
                             MapStatusToDisplay(current.SuccessStoryStatus);
-                        current.CollaborationStatusDescription = current.CollaborationStatus.ToString();
+                        current.CollaborationStatusDescription = MapSuccessStroyCollaborationToDisplay(current.CollaborationStatus);
 
                         lookup.Add(current.Id, current);
                     }
@@ -759,6 +768,15 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
                 SuccessStoryStatus.AssetManagerRejected => "Rejected",
                 SuccessStoryStatus.AdminRejected => "Rejected",
                 _ => "Draft"
+            };
+        }
+
+        private string MapSuccessStroyCollaborationToDisplay(SuccessStroyCollaborationStatus status)
+        {
+            return status switch
+            {
+                SuccessStroyCollaborationStatus.Ongoing => "Ongoing",
+                SuccessStroyCollaborationStatus.Successful => "Successful"
             };
         }
     }

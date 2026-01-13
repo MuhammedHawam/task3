@@ -50,7 +50,7 @@ public class GetDashboardHomeQueryHandler : IRequestHandler<GetDashboardHomeQuer
         return Result<DashboardHomeDto>.Success(dashboard);
     }
 
-    private async Task<DashboardKPIsDto> FetchKPIsAsync(Guid companyId, DateTime fromDate)
+    private async Task<DashboardKPIsDto> FetchKPIsAsync(Guid companyId, DateTime? fromDate)
     {
         var totalCompanies = await _companyRepository.GetTotalCompaniesCountAsync();
         var collaborationsCount = await _opportunityRepository.GetDistinctCollaboratedCompaniesCountAsync(companyId, fromDate);
@@ -89,7 +89,6 @@ public class GetDashboardHomeQueryHandler : IRequestHandler<GetDashboardHomeQuer
             pageSize: 4,
             statuses: new List<OpportunityStatus> { OpportunityStatus.Published },
             sortBy: "CreatedAt",
-            sortDescending: true,
             asNoTracking: true);
 
         var companies = await _companyRepository.GetByIdsAsync(opportunities.Items.Select(o => o.CompanyId).Distinct().ToList());

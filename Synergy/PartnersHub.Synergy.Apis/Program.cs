@@ -180,19 +180,21 @@ builder.Services.AddMediatR(cfg => {
 });
 
 // Add CORS
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowedOrigins", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy.WithOrigins(allowedOrigins)
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
 var app = builder.Build();
 using var scope = app.Services.CreateScope();
-
 
 
 
@@ -284,8 +286,7 @@ if (!dbContext.SynergyCompanies.Any())
             "Director",
             "ronit.sela@surj.org.eg",
             "+202 2 123 4567",
-            Guid.NewGuid(),
-            Convert.FromBase64String("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")
+            Guid.NewGuid()
         ).Value,
         SynergyCompany.Create(
             new Guid("3375f62d-f3c2-f011-a4de-005056992b12"),
@@ -325,11 +326,24 @@ if (!dbContext.SynergyCompanies.Any())
 }
 var cacheService = scope.ServiceProvider.GetRequiredService<ICacheWrapper>();
 await cacheService.LoadLookupsIntoCacheAsync();
+
+// Remove sensitive headers
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        context.Response.Headers.Remove("Server");
+        context.Response.Headers.Remove("X-Powered-By");
+        return Task.CompletedTask;
+    });
+    await next();
+});
+
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowAll");
+app.UseCors("AllowedOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
 

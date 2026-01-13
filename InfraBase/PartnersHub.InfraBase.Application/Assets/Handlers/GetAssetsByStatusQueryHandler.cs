@@ -11,16 +11,13 @@ public class GetAssetsByStatusQueryHandler : IRequestHandler<GetAssetsByStatusQu
 {
     private readonly IAssetRepository _repository;
     private readonly IConfigurationLookupService _lookupService;
-    private readonly IMiddlewareIntegrationService _middlewareService;
 
     public GetAssetsByStatusQueryHandler(
         IAssetRepository repository,
-        IConfigurationLookupService lookupService,
-        IMiddlewareIntegrationService middlewareService)
+        IConfigurationLookupService lookupService)
     {
         _repository = repository;
         _lookupService = lookupService;
-        _middlewareService = middlewareService;
     }
 
     public async Task<List<AssetListDto>> Handle(GetAssetsByStatusQuery query, 
@@ -78,17 +75,6 @@ public class GetAssetsByStatusQueryHandler : IRequestHandler<GetAssetsByStatusQu
                                 ? foundAssetType
                                 : asset.AssetTypeOther ?? "N/A";
 
-            if (sectorName == "N/A" && !string.IsNullOrWhiteSpace(asset.SectorCode))
-                sectorName = (await _lookupService.GetSectorNameByCodeAsync(asset.SectorCode, cancellationToken)) ?? "N/A";
-            if (subSectorName == "N/A" && !string.IsNullOrWhiteSpace(asset.SectorCode) && !string.IsNullOrWhiteSpace(asset.SubSectorCode))
-                subSectorName = (await _lookupService.GetSubSectorNameByCodeAsync(asset.SectorCode, asset.SubSectorCode, cancellationToken)) ?? "N/A";
-            if (assetTypeName == "N/A" && !string.IsNullOrWhiteSpace(asset.AssetTypeCode))
-                assetTypeName = (await _lookupService.GetAssetTypeNameByCodeAsync(asset.AssetTypeCode, cancellationToken)) ?? "N/A";
-
-            var companyName = !string.IsNullOrWhiteSpace(asset.CompanyName)
-                ? asset.CompanyName
-                : (await _middlewareService.GetCompanyByIdAsync(asset.CompanyId))?.Name;
-
             items.Add(new AssetListDto
             {
                 Id = asset.Id,
@@ -102,7 +88,7 @@ public class GetAssetsByStatusQueryHandler : IRequestHandler<GetAssetsByStatusQu
                 SubmittedBy = asset.SubmittedBy,
                 TotalCapex = asset.TotalCapex,
                 TotalOpex = asset.TotalOpex,
-                CompanyName = companyName,
+                CompanyName = asset.CompanyName,
                 CreatedAt = asset.CreatedAt
             });
         }

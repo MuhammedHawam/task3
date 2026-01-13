@@ -45,8 +45,7 @@ namespace PartnersHub.Synergy.Apis.Controllers
             [FromQuery] string? endDate,
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 12,
-            [FromQuery] bool sortDescending = true,
-            [FromQuery] string? sortBy = "CreatedAt"
+            [FromQuery] string? sortBy = "CreatedAt:desc"
             )
         {
             var query = new SearchOpportunitiesQuery
@@ -64,8 +63,7 @@ namespace PartnersHub.Synergy.Apis.Controllers
                 CollaborationStatuses = collaborationStatuses,
                 StartDate = ParseDateOnly(startDate),
                 EndDate = ParseDateOnly(endDate),
-                SortBy = sortBy,
-                SortDescending = sortDescending
+                SortBy = sortBy
             };
 
             var result = await _mediator.Send(query);
@@ -78,6 +76,11 @@ namespace PartnersHub.Synergy.Apis.Controllers
         public async Task<ActionResult<ApiResponse<Guid>>> SaveRequestAsDraft([FromBody] CreateOpportunityCommand command)
         {
             var requestId = await _mediator.Send(command);
+
+            if (requestId.IsFailure)
+            {
+                return BadRequest(requestId);
+            }
             return Ok(requestId);
         }
 

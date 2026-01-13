@@ -28,6 +28,11 @@ namespace PartnersHub.Synergy.Apis.Controllers
         {
             var requestId = await _mediator.Send(command);
 
+           if (requestId.IsFailure)
+              {
+                return BadRequest(requestId);
+              }
+
             return Ok(requestId);
         }
         [HttpGet("{Id}")]
@@ -50,8 +55,7 @@ namespace PartnersHub.Synergy.Apis.Controllers
         [FromQuery] DateTime? endDate = null,
         [FromQuery] string? partnerCompanyName = null,
         [FromQuery] string? searchTerm = null,
-        [FromQuery] string? sortBy = "CreatedAt",
-        [FromQuery] bool sortDescending = true,
+        [FromQuery] string? sortBy = "CreatedAt:desc",
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10)
         {
@@ -66,7 +70,6 @@ namespace PartnersHub.Synergy.Apis.Controllers
                 PartnerCompanyName = partnerCompanyName,
                 SearchTerm = searchTerm,
                 SortBy = sortBy,
-                SortDescending = sortDescending,
                 PageNumber = pageNumber,
                 PageSize = pageSize
             };

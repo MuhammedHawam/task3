@@ -19,14 +19,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // CORS
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("AllowedOrigins", policy =>
     {
-        policy
-            .WithOrigins("http://localhost:3000", "http://localhost:4200")
-            .AllowAnyHeader()
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyMethod()
+            .AllowAnyHeader()
             .AllowCredentials();
     });
 });
@@ -96,8 +97,20 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
+// Remove sensitive headers
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        context.Response.Headers.Remove("Server");
+        context.Response.Headers.Remove("X-Powered-By");
+        return Task.CompletedTask;
+    });
+    await next();
+});
+
 app.UseRouting();
-app.UseCors();
+app.UseCors("AllowedOrigins");
 app.UseAuthentication();
 
 app.UseAuthorization();

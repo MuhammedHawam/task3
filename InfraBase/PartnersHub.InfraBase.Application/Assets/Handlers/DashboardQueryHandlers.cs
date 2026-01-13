@@ -13,16 +13,13 @@ public class GetContributorDashboardQueryHandler
 {
     private readonly IAssetRepository _repository;
     private readonly IConfigurationLookupService _lookupService;
-    private readonly IMiddlewareIntegrationService _middlewareService;
 
     public GetContributorDashboardQueryHandler(
         IAssetRepository repository,
-        IConfigurationLookupService lookupService,
-        IMiddlewareIntegrationService middlewareService)
+        IConfigurationLookupService lookupService)
     {
         _repository = repository;
         _lookupService = lookupService;
-        _middlewareService = middlewareService;
     }
 
     public async Task<ContributorDashboardDto> Handle(
@@ -45,27 +42,15 @@ public class GetContributorDashboardQueryHandler
         
         foreach (var asset in paginatedAssets.Items)
         {
-            var sectorName = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty
-                ? (await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)) ?? "N/A"
+            var sectorName = asset.SectorId.HasValue 
+                ? await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)
                 : "N/A";
-            if (sectorName == "N/A" && !string.IsNullOrWhiteSpace(asset.SectorCode))
-                sectorName = (await _lookupService.GetSectorNameByCodeAsync(asset.SectorCode, cancellationToken)) ?? "N/A";
-
-            var subSectorName = asset.SubSectorId.HasValue && asset.SubSectorId.Value != Guid.Empty
-                ? (await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)) ?? "N/A"
+            var subSectorName = asset.SubSectorId.HasValue 
+                ? await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)
                 : "N/A";
-            if (subSectorName == "N/A" && !string.IsNullOrWhiteSpace(asset.SectorCode) && !string.IsNullOrWhiteSpace(asset.SubSectorCode))
-                subSectorName = (await _lookupService.GetSubSectorNameByCodeAsync(asset.SectorCode, asset.SubSectorCode, cancellationToken)) ?? "N/A";
-
-            var assetTypeName = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty
-                ? (await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)) ?? "N/A"
+            var assetTypeName = asset.AssetTypeId.HasValue 
+                ? await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)
                 : asset.AssetTypeOther ?? "N/A";
-            if (assetTypeName == "N/A" && !string.IsNullOrWhiteSpace(asset.AssetTypeCode))
-                assetTypeName = (await _lookupService.GetAssetTypeNameByCodeAsync(asset.AssetTypeCode, cancellationToken)) ?? "N/A";
-
-            var companyName = !string.IsNullOrWhiteSpace(asset.CompanyName)
-                ? asset.CompanyName
-                : (await _middlewareService.GetCompanyByIdAsync(asset.CompanyId))?.Name;
             
             assetDtos.Add(new AssetListDto
             {
@@ -79,7 +64,7 @@ public class GetContributorDashboardQueryHandler
                 SubmittedAt = asset.SubmittedAt,
                 TotalCapex = asset.TotalCapex,
                 TotalOpex = asset.TotalOpex,
-                CompanyName = companyName,
+                CompanyName = asset.CompanyName,
                 CreatedAt = asset.CreatedAt
             });
         }
@@ -111,16 +96,13 @@ public class GetPcAdminDashboardQueryHandler
 {
     private readonly IAssetRepository _repository;
     private readonly IConfigurationLookupService _lookupService;
-    private readonly IMiddlewareIntegrationService _middlewareService;
 
     public GetPcAdminDashboardQueryHandler(
         IAssetRepository repository,
-        IConfigurationLookupService lookupService,
-        IMiddlewareIntegrationService middlewareService)
+        IConfigurationLookupService lookupService)
     {
         _repository = repository;
         _lookupService = lookupService;
-        _middlewareService = middlewareService;
     }
 
     public async Task<PcAdminDashboardDto> Handle(
@@ -143,27 +125,15 @@ public class GetPcAdminDashboardQueryHandler
         
         foreach (var asset in paginatedAssets.Items)
         {
-            var sectorName = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty
-                ? (await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)) ?? "N/A"
+            var sectorName = asset.SectorId.HasValue 
+                ? await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)
                 : "N/A";
-            if (sectorName == "N/A" && !string.IsNullOrWhiteSpace(asset.SectorCode))
-                sectorName = (await _lookupService.GetSectorNameByCodeAsync(asset.SectorCode, cancellationToken)) ?? "N/A";
-
-            var subSectorName = asset.SubSectorId.HasValue && asset.SubSectorId.Value != Guid.Empty
-                ? (await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)) ?? "N/A"
+            var subSectorName = asset.SubSectorId.HasValue 
+                ? await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)
                 : "N/A";
-            if (subSectorName == "N/A" && !string.IsNullOrWhiteSpace(asset.SectorCode) && !string.IsNullOrWhiteSpace(asset.SubSectorCode))
-                subSectorName = (await _lookupService.GetSubSectorNameByCodeAsync(asset.SectorCode, asset.SubSectorCode, cancellationToken)) ?? "N/A";
-
-            var assetTypeName = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty
-                ? (await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)) ?? "N/A"
+            var assetTypeName = asset.AssetTypeId.HasValue 
+                ? await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)
                 : asset.AssetTypeOther ?? "N/A";
-            if (assetTypeName == "N/A" && !string.IsNullOrWhiteSpace(asset.AssetTypeCode))
-                assetTypeName = (await _lookupService.GetAssetTypeNameByCodeAsync(asset.AssetTypeCode, cancellationToken)) ?? "N/A";
-
-            var companyName = !string.IsNullOrWhiteSpace(asset.CompanyName)
-                ? asset.CompanyName
-                : (await _middlewareService.GetCompanyByIdAsync(asset.CompanyId))?.Name;
             
             assetDtos.Add(new AssetListDto
             {
@@ -177,7 +147,7 @@ public class GetPcAdminDashboardQueryHandler
                 SubmittedAt = asset.SubmittedAt,
                 TotalCapex = asset.TotalCapex,
                 TotalOpex = asset.TotalOpex,
-                CompanyName = companyName,
+                CompanyName = asset.CompanyName,
                 CreatedAt = asset.CreatedAt
             });
         }
@@ -208,16 +178,13 @@ public class GetTeamAssetsDashboardQueryHandler
 {
     private readonly IAssetRepository _repository;
     private readonly IConfigurationLookupService _lookupService;
-    private readonly IMiddlewareIntegrationService _middlewareService;
 
     public GetTeamAssetsDashboardQueryHandler(
         IAssetRepository repository,
-        IConfigurationLookupService lookupService,
-        IMiddlewareIntegrationService middlewareService)
+        IConfigurationLookupService lookupService)
     {
         _repository = repository;
         _lookupService = lookupService;
-        _middlewareService = middlewareService;
     }
 
     public async Task<TeamAssetsDashboardDto> Handle(
@@ -242,27 +209,15 @@ public class GetTeamAssetsDashboardQueryHandler
         
         foreach (var asset in paginatedAssets.Items)
         {
-            var sectorName = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty
-                ? (await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)) ?? "N/A"
+            var sectorName = asset.SectorId.HasValue 
+                ? await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)
                 : "N/A";
-            if (sectorName == "N/A" && !string.IsNullOrWhiteSpace(asset.SectorCode))
-                sectorName = (await _lookupService.GetSectorNameByCodeAsync(asset.SectorCode, cancellationToken)) ?? "N/A";
-
-            var subSectorName = asset.SubSectorId.HasValue && asset.SubSectorId.Value != Guid.Empty
-                ? (await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)) ?? "N/A"
+            var subSectorName = asset.SubSectorId.HasValue 
+                ? await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)
                 : "N/A";
-            if (subSectorName == "N/A" && !string.IsNullOrWhiteSpace(asset.SectorCode) && !string.IsNullOrWhiteSpace(asset.SubSectorCode))
-                subSectorName = (await _lookupService.GetSubSectorNameByCodeAsync(asset.SectorCode, asset.SubSectorCode, cancellationToken)) ?? "N/A";
-
-            var assetTypeName = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty
-                ? (await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)) ?? "N/A"
+            var assetTypeName = asset.AssetTypeId.HasValue 
+                ? await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)
                 : asset.AssetTypeOther ?? "N/A";
-            if (assetTypeName == "N/A" && !string.IsNullOrWhiteSpace(asset.AssetTypeCode))
-                assetTypeName = (await _lookupService.GetAssetTypeNameByCodeAsync(asset.AssetTypeCode, cancellationToken)) ?? "N/A";
-
-            var companyName = !string.IsNullOrWhiteSpace(asset.CompanyName)
-                ? asset.CompanyName
-                : (await _middlewareService.GetCompanyByIdAsync(asset.CompanyId))?.Name;
             
             assetDtos.Add(new AssetListDto
             {
@@ -276,7 +231,7 @@ public class GetTeamAssetsDashboardQueryHandler
                 SubmittedAt = asset.SubmittedAt,
                 TotalCapex = asset.TotalCapex,
                 TotalOpex = asset.TotalOpex,
-                CompanyName = companyName,
+                CompanyName = asset.CompanyName,
                 CreatedAt = asset.CreatedAt
             });
         }
@@ -306,16 +261,13 @@ public class GetInfrabaseAdminDashboardQueryHandler
 {
     private readonly IAssetRepository _repository;
     private readonly IConfigurationLookupService _lookupService;
-    private readonly IMiddlewareIntegrationService _middlewareService;
 
     public GetInfrabaseAdminDashboardQueryHandler(
         IAssetRepository repository,
-        IConfigurationLookupService lookupService,
-        IMiddlewareIntegrationService middlewareService)
+        IConfigurationLookupService lookupService)
     {
         _repository = repository;
         _lookupService = lookupService;
-        _middlewareService = middlewareService;
     }
 
     public async Task<InfrabaseAdminDashboardDto> Handle(
@@ -338,27 +290,15 @@ public class GetInfrabaseAdminDashboardQueryHandler
         
         foreach (var asset in paginatedAssets.Items)
         {
-            var sectorName = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty
-                ? (await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)) ?? "N/A"
+            var sectorName = asset.SectorId.HasValue 
+                ? await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)
                 : "N/A";
-            if (sectorName == "N/A" && !string.IsNullOrWhiteSpace(asset.SectorCode))
-                sectorName = (await _lookupService.GetSectorNameByCodeAsync(asset.SectorCode, cancellationToken)) ?? "N/A";
-
-            var subSectorName = asset.SubSectorId.HasValue && asset.SubSectorId.Value != Guid.Empty
-                ? (await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)) ?? "N/A"
+            var subSectorName = asset.SubSectorId.HasValue 
+                ? await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)
                 : "N/A";
-            if (subSectorName == "N/A" && !string.IsNullOrWhiteSpace(asset.SectorCode) && !string.IsNullOrWhiteSpace(asset.SubSectorCode))
-                subSectorName = (await _lookupService.GetSubSectorNameByCodeAsync(asset.SectorCode, asset.SubSectorCode, cancellationToken)) ?? "N/A";
-
-            var assetTypeName = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty
-                ? (await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)) ?? "N/A"
+            var assetTypeName = asset.AssetTypeId.HasValue 
+                ? await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)
                 : asset.AssetTypeOther ?? "N/A";
-            if (assetTypeName == "N/A" && !string.IsNullOrWhiteSpace(asset.AssetTypeCode))
-                assetTypeName = (await _lookupService.GetAssetTypeNameByCodeAsync(asset.AssetTypeCode, cancellationToken)) ?? "N/A";
-
-            var companyName = !string.IsNullOrWhiteSpace(asset.CompanyName)
-                ? asset.CompanyName
-                : (await _middlewareService.GetCompanyByIdAsync(asset.CompanyId))?.Name;
             
             assetDtos.Add(new AssetListDto
             {
@@ -372,7 +312,7 @@ public class GetInfrabaseAdminDashboardQueryHandler
                 SubmittedAt = asset.SubmittedAt,
                 TotalCapex = asset.TotalCapex,
                 TotalOpex = asset.TotalOpex,
-                CompanyName = companyName,
+                CompanyName = asset.CompanyName,
                 CreatedAt = asset.CreatedAt
             });
         }

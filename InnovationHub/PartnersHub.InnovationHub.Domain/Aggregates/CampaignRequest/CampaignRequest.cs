@@ -112,13 +112,17 @@ namespace PartnersHub.InnovationHub.Domain.Aggregates.Campaigns
                                                              List<(Guid Id, string Name)> EvaluatorsList,
                                                              List<(Guid Id, string Name)> SponsorsList,
                                                              List<(string name, int value)> EvaluationCriteriaList,
-                                                             List<Guid>? LinkedDevCoChallenges)
+                                                             List<Guid>? LinkedDevCoChallenges,
+                                                     string SubmitterEmail)
         {
             if (userId == null)
                 return Result<CampaignRequest>.Failure("User ID is required");
 
             if (string.IsNullOrWhiteSpace(name))
                 return Result<CampaignRequest>.Failure("Name is required");
+
+            if (!EmailRegex.IsMatch(SubmitterEmail))
+                return Result<CampaignRequest>.Failure("Invalid email format");
 
             var campaignRequest = new CampaignRequest
             {
@@ -133,7 +137,8 @@ namespace PartnersHub.InnovationHub.Domain.Aggregates.Campaigns
                 SubmissionDeadLine = SubmissionDate,
                 Comments = string.Empty,
                 CreatedAt = DateTime.UtcNow,
-                CreatedBy = userId.ToString()
+                CreatedBy = userId.ToString(),
+                UserEmail = SubmitterEmail
             };
 
             SponsorsList.ForEach(s => { campaignRequest.AddSponsor(s.Id, s.Name); });

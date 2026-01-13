@@ -212,7 +212,7 @@ public class CreateOpportunityCommandHandler : IRequestHandler<CreateOpportunity
         {
             return Result.Failure("Thematic Area does not exist");
         }
-        if (await _opportunityRepository.IsOpportunityWithTitleAndCompanyExistsAsync(command.Title,( command.IsAdmin == true ? command.UserCompanyId.Value : _userService.CompanyId)))
+        if (await _opportunityRepository.IsOpportunityWithTitleAndCompanyExistsAsync(command.Title,( command.IsAdmin == true ? command.CompanyId : _userService.CompanyId)))
         {
             return Result.Failure("Opportunity with the same title exists");
 

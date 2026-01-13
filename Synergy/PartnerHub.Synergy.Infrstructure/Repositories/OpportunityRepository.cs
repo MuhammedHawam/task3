@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using PartnersHub.Synergy.Application.Common;
+using PartnersHub.Synergy.Application.Common.Helpers;
 using PartnersHub.Synergy.Application.Common.Options;
 using PartnersHub.Synergy.Application.Interfaces.Repository;
 using PartnersHub.Synergy.Application.Models;
@@ -268,7 +269,6 @@ public class OpportunityRepository : IOpportunityRepository
         DateOnly? startDate = null,
         DateOnly? endDate = null,
         string? sortBy = null,
-        bool sortDescending = true,
         bool asNoTracking = true)
     {
         // Remove duplicate includes
@@ -308,7 +308,6 @@ public class OpportunityRepository : IOpportunityRepository
         }
         else if (companyIds == null || !companyIds.Any())
         {
-            //TODO: review the uncommented code
             // Default: only show published opportunities for public search
             //query = query.Where(o => 
             //    o.Status == OpportunityStatus.Published || 
@@ -369,9 +368,13 @@ public class OpportunityRepository : IOpportunityRepository
         // Get total count AFTER filtering but BEFORE pagination
         var totalCount = await query.CountAsync();
 
-        // Apply sorting
-        query = (sortBy?.ToLower(), sortDescending) switch
+        var (field, descending) = ParseHelper.ParseSort(sortBy);
+
+        
+        query = (field, descending) switch
         {
+            ("requestid", false) => query.OrderBy(o => o.RequestId),
+            ("requestid", true) => query.OrderByDescending(o => o.RequestId),
             ("title", true) => query.OrderByDescending(o => o.Title.Value),
             ("title", false) => query.OrderBy(o => o.Title.Value),
             ("startdate", true) => query.OrderByDescending(o => o.StartDate),
@@ -380,8 +383,9 @@ public class OpportunityRepository : IOpportunityRepository
             ("enddate", false) => query.OrderBy(o => o.EndDate),
             ("status", true) => query.OrderByDescending(o => o.Status),
             ("status", false) => query.OrderBy(o => o.Status),
-            ("submissiondate", true) or ("createdat", true) or _ when sortDescending => query.OrderByDescending(o => o.CreatedAt),
-            ("submissiondate", false) or ("createdat", false) or _ => query.OrderBy(o => o.CreatedAt)
+            ("submissiondate", false) or ("createdate", false) => query.OrderBy(o => o.CreatedAt),
+            ("submissiondate", true) or ("createdate", true) => query.OrderByDescending(o => o.CreatedAt),
+            _ => query.OrderByDescending(o => o.CreatedAt)
         };
 
         // Apply pagination

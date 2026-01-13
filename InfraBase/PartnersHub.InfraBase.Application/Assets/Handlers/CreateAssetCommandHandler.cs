@@ -15,7 +15,6 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITokenService _tokenService;
     private readonly IMiddlewareIntegrationService _middlewareService;
-    private readonly IConfigurationLookupService _lookupService;
     private readonly ILogger<CreateAssetCommandHandler> _logger;
 
     public CreateAssetCommandHandler(
@@ -23,14 +22,12 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
         IUnitOfWork unitOfWork,
         ITokenService tokenService,
         IMiddlewareIntegrationService middlewareService,
-        IConfigurationLookupService lookupService,
         ILogger<CreateAssetCommandHandler> logger)
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
         _tokenService = tokenService;
         _middlewareService = middlewareService;
-        _lookupService = lookupService;
         _logger = logger;
     }
 
@@ -67,35 +64,17 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
             _logger.LogError(ex, "Error fetching company name for {CompanyId}", command.CompanyId);
         }
 
-        // Resolve stable lookup codes from IDs (IDs can change if ConfigurationHub is reseeded).
-        var sectorCode = command.SectorId.HasValue && command.SectorId.Value != Guid.Empty
-            ? await _lookupService.GetSectorCodeAsync(command.SectorId.Value, cancellationToken)
-            : null;
-        var subSectorCode = command.SubSectorId.HasValue && command.SubSectorId.Value != Guid.Empty
-            ? await _lookupService.GetSubSectorCodeAsync(command.SubSectorId.Value, cancellationToken)
-            : null;
-        var assetTypeCode = command.AssetTypeId.HasValue && command.AssetTypeId.Value != Guid.Empty
-            ? await _lookupService.GetAssetTypeCodeAsync(command.AssetTypeId.Value, cancellationToken)
-            : null;
-        var uomCode = command.UnitOfMeasurementId.HasValue && command.UnitOfMeasurementId.Value != Guid.Empty
-            ? await _lookupService.GetUomCodeAsync(command.UnitOfMeasurementId.Value, cancellationToken)
-            : null;
-
         var assetResult = Asset.Create(
             command.AssetName, 
             command.LocationCity, 
             command.SectorId, 
             command.SubSectorId, 
             command.AssetTypeId, 
-            sectorCode,
-            subSectorCode,
-            assetTypeCode,
             command.AssetTypeOther, 
             command.QuantityOfAsset, 
             command.CapacityPerAsset, 
             command.UnitOfMeasurementId, 
             command.UnitOfMeasurementOther,
-            uomCode,
             command.Description, 
             command.ConstructionStartingQuarter, 
             command.ConstructionStartingYear, 
@@ -111,7 +90,7 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
             command.IsPifGuaranteesRequired, 
             userName, // Use username for history
             command.CompanyId,
-            companyName ?? command.CompanyName);
+            command.CompanyName);
 
         if (assetResult.IsFailure)
         {
