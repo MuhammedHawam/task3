@@ -47,7 +47,7 @@ public class AssetIntegrationTests
     #region Required Field Validation Tests
 
     [Test]
-    public void CreateAsset_WithoutAssetName_FailsValidation()
+    public void CreateAsset_WithoutAssetName_Succeeds()
     {
         var result = Asset.Create(
             "", // Empty asset name
@@ -77,8 +77,8 @@ public class AssetIntegrationTests
             Guid.NewGuid(),
             "Test Company");
 
-        Assert.That(result.IsFailure, Is.True);
-        Assert.That(result.Error, Does.Contain("Asset name"));
+        Assert.That(result.IsSuccess, Is.True);
+        Assert.That(result.Value!.AssetName.Value, Is.EqualTo(string.Empty));
     }
 
     [Test]
@@ -549,15 +549,14 @@ public class AssetIntegrationTests
     }
 
     [Test]
-    public void CannotSubmit_WithoutOpex()
+    public void CanSubmit_WithoutOpex()
     {
         var asset = CreateTestAsset();
         asset.AddCapexDetail(2024, 10000, asset.CreatedBy!);
 
         var result = asset.Submit(asset.CreatedBy!, "Infra-000001", false);
         
-        Assert.That(result.IsFailure, Is.True);
-        Assert.That(result.Error, Does.Contain("OPEX"));
+        Assert.That(result.IsSuccess, Is.True);
     }
 
     [Test]

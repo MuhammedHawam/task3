@@ -10,13 +10,16 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
 {
     private readonly IAssetRepository _repository;
     private readonly IConfigurationLookupService _lookupService;
+    private readonly IMiddlewareIntegrationService _middlewareService;
 
     public GetAssetByIdQueryHandler(
         IAssetRepository repository,
-        IConfigurationLookupService lookupService)
+        IConfigurationLookupService lookupService,
+        IMiddlewareIntegrationService middlewareService)
     {
         _repository = repository;
         _lookupService = lookupService;
+        _middlewareService = middlewareService;
     }
 
     public async Task<AssetDto?> Handle(GetAssetByIdQuery query, 
@@ -52,6 +55,20 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             ? (asset.UnitOfMeasurementOther ?? "N/A")
             : uomName;
 
+        var companyName = asset.CompanyName;
+        try
+        {
+            var company = await _middlewareService.GetCompanyByIdAsync(asset.CompanyId);
+            if (!string.IsNullOrWhiteSpace(company?.Name))
+            {
+                companyName = company.Name;
+            }
+        }
+        catch
+        {
+            // ignore and fall back to stored name
+        }
+
         return new AssetDto
         {
             Id = asset.Id,
@@ -64,13 +81,15 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             SubSectorName = subSectorName,
             AssetTypeId = asset.AssetTypeId,
             AssetTypeName = assetTypeName,
-            AssetTypeOther = asset.AssetTypeOther,
+            // Only expose "Other" when no predefined lookup is selected.
+            AssetTypeOther = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty ? null : asset.AssetTypeOther,
             QuantityOfAsset = asset.QuantityOfAsset,
             CapacityPerAsset = asset.CapacityPerAsset,
             TotalCapacity = asset.TotalCapacity,
             UnitOfMeasurementId = asset.UnitOfMeasurementId,
             UnitOfMeasurementName = uomName,
-            UnitOfMeasurementOther = asset.UnitOfMeasurementOther,
+            // Only expose "Other" when no predefined lookup is selected.
+            UnitOfMeasurementOther = asset.UnitOfMeasurementId.HasValue && asset.UnitOfMeasurementId.Value != Guid.Empty ? null : asset.UnitOfMeasurementOther,
             Description = asset.Description?.Value,
             ConstructionStartingQuarter = asset.ConstructionStartingQuarter,
             ConstructionStartingYear = asset.ConstructionStartingYear,
@@ -97,7 +116,7 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             ApprovedBy = asset.ApprovedBy,
             ApprovedAt = asset.ApprovedAt,
             CompanyId = asset.CompanyId,
-            CompanyName = asset.CompanyName,
+            CompanyName = companyName,
             CreatedBy = asset.CreatedBy,
             CreatedAt = asset.CreatedAt,
             UpdatedBy = asset.UpdatedBy,

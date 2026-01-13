@@ -13,9 +13,10 @@ public class AssetName : ValueObject
 
     public static Result<AssetName> Create(string? value)
     {
+        // Asset name is optional for now (can be empty/null).
         if (string.IsNullOrWhiteSpace(value))
         {
-            return Result<AssetName>.Failure("Asset name is required");
+            return Result<AssetName>.Success(new AssetName(string.Empty));
         }
 
         var trimmed = value.Trim();

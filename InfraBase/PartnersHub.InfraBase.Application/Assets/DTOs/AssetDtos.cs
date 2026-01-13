@@ -15,12 +15,18 @@ public record AssetDto
     public Guid? AssetTypeId { get; init; }
     public string? AssetTypeName { get; init; }
     public string? AssetTypeOther { get; init; }
+    public string AssetTypeDisplayName => !string.IsNullOrWhiteSpace(AssetTypeName)
+        ? AssetTypeName!
+        : AssetTypeOther ?? "N/A";
     public decimal? QuantityOfAsset { get; init; }
     public decimal CapacityPerAsset { get; init; }
     public decimal? TotalCapacity { get; init; }
     public Guid? UnitOfMeasurementId { get; init; }
     public string? UnitOfMeasurementName { get; init; }
     public string? UnitOfMeasurementOther { get; init; }
+    public string UnitOfMeasurementDisplayName => !string.IsNullOrWhiteSpace(UnitOfMeasurementName)
+        ? UnitOfMeasurementName!
+        : UnitOfMeasurementOther ?? "N/A";
     public string? Description { get; init; }
     public int? ConstructionStartingQuarter { get; init; }
     public int? ConstructionStartingYear { get; init; }
@@ -44,6 +50,7 @@ public record AssetDto
     public decimal? IRR { get; init; }
     public bool? IsPifGuaranteesRequired { get; init; }
     public AssetStatuses Status { get; init; }
+    public string StatusDisplayName => Status.GetDisplayName();
     public string? SubmittedBy { get; init; }
     public DateTime? SubmittedAt { get; init; }
     public string? RejectionReason { get; init; }
