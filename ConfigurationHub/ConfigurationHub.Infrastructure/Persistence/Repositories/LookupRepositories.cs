@@ -145,6 +145,19 @@ public class AssetTypeRepository : IAssetTypeRepository {
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<AssetType>> GetBySubSectorIdAsync(Guid subSectorId, CancellationToken cancellationToken = default)
+    {
+        // Filter through mapping table and only return active asset types.
+        return await (
+                from map in _context.SubSectorAssetTypes
+                join assetType in _context.AssetTypes on map.AssetTypeId equals assetType.Id
+                where map.SubSectorId == subSectorId && assetType.IsActive
+                orderby assetType.DisplayOrder
+                select assetType
+            )
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<bool> CodeExistsAsync(string code, Guid? excludeId = null, CancellationToken cancellationToken = default) {
         var query = _context.AssetTypes.Where(a => a.Code == code);
 

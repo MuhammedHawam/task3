@@ -10,6 +10,7 @@ public interface IAssetTypeRepository {
     Task<AssetType?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
     Task<IEnumerable<AssetType>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<AssetType>> GetActiveAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<AssetType>> GetBySubSectorIdAsync(Guid subSectorId, CancellationToken cancellationToken = default);
     Task<bool> CodeExistsAsync(string code, Guid? excludeId = null, CancellationToken cancellationToken = default);
     Task AddAsync(AssetType assetType, CancellationToken cancellationToken = default);
     void Update(AssetType assetType);

@@ -21,6 +21,7 @@ public static class DbInitializer
             await SeedWhiteListIPsAsync(context);
             await SeedSectorsAsync(context);
             await SeedAssetTypesAsync(context);
+            await SeedSubSectorAssetTypesAsync(context);
             await SeedUnitsOfMeasurementAsync(context);
             await SeedTermsAndConditionsAsync(context);
 
@@ -212,6 +213,72 @@ public static class DbInitializer
         }
     }
 
+    private static async Task SeedSubSectorAssetTypesAsync(ConfigurationHubDbContext context)
+    {
+        var lookupTriples = GetInfraBaseLookupSeedData();
+
+        // Build lookup maps based on persisted values (do not rely on deterministic GUIDs).
+        var sectors = context.Sectors.ToList();
+        var sectorNameById = sectors.ToDictionary(s => s.Id, s => s.NameEn);
+
+        var subSectors = context.SubSectors.ToList();
+        var subSectorIdBySectorAndName = subSectors
+            .Where(ss => sectorNameById.ContainsKey(ss.SectorId))
+            .ToDictionary(
+                ss => $"{sectorNameById[ss.SectorId].Trim().ToUpperInvariant()}|{ss.NameEn.Trim().ToUpperInvariant()}",
+                ss => ss.Id,
+                StringComparer.OrdinalIgnoreCase);
+
+        var assetTypes = context.AssetTypes.ToList();
+        var assetTypeIdByName = assetTypes.ToDictionary(a => a.NameEn.Trim(), a => a.Id, StringComparer.OrdinalIgnoreCase);
+
+        var desiredPairs = new HashSet<(Guid SubSectorId, Guid AssetTypeId)>();
+
+        foreach (var (sector, subSector, asset) in lookupTriples)
+        {
+            var key = $"{sector.Trim().ToUpperInvariant()}|{subSector.Trim().ToUpperInvariant()}";
+            if (!subSectorIdBySectorAndName.TryGetValue(key, out var subSectorId))
+            {
+                continue;
+            }
+
+            if (!assetTypeIdByName.TryGetValue(asset.Trim(), out var assetTypeId))
+            {
+                continue;
+            }
+
+            desiredPairs.Add((subSectorId, assetTypeId));
+        }
+
+        if (desiredPairs.Count == 0)
+        {
+            return;
+        }
+
+        var existingPairs = context.SubSectorAssetTypes
+            .Select(x => new { x.SubSectorId, x.AssetTypeId })
+            .ToList()
+            .Select(x => (x.SubSectorId, x.AssetTypeId))
+            .ToHashSet();
+
+        var toAdd = new List<SubSectorAssetType>();
+        foreach (var (subSectorId, assetTypeId) in desiredPairs)
+        {
+            if (existingPairs.Contains((subSectorId, assetTypeId)))
+            {
+                continue;
+            }
+
+            var created = SubSectorAssetType.Create(subSectorId, assetTypeId).Value!;
+            toAdd.Add(created);
+        }
+
+        if (toAdd.Count > 0)
+        {
+            await context.SubSectorAssetTypes.AddRangeAsync(toAdd);
+        }
+    }
+
     private static async Task SeedUnitsOfMeasurementAsync(ConfigurationHubDbContext context)
     {
         var uoms = new[]
@@ -225,7 +292,8 @@ public static class DbInitializer
             UnitOfMeasurement.Create("KG", "????????", "Kilogram", "???", 7, SystemUserId).Value!,
             UnitOfMeasurement.Create("LITER", "???", "Liter", "???", 8, SystemUserId).Value!,
             UnitOfMeasurement.Create("CUBIC_M", "??? ????", "Cubic Meter", "?³", 9, SystemUserId).Value!,
-            UnitOfMeasurement.Create("MW", "???????", "Megawatt", "???????", 10, SystemUserId).Value!
+            UnitOfMeasurement.Create("MW", "???????", "Megawatt", "???????", 10, SystemUserId).Value!,
+            UnitOfMeasurement.Create("OTHER", "????", "Other", null, 999, SystemUserId).Value!
         };
 
         var existing = context.UnitsOfMeasurement.ToList();

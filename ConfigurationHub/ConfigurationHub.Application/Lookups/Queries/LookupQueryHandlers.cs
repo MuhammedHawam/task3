@@ -189,6 +189,32 @@ public class GetActiveAssetTypesQueryHandler : IRequestHandler<GetActiveAssetTyp
     }
 }
 
+public class GetAssetTypesBySubSectorIdQueryHandler : IRequestHandler<GetAssetTypesBySubSectorIdQuery, IEnumerable<AssetTypeDto>>
+{
+    private readonly IAssetTypeRepository _repository;
+
+    public GetAssetTypesBySubSectorIdQueryHandler(IAssetTypeRepository repository)
+    {
+        _repository = repository;
+    }
+
+    public async Task<IEnumerable<AssetTypeDto>> Handle(GetAssetTypesBySubSectorIdQuery request, CancellationToken cancellationToken)
+    {
+        var assetTypes = await _repository.GetBySubSectorIdAsync(request.SubSectorId, cancellationToken);
+        return assetTypes.Select(a => new AssetTypeDto
+        {
+            Id = a.Id,
+            Code = a.Code,
+            NameAr = a.NameAr,
+            NameEn = a.NameEn,
+            DescriptionAr = a.DescriptionAr,
+            DescriptionEn = a.DescriptionEn,
+            DisplayOrder = a.DisplayOrder,
+            IsActive = a.IsActive
+        });
+    }
+}
+
 // UnitOfMeasurement Query Handlers
 public class GetAllUnitsOfMeasurementQueryHandler : IRequestHandler<GetAllUnitsOfMeasurementQuery, IEnumerable<UnitOfMeasurementDto>> {
     private readonly IUnitOfMeasurementRepository _repository;
