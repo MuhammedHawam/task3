@@ -113,35 +113,6 @@ public class AssetTypeConfiguration : IEntityTypeConfiguration<AssetType> {
     }
 }
 
-public class SubSectorAssetTypeConfiguration : IEntityTypeConfiguration<SubSectorAssetType>
-{
-    public void Configure(EntityTypeBuilder<SubSectorAssetType> builder)
-    {
-        builder.ToTable("SubSectorAssetTypes");
-
-        builder.HasKey(x => x.Id);
-
-        builder.Property(x => x.SubSectorId)
-            .IsRequired();
-
-        builder.Property(x => x.AssetTypeId)
-            .IsRequired();
-
-        builder.HasIndex(x => new { x.SubSectorId, x.AssetTypeId })
-            .IsUnique();
-
-        builder.HasOne<SubSector>()
-            .WithMany()
-            .HasForeignKey(x => x.SubSectorId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasOne<AssetType>()
-            .WithMany()
-            .HasForeignKey(x => x.AssetTypeId)
-            .OnDelete(DeleteBehavior.Cascade);
-    }
-}
-
 public class UnitOfMeasurementConfiguration : IEntityTypeConfiguration<UnitOfMeasurement> {
     public void Configure(EntityTypeBuilder<UnitOfMeasurement> builder) {
         builder.ToTable("UnitsOfMeasurement");

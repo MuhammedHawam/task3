@@ -20,7 +20,6 @@ public class ConfigurationHubDbContext : DbContext {
     public DbSet<Sector> Sectors => Set<Sector>();
     public DbSet<SubSector> SubSectors => Set<SubSector>();
     public DbSet<AssetType> AssetTypes => Set<AssetType>();
-    public DbSet<SubSectorAssetType> SubSectorAssetTypes => Set<SubSectorAssetType>();
     public DbSet<UnitOfMeasurement> UnitsOfMeasurement => Set<UnitOfMeasurement>();
 
     public DbSet<DomainModule> Modules => Set<DomainModule>();
