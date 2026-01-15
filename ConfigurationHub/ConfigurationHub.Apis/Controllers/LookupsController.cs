@@ -112,6 +112,17 @@ public class LookupsController : ControllerBase {
         return Ok(result);
     }
 
+    /// <summary>
+    /// Get asset types by sub-sector ID
+    /// </summary>
+    [HttpGet("subsectors/{subSectorId:guid}/assettypes")]
+    public async Task<ActionResult<IEnumerable<AssetTypeDto>>> GetAssetTypesBySubSectorId(Guid subSectorId)
+    {
+        var query = new GetAssetTypesBySubSectorIdQuery { SubSectorId = subSectorId };
+        var result = await _mediator.Send(query);
+        return Ok(result);
+    }
+
     #endregion
 
     #region UnitsOfMeasurement

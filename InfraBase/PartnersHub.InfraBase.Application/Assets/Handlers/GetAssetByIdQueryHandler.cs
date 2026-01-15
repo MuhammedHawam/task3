@@ -34,12 +34,16 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
         var sectorName = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty
             ? await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)
             : null;
-        sectorName = string.IsNullOrWhiteSpace(sectorName) ? "N/A" : sectorName;
+        sectorName = string.IsNullOrWhiteSpace(sectorName)
+            ? (asset.SectorOther ?? "N/A")
+            : sectorName;
 
         var subSectorName = asset.SubSectorId.HasValue && asset.SubSectorId.Value != Guid.Empty
             ? await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)
             : null;
-        subSectorName = string.IsNullOrWhiteSpace(subSectorName) ? "N/A" : subSectorName;
+        subSectorName = string.IsNullOrWhiteSpace(subSectorName)
+            ? (asset.SubSectorOther ?? "N/A")
+            : subSectorName;
 
         var assetTypeName = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty
             ? await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)
@@ -77,8 +81,12 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             LocationCity = asset.LocationCity.Value,
             SectorId = asset.SectorId,
             SectorName = sectorName,
+            // Only expose "Other" when no predefined lookup is selected.
+            SectorOther = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty ? null : asset.SectorOther,
             SubSectorId = asset.SubSectorId,
             SubSectorName = subSectorName,
+            // Only expose "Other" when no predefined lookup is selected.
+            SubSectorOther = asset.SubSectorId.HasValue && asset.SubSectorId.Value != Guid.Empty ? null : asset.SubSectorOther,
             AssetTypeId = asset.AssetTypeId,
             AssetTypeName = assetTypeName,
             // Only expose "Other" when no predefined lookup is selected.

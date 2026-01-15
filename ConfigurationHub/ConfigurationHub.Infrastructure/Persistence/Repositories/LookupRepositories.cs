@@ -145,6 +145,58 @@ public class AssetTypeRepository : IAssetTypeRepository {
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<AssetType>> GetBySubSectorIdAsync(Guid subSectorId, CancellationToken cancellationToken = default)
+    {
+        // No persisted mapping table. Derive mapping from the shared InfraBase seed triples:
+        // (SectorName, SubSectorName) -> allowed AssetType names.
+        var subSector = await _context.SubSectors
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == subSectorId, cancellationToken);
+
+        if (subSector == null)
+        {
+            return Enumerable.Empty<AssetType>();
+        }
+
+        var sector = await _context.Sectors
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == subSector.SectorId, cancellationToken);
+
+        if (sector == null)
+        {
+            return Enumerable.Empty<AssetType>();
+        }
+
+        var sectorName = (sector.NameEn ?? sector.NameAr ?? string.Empty).Trim();
+        var subSectorName = (subSector.NameEn ?? subSector.NameAr ?? string.Empty).Trim();
+
+        if (string.IsNullOrWhiteSpace(sectorName) || string.IsNullOrWhiteSpace(subSectorName))
+        {
+            return Enumerable.Empty<AssetType>();
+        }
+
+        var allowedAssetNames = InfraBaseLookupSeedData.Triples
+            .Where(t =>
+                string.Equals(t.Sector.Trim(), sectorName, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(t.SubSector.Trim(), subSectorName, StringComparison.OrdinalIgnoreCase))
+            .Select(t => t.Asset.Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (allowedAssetNames.Count == 0)
+        {
+            return Enumerable.Empty<AssetType>();
+        }
+
+        // Seeded AssetTypes use NameEn as the asset string from the triples, so match by NameEn.
+        return await _context.AssetTypes
+            .AsNoTracking()
+            .Where(a => a.IsActive && allowedAssetNames.Contains(a.NameEn, StringComparer.OrdinalIgnoreCase))
+            .OrderBy(a => a.DisplayOrder)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<bool> CodeExistsAsync(string code, Guid? excludeId = null, CancellationToken cancellationToken = default) {
         var query = _context.AssetTypes.Where(a => a.Code == code);
 

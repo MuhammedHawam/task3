@@ -20,6 +20,10 @@ public record GetSubSectorsBySectorIdQuery : IRequest<IEnumerable<SubSectorDto>>
 // AssetType Queries
 public record GetAllAssetTypesQuery : IRequest<IEnumerable<AssetTypeDto>>;
 public record GetActiveAssetTypesQuery : IRequest<IEnumerable<AssetTypeDto>>;
+public record GetAssetTypesBySubSectorIdQuery : IRequest<IEnumerable<AssetTypeDto>>
+{
+    public Guid SubSectorId { get; init; }
+}
 
 // UnitOfMeasurement Queries
 public record GetAllUnitsOfMeasurementQuery : IRequest<IEnumerable<UnitOfMeasurementDto>>;

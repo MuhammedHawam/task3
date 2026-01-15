@@ -71,8 +71,10 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
         var assetResult = Asset.Create(
             command.AssetName, 
             command.LocationCity, 
-            command.SectorId, 
-            command.SubSectorId, 
+            command.SectorId,
+            command.SectorOther,
+            command.SubSectorId,
+            command.SubSectorOther,
             command.AssetTypeId, 
             command.AssetTypeOther, 
             command.QuantityOfAsset, 
