@@ -25,14 +25,14 @@ public class GetAssetListQueryHandler : IRequestHandler<GetAssetListQuery, Pagin
         _middlewareService = middlewareService;
     }
 
-    public async Task<PaginatedList<AssetListDto>> Handle(GetAssetListQuery query, 
+    public async Task<PaginatedList<AssetListDto>> Handle(GetAssetListQuery query,
         CancellationToken cancellationToken)
     {
         var paginatedAssets = await _repository.GetPagedAsync(
-            query.PageNumber, 
-            query.PageSize, 
-            query.Status, 
-            query.CompanyId, 
+            query.PageNumber,
+            query.PageSize,
+            query.Status,
+            query.CompanyId,
             query.SearchTerm,
             query.SortBy,
             query.SortDescending,
@@ -106,9 +106,9 @@ public class GetAssetListQueryHandler : IRequestHandler<GetAssetListQuery, Pagin
         }
 
         return new PaginatedList<AssetListDto>(
-            items, 
-            paginatedAssets.TotalCount, 
-            query.PageNumber, 
+            items,
+            paginatedAssets.TotalCount,
+            query.PageNumber,
             query.PageSize);
     }
 

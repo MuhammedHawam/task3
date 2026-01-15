@@ -36,4 +36,15 @@ public static class EnumExtensions
             _ => developmentType.ToString()
         };
     }
+
+    public static string GetDisplayName(this UserType usertype)
+    {
+        return usertype switch
+        {
+            UserType.PcAdmin => "pcAdmin",
+            UserType.InfraAdmin => "infraAdmin",
+            UserType.Contributor => "contributor",
+            _ => usertype.ToString()
+        };
+    }
 }

@@ -5,5 +5,6 @@ public enum TenderingStages {
     Tendered = 1,
     Award = 2,
     Execution = 3,
-    Delivered = 4
+    Delivered = 4,
+    NA= 5
 }

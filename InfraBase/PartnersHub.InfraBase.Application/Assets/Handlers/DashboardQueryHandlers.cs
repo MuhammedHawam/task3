@@ -8,7 +8,7 @@ using PartnersHub.InfraBase.Domain.Enums;
 
 namespace PartnersHub.InfraBase.Application.Assets.Handlers;
 
-public class GetContributorDashboardQueryHandler 
+public class GetContributorDashboardQueryHandler
     : IRequestHandler<GetContributorDashboardQuery, ContributorDashboardDto>
 {
     private readonly IAssetRepository _repository;
@@ -26,11 +26,11 @@ public class GetContributorDashboardQueryHandler
     }
 
     public async Task<ContributorDashboardDto> Handle(
-        GetContributorDashboardQuery request, 
+        GetContributorDashboardQuery request,
         CancellationToken cancellationToken)
     {
         var statusCounts = await _repository.GetStatusCountsByUserAsync(
-            request.UserId, 
+            request.UserId,
             cancellationToken);
 
         var paginatedAssets = await _repository.GetPaginatedByUserAsync(
@@ -42,7 +42,7 @@ public class GetContributorDashboardQueryHandler
             cancellationToken);
 
         var assetDtos = new List<AssetListDto>();
-        
+
         var companyNamesById = await LoadCompanyNamesAsync(
             paginatedAssets.Items.Select(a => a.CompanyId).Distinct(),
             cancellationToken);
@@ -69,7 +69,7 @@ public class GetContributorDashboardQueryHandler
             var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
                 ? resolvedCompanyName
                 : asset.CompanyName;
-            
+
             assetDtos.Add(new AssetListDto
             {
                 Id = asset.Id,
@@ -96,14 +96,14 @@ public class GetContributorDashboardQueryHandler
                 PendingOnPcAdmin = statusCounts.GetValueOrDefault(AssetStatuses.Submitted, 0),
                 PendingOnInfrabaseAdmin = statusCounts.GetValueOrDefault(AssetStatuses.AcceptedByPcAdmin, 0),
                 Draft = statusCounts.GetValueOrDefault(AssetStatuses.Draft, 0),
-                ReturnForCorrection = 
+                ReturnForCorrection =
                     statusCounts.GetValueOrDefault(AssetStatuses.RejectedByPcAdmin, 0) +
                     statusCounts.GetValueOrDefault(AssetStatuses.RejectedByInfrabase, 0)
             },
             Assets = new PaginatedList<AssetListDto>(
-                assetDtos, 
-                paginatedAssets.TotalCount, 
-                request.PageNumber, 
+                assetDtos,
+                paginatedAssets.TotalCount,
+                request.PageNumber,
                 request.PageSize)
         };
     }
@@ -141,7 +141,7 @@ public class GetContributorDashboardQueryHandler
     }
 }
 
-public class GetPcAdminDashboardQueryHandler 
+public class GetPcAdminDashboardQueryHandler
     : IRequestHandler<GetPcAdminDashboardQuery, PcAdminDashboardDto>
 {
     private readonly IAssetRepository _repository;
@@ -159,11 +159,11 @@ public class GetPcAdminDashboardQueryHandler
     }
 
     public async Task<PcAdminDashboardDto> Handle(
-        GetPcAdminDashboardQuery request, 
+        GetPcAdminDashboardQuery request,
         CancellationToken cancellationToken)
     {
         var statusCounts = await _repository.GetStatusCountsByUserAsync(
-            request.UserId, 
+            request.UserId,
             cancellationToken);
 
         var paginatedAssets = await _repository.GetPaginatedByUserAsync(
@@ -175,7 +175,7 @@ public class GetPcAdminDashboardQueryHandler
             cancellationToken);
 
         var assetDtos = new List<AssetListDto>();
-        
+
         var companyNamesById = await LoadCompanyNamesAsync(
             paginatedAssets.Items.Select(a => a.CompanyId).Distinct(),
             cancellationToken);
@@ -202,7 +202,7 @@ public class GetPcAdminDashboardQueryHandler
             var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
                 ? resolvedCompanyName
                 : asset.CompanyName;
-            
+
             assetDtos.Add(new AssetListDto
             {
                 Id = asset.Id,
@@ -228,14 +228,14 @@ public class GetPcAdminDashboardQueryHandler
                 Draft = statusCounts.GetValueOrDefault(AssetStatuses.Draft, 0),
                 CheckedAssets = statusCounts.GetValueOrDefault(AssetStatuses.AcceptedByInfrabase, 0),
                 PendingOnInfrabaseAdmin = statusCounts.GetValueOrDefault(AssetStatuses.AcceptedByPcAdmin, 0),
-                ReturnForCorrection = 
+                ReturnForCorrection =
                     statusCounts.GetValueOrDefault(AssetStatuses.RejectedByPcAdmin, 0) +
                     statusCounts.GetValueOrDefault(AssetStatuses.RejectedByInfrabase, 0)
             },
             MyAssets = new PaginatedList<AssetListDto>(
-                assetDtos, 
-                paginatedAssets.TotalCount, 
-                request.PageNumber, 
+                assetDtos,
+                paginatedAssets.TotalCount,
+                request.PageNumber,
                 request.PageSize)
         };
     }
@@ -273,7 +273,7 @@ public class GetPcAdminDashboardQueryHandler
     }
 }
 
-public class GetTeamAssetsDashboardQueryHandler 
+public class GetTeamAssetsDashboardQueryHandler
     : IRequestHandler<GetTeamAssetsDashboardQuery, TeamAssetsDashboardDto>
 {
     private readonly IAssetRepository _repository;
@@ -291,7 +291,7 @@ public class GetTeamAssetsDashboardQueryHandler
     }
 
     public async Task<TeamAssetsDashboardDto> Handle(
-        GetTeamAssetsDashboardQuery request, 
+        GetTeamAssetsDashboardQuery request,
         CancellationToken cancellationToken)
     {
         var statusCounts = await _repository.GetTeamAssetsStatusCountsAsync(
@@ -309,7 +309,7 @@ public class GetTeamAssetsDashboardQueryHandler
             cancellationToken);
 
         var assetDtos = new List<AssetListDto>();
-        
+
         var companyNamesById = await LoadCompanyNamesAsync(
             paginatedAssets.Items.Select(a => a.CompanyId).Distinct(),
             cancellationToken);
@@ -336,7 +336,7 @@ public class GetTeamAssetsDashboardQueryHandler
             var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
                 ? resolvedCompanyName
                 : asset.CompanyName;
-            
+
             assetDtos.Add(new AssetListDto
             {
                 Id = asset.Id,
@@ -360,15 +360,15 @@ public class GetTeamAssetsDashboardQueryHandler
             {
                 TotalAssets = statusCounts.Values.Sum(),
                 CheckedAssets = statusCounts.GetValueOrDefault(AssetStatuses.AcceptedByInfrabase, 0),
-                ReturnForCorrection = 
+                ReturnForCorrection =
                     statusCounts.GetValueOrDefault(AssetStatuses.RejectedByPcAdmin, 0) +
                     statusCounts.GetValueOrDefault(AssetStatuses.RejectedByInfrabase, 0),
                 PendingAssets = statusCounts.GetValueOrDefault(AssetStatuses.Submitted, 0)
             },
             Assets = new PaginatedList<AssetListDto>(
-                assetDtos, 
-                paginatedAssets.TotalCount, 
-                request.PageNumber, 
+                assetDtos,
+                paginatedAssets.TotalCount,
+                request.PageNumber,
                 request.PageSize)
         };
     }
@@ -406,7 +406,7 @@ public class GetTeamAssetsDashboardQueryHandler
     }
 }
 
-public class GetInfrabaseAdminDashboardQueryHandler 
+public class GetInfrabaseAdminDashboardQueryHandler
     : IRequestHandler<GetInfrabaseAdminDashboardQuery, InfrabaseAdminDashboardDto>
 {
     private readonly IAssetRepository _repository;
@@ -424,7 +424,7 @@ public class GetInfrabaseAdminDashboardQueryHandler
     }
 
     public async Task<InfrabaseAdminDashboardDto> Handle(
-        GetInfrabaseAdminDashboardQuery request, 
+        GetInfrabaseAdminDashboardQuery request,
         CancellationToken cancellationToken)
     {
         var statusCounts = await _repository.GetStatusCountsAsync(null, cancellationToken);
@@ -440,7 +440,7 @@ public class GetInfrabaseAdminDashboardQueryHandler
             cancellationToken);
 
         var assetDtos = new List<AssetListDto>();
-        
+
         var companyNamesById = await LoadCompanyNamesAsync(
             paginatedAssets.Items.Select(a => a.CompanyId).Distinct(),
             cancellationToken);
@@ -467,7 +467,7 @@ public class GetInfrabaseAdminDashboardQueryHandler
             var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
                 ? resolvedCompanyName
                 : asset.CompanyName;
-            
+
             assetDtos.Add(new AssetListDto
             {
                 Id = asset.Id,
@@ -498,9 +498,9 @@ public class GetInfrabaseAdminDashboardQueryHandler
                 RejectedByInfrabase = statusCounts.GetValueOrDefault(AssetStatuses.RejectedByInfrabase, 0)
             },
             Assets = new PaginatedList<AssetListDto>(
-                assetDtos, 
-                paginatedAssets.TotalCount, 
-                request.PageNumber, 
+                assetDtos,
+                paginatedAssets.TotalCount,
+                request.PageNumber,
                 request.PageSize)
         };
     }

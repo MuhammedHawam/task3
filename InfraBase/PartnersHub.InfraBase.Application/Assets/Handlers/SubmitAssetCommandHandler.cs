@@ -3,6 +3,7 @@ using PartnersHub.InfraBase.Application.Assets.Commands;
 using PartnersHub.InfraBase.Application.Common.Exceptions;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Repository;
+using PartnersHub.InfraBase.Domain.Enums;
 
 namespace PartnersHub.InfraBase.Application.Assets.Handlers;
 
@@ -25,7 +26,7 @@ public class SubmitAssetCommandHandler : IRequestHandler<SubmitAssetCommand, str
     public async Task<string> Handle(SubmitAssetCommand command, CancellationToken cancellationToken)
     {
         var userName = _tokenService.GetUserName(); // Use username for readable history
-        var isPcAdmin = command.IsPcAdmin || _tokenService.IsPcAdmin();
+        var isPcAdmin = command.UserType == UserType.PcAdmin || _tokenService.IsPcAdmin();
 
         var asset = await _repository.GetByIdWithDetailsAsync(command.Id, cancellationToken);
         if (asset == null)
@@ -41,15 +42,23 @@ public class SubmitAssetCommandHandler : IRequestHandler<SubmitAssetCommand, str
         {
             throw new ValidationException(submitResult.Error!);
         }
-
-        if (isPcAdmin)
+        if (command.UserType == UserType.InfraAdmin)
         {
-            var approveResult = asset.AcceptByPcAdmin(userName);
+            var approveResult = asset.CheckByInfrabaseAdmin(userName);
             if (approveResult.IsFailure)
             {
                 throw new ValidationException(approveResult.Error!);
             }
         }
+        //else if (isPcAdmin)
+        //{
+        //    var approveResult = asset.AcceptByPcAdmin(userName);
+        //    if (approveResult.IsFailure)
+        //    {
+        //        throw new ValidationException(approveResult.Error!);
+        //    }
+        //}
+
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         

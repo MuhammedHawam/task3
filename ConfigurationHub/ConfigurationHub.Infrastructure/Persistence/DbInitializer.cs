@@ -515,6 +515,7 @@ For more information, please contact the support team.",
             ("Digital & Technology", "Data Transmission", "Fiber Optics"),
             ("Digital & Technology", "Data Transmission", "Cable‑Only Network"),
             ("Digital & Technology", "Other", "Other"),
+            ("Digital & Technology", "N/A" , "N/A" ),
 
             // Enabling Works
             ("Enabling Works", "Earthwork", "Earthwork"),
@@ -522,6 +523,7 @@ For more information, please contact the support team.",
             ("Enabling Works", "Marine works", "Dredging"),
             ("Enabling Works", "Marine works", "Jetty / Pontoon"),
             ("Enabling Works", "Other", "Other"),
+            ("Enabling Works", "N/A" , "N/A" ),
 
             // Energy & Power
             ("Energy & Power", "EV system", "EV Charging Station"),
@@ -558,6 +560,7 @@ For more information, please contact the support team.",
             ("Energy & Power", "Power Transmission", "110 kV Step‑Down Substation"),
             ("Energy & Power", "Power Transmission", "Sub‑Sea Utility Infrastructure (cable & pipe)"),
             ("Energy & Power", "Other", "Other"),
+            ("Energy & Power", "N/A" , "N/A"),
 
             // Industrial Infrastructure
             ("Industrial Infrastructure", "Fuel / Gas Facility", "Gas stations"),
@@ -566,6 +569,7 @@ For more information, please contact the support team.",
             ("Industrial Infrastructure", "Gas", "Gas Networks"),
             ("Industrial Infrastructure", "Factories", "Factories"),
             ("Industrial Infrastructure", "Other", "Other"),
+            ("Industrial Infrastructure", "N/A" , "N/A"),
 
             // Social Infrastructure
             ("Social Infrastructure", "Public Realm", "Park"),
@@ -577,6 +581,7 @@ For more information, please contact the support team.",
             ("Social Infrastructure", "Public Realm", "Open Space"),
             ("Social Infrastructure", "Public Realm", "Sport Field"),
             ("Social Infrastructure", "Other", "Other"),
+            ("Social Infrastructure", "N/A" , "N/A"),
             ("Social Infrastructure", "Marine", "Canal"),
             ("Social Infrastructure", "Marine", "Marina Berth"),
             ("Social Infrastructure", "Culture", "Exhibition Centers"),
@@ -626,6 +631,7 @@ For more information, please contact the support team.",
             ("Transportation & Logistics", "Roads", "Tunnel"),
             ("Transportation & Logistics", "Car Parking", "Car Parking"),
             ("Transportation & Logistics", "Other", "Other"),
+            ("Transportation & Logistics", "N/A" , "N/A"),
 
             // Water & Waste
             ("Water & Waste", "District cooling", "District‑Cooling Plant"),
@@ -651,8 +657,12 @@ For more information, please contact the support team.",
             ("Water & Waste", "Storm water", "Bioretention Wetland System"),
             ("Water & Waste", "Storm water", "Storm‑Water Network"),
             ("Water & Waste", "Other", "Other"),
+            ("Water & Waste", "N/A" , "N/A"),
 
             // Other
             ("Other", "Other", "Other"),
+
+            // N/A
+            ("N/A" , "N/A" , "N/A")
         };
 }

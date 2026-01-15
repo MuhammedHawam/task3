@@ -139,6 +139,18 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
             }
         }
 
+        // InfraBase Admin: assets created by InfraBase admin should be marked as checked immediately.
+        if (_tokenService.IsInfrabaseAdmin())
+        {
+            var nextNumber = await _repository.GetNextAssetNumberAsync(cancellationToken);
+            var assetCode = $"Infra-{nextNumber:D6}";
+
+            var checkResult = asset.MarkAsCheckedByInfrabaseAdminOnCreate(userName, assetCode);
+            if (checkResult.IsFailure)
+            {
+                throw new ValidationException(checkResult.Error!);
+            }
+        }
         await _repository.AddAsync(asset, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -162,10 +174,11 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
 
     private Guid ResolveCompanyId(CreateAssetCommand command)
     {
-        var tokenCompanyId = _tokenService.GetCompanyId();
+        var tokenCompanyId = command.CompanyId;
+      
 
         // InfraBase Admin flow: allow creating on behalf of a selected portfolio company.
-        if (_tokenService.IsInfrabaseAdmin())
+        if (command.UserType == UserType.InfraAdmin)
         {
             if (command.PortfolioCompanyId.HasValue && command.PortfolioCompanyId.Value != Guid.Empty)
             {
@@ -173,20 +186,20 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
             }
 
             // If admin didn't pass an override, fall back to token company id (if any).
-            if (tokenCompanyId.HasValue && tokenCompanyId.Value != Guid.Empty)
+            if (tokenCompanyId != Guid.Empty)
             {
-                return tokenCompanyId.Value;
+                return tokenCompanyId;
             }
 
             throw new ValidationException("Portfolio company is required to create an asset on behalf of a company.");
         }
 
         // Non-admin flow: company must come from token.
-        if (!tokenCompanyId.HasValue || tokenCompanyId.Value == Guid.Empty)
+        if (tokenCompanyId == Guid.Empty)
         {
             throw new ValidationException("Company ID is required to create an asset.");
         }
 
-        return tokenCompanyId.Value;
+        return tokenCompanyId;
     }
 }

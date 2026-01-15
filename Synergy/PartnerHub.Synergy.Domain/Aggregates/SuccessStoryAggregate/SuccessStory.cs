@@ -266,6 +266,8 @@ public class SuccessStory : AggregateRoot
             return Result<bool>.Failure("Only approved stories can be published");
 
         Status = SuccessStoryStatus.Published;
+        ApprovedBy = userId;
+        ApprovedAt = DateTime.UtcNow;
         MarkAsUpdated(userId);
         
         AddDomainEvent(new SuccessStoryApprovedEvent(Id, CompanyId, Status, userId, successStoryName, companyName, companyEmail));

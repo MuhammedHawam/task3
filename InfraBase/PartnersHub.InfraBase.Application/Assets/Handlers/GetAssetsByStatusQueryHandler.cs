@@ -23,14 +23,14 @@ public class GetAssetsByStatusQueryHandler : IRequestHandler<GetAssetsByStatusQu
         _middlewareService = middlewareService;
     }
 
-    public async Task<List<AssetListDto>> Handle(GetAssetsByStatusQuery query, 
+    public async Task<List<AssetListDto>> Handle(GetAssetsByStatusQuery query,
         CancellationToken cancellationToken)
     {
         var paginatedAssets = await _repository.GetPagedAsync(
-            1, 
-            int.MaxValue, 
-            query.Status, 
-            query.CompanyId, 
+            1,
+            int.MaxValue,
+            query.Status,
+            query.CompanyId,
             null,
             null,
             false,

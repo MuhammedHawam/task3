@@ -23,5 +23,11 @@ public enum FundingModels
     /// <summary>
     /// The project is funded through a joint venture.
     /// </summary>
-    JointVenture = 3
+    JointVenture = 3,
+
+    /// <summary>
+    /// N/A value
+    /// </summary>
+    NA= 4
+
 }

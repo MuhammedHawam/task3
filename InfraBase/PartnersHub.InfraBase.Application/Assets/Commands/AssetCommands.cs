@@ -37,6 +37,8 @@ public record CreateAssetCommand : IRequest<Guid>
     public FinancialEntryMode? CapexEntryMode { get; init; }
     public FinancialEntryMode? OpexEntryMode { get; init; }
     public FundingModels? FundingModel { get; init; }
+    public UserType? UserType { get; set; }
+    public string UserTypeDisplayName => UserType?.GetDisplayName() ?? "N/A";
     public decimal? ExpectedDebt { get; init; }
     public decimal? ExpectedEquity { get; init; }
     public bool? IsRevenueGenerating { get; init; }
@@ -83,7 +85,7 @@ public record UpdateAssetCommand : IRequest<bool>
 
 public record SaveAssetAsDraftCommand(Guid Id) : IRequest<bool>;
 
-public record SubmitAssetCommand(Guid Id, bool IsPcAdmin = false) : IRequest<string>;
+public record SubmitAssetCommand(Guid Id,UserType UserType) : IRequest<string>;
 
 public record AcceptAssetByPcAdminCommand(Guid Id) : IRequest<bool>;
 

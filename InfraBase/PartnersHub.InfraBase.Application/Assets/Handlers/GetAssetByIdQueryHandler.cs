@@ -22,7 +22,7 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
         _middlewareService = middlewareService;
     }
 
-    public async Task<AssetDto?> Handle(GetAssetByIdQuery query, 
+    public async Task<AssetDto?> Handle(GetAssetByIdQuery query,
         CancellationToken cancellationToken)
     {
         var asset = await _repository.GetByIdWithDetailsAsync(query.Id, cancellationToken);
@@ -141,7 +141,7 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
                 PerformedBy = h.PerformedBy,
                 PerformedAt = h.PerformedAt,
                 Comments = h.Comments
-            }).OrderBy(h=>h.PerformedAt).ToList(),
+            }).OrderBy(h => h.PerformedAt).ToList(),
             Attachments = asset.GetAttachments().Select(a => new AssetAttachmentDto
             {
                 Id = a.Id,

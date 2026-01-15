@@ -182,9 +182,9 @@ public class Asset : AggregateRoot
                 return Result<Asset>.Failure("Quantity of asset must be greater than zero");
             }
 
-            if (normalizedQuantity.Value.ToString().Replace(".", "").Replace(",", "").Length > 5)
+            if (normalizedQuantity.Value.ToString().Replace(".", "").Replace(",", "").Length > 15)
             {
-                return Result<Asset>.Failure("Quantity of asset cannot exceed 5 digits");
+                return Result<Asset>.Failure("Quantity of asset cannot exceed 15 digits");
             }
         }
 
@@ -193,9 +193,9 @@ public class Asset : AggregateRoot
             return Result<Asset>.Failure("Capacity per asset must be greater than zero");
         }
 
-        if (capacityPerAsset.ToString().Replace(".", "").Replace(",", "").Length > 5)
+        if (capacityPerAsset.ToString().Replace(".", "").Replace(",", "").Length > 15)
         {
-            return Result<Asset>.Failure("Capacity per asset cannot exceed 5 digits");
+            return Result<Asset>.Failure("Capacity per asset cannot exceed 15 digits");
         }
 
         var descriptionResult = AssetDescription.Create(description);
@@ -509,6 +509,11 @@ public class Asset : AggregateRoot
             return Result<bool>.Failure("Cannot submit asset without CAPEX details");
         }
 
+        //if (_opexDetails.Count == 0)
+        //{
+        //    return Result<bool>.Failure("Cannot submit asset without OPEX details");
+        //}
+
         if (CapexEntryMode == FinancialEntryMode.SingleYear && _capexDetails.Count != 1)
         {
             return Result<bool>.Failure("CAPEX Single-Year mode requires exactly one year row");
@@ -542,7 +547,50 @@ public class Asset : AggregateRoot
         AddDomainEvent(new AssetSubmittedEvent(Id, AssetCode, userId ?? "Admin", CompanyId, CreatedBy ?? userId ?? "Admin", !isPcAdmin));
         return Result<bool>.Success(true);
     }
+    /// <summary>
+    /// InfraBase Admin flow: when an InfraBase admin creates an asset, it should be marked as checked immediately.
+    /// This bypasses the normal contributor/PC-admin approval workflow.
+    /// </summary>
+    public Result<bool> MarkAsCheckedByInfrabaseAdminOnCreate(string userId, string assetCode)
+    {
+        if (Status != AssetStatuses.Draft)
+        {
+            return Result<bool>.Failure("Only draft assets can be marked as checked on creation");
+        }
 
+        if (string.IsNullOrWhiteSpace(assetCode))
+        {
+            return Result<bool>.Failure("Asset must have an asset code");
+        }
+
+        AssignAssetCode(assetCode);
+
+        Status = AssetStatuses.AcceptedByInfrabase;
+        ApprovedBy = userId;
+        ApprovedAt = DateTime.Now;
+
+        SubmittedBy = userId;
+        SubmittedAt = DateTime.Now;
+
+        UpdatedBy = userId;
+        UpdatedAt = DateTime.Now;
+
+        RejectionReason = null;
+        RejectedBy = null;
+        RejectedAt = null;
+
+        AddHistory("Checked by Infrabase Admin", !string.IsNullOrWhiteSpace(userId) ? userId : "Admin",
+            "Asset created by Infrabase Admin and marked as checked");
+
+        AddDomainEvent(new AssetCheckedByInfrabaseAdminEvent(
+            Id,
+            AssetCode!,
+            !string.IsNullOrWhiteSpace(userId) ? userId : "Admin",
+            CreatedBy ?? userId ?? "Admin",
+            CompanyId));
+
+        return Result<bool>.Success(true);
+    }
     public Result<bool> AcceptByPcAdmin(string userId)
     {
         //TODO: Review
@@ -597,7 +645,7 @@ public class Asset : AggregateRoot
 
     public Result<bool> CheckByInfrabaseAdmin(string userId)
     {
-        if (Status != AssetStatuses.AcceptedByPcAdmin)
+        if (Status != AssetStatuses.AcceptedByPcAdmin && Status != AssetStatuses.Submitted)
         {
             return Result<bool>.Failure("Only PC Admin accepted assets can be checked by Infrabase Admin");
         }
