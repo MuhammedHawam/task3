@@ -17,7 +17,9 @@ public class Asset : AggregateRoot
     public LocationCity LocationCity { get; private set; } = null!;
 
     public Guid? SectorId { get; private set; }
+    public string? SectorOther { get; private set; }
     public Guid? SubSectorId { get; private set; }
+    public string? SubSectorOther { get; private set; }
     public Guid? AssetTypeId { get; private set; }
     public string? AssetTypeOther { get; private set; }
     public decimal? QuantityOfAsset { get; private set; }
@@ -65,8 +67,8 @@ public class Asset : AggregateRoot
 
     private Asset() { }
 
-    private Asset(AssetName assetName, LocationCity locationCity, Guid? sectorId,
-        Guid? subSectorId, Guid? assetTypeId, string? assetTypeOther, decimal? quantityOfAsset,
+    private Asset(AssetName assetName, LocationCity locationCity, Guid? sectorId, string? sectorOther,
+        Guid? subSectorId, string? subSectorOther, Guid? assetTypeId, string? assetTypeOther, decimal? quantityOfAsset,
         decimal capacityPerAsset, Guid? unitOfMeasurementId, string? unitOfMeasurementOther,
         AssetDescription? description,
         int? constructionStartingQuarter, int? constructionStartingYear,
@@ -79,7 +81,9 @@ public class Asset : AggregateRoot
         AssetName = assetName;
         LocationCity = locationCity;
         SectorId = sectorId;
+        SectorOther = sectorOther;
         SubSectorId = subSectorId;
+        SubSectorOther = subSectorOther;
         AssetTypeId = assetTypeId;
         AssetTypeOther = assetTypeOther;
         QuantityOfAsset = quantityOfAsset;
@@ -111,7 +115,7 @@ public class Asset : AggregateRoot
     }
 
     public static Result<Asset> Create(string assetName, string locationCity,
-        Guid? sectorId, Guid? subSectorId, Guid? assetTypeId, string? assetTypeOther,
+        Guid? sectorId, string? sectorOther, Guid? subSectorId, string? subSectorOther, Guid? assetTypeId, string? assetTypeOther,
         decimal? quantityOfAsset, decimal capacityPerAsset, Guid? unitOfMeasurementId,
         string? unitOfMeasurementOther, string? description,
         int? constructionStartingQuarter, int? constructionStartingYear,
@@ -143,14 +147,40 @@ public class Asset : AggregateRoot
             return Result<Asset>.Failure("User is required");
         }
 
-        if (!sectorId.HasValue || sectorId.Value == Guid.Empty)
+        var normalizedSectorOther = string.IsNullOrWhiteSpace(sectorOther) ? null : sectorOther.Trim();
+        var normalizedSubSectorOther = string.IsNullOrWhiteSpace(subSectorOther) ? null : subSectorOther.Trim();
+
+        // Normalize IDs and prefer free-text "Other" when provided.
+        var normalizedSectorId = sectorId.HasValue && sectorId.Value != Guid.Empty ? sectorId : null;
+        if (!string.IsNullOrWhiteSpace(normalizedSectorOther))
+        {
+            normalizedSectorId = null;
+        }
+
+        var normalizedSubSectorId = subSectorId.HasValue && subSectorId.Value != Guid.Empty ? subSectorId : null;
+        if (!string.IsNullOrWhiteSpace(normalizedSubSectorOther))
+        {
+            normalizedSubSectorId = null;
+        }
+
+        if (normalizedSectorId == null && string.IsNullOrWhiteSpace(normalizedSectorOther))
         {
             return Result<Asset>.Failure("Sector is required");
         }
 
-        if (!subSectorId.HasValue || subSectorId.Value == Guid.Empty)
+        if (normalizedSubSectorId == null && string.IsNullOrWhiteSpace(normalizedSubSectorOther))
         {
             return Result<Asset>.Failure("Sub sector is required");
+        }
+
+        if (normalizedSectorOther != null && normalizedSectorOther.Length > 200)
+        {
+            return Result<Asset>.Failure("Sector other cannot exceed 200 characters");
+        }
+
+        if (normalizedSubSectorOther != null && normalizedSubSectorOther.Length > 200)
+        {
+            return Result<Asset>.Failure("Sub sector other cannot exceed 200 characters");
         }
 
         // Set AssetTypeId to null if empty or if AssetTypeOther is provided
@@ -291,7 +321,9 @@ public class Asset : AggregateRoot
         }
 
         var asset = new Asset(assetNameResult.Value!, locationCityResult.Value!,
-            sectorId, subSectorId, assetTypeId, assetTypeOther, normalizedQuantity,
+            normalizedSectorId, normalizedSectorOther,
+            normalizedSubSectorId, normalizedSubSectorOther,
+            assetTypeId, assetTypeOther, normalizedQuantity,
             capacityPerAsset, unitOfMeasurementId, unitOfMeasurementOther,
             descriptionResult.Value!,
             normalizedStartQuarter, normalizedStartYear,
@@ -695,7 +727,7 @@ public class Asset : AggregateRoot
     }
 
     public Result<bool> UpdateAssetInformation(string? assetName, string? locationCity,
-        Guid? sectorId, Guid? subSectorId, Guid? assetTypeId, string? assetTypeOther,
+        Guid? sectorId, string? sectorOther, Guid? subSectorId, string? subSectorOther, Guid? assetTypeId, string? assetTypeOther,
         decimal? quantityOfAsset, decimal? capacityPerAsset, Guid? unitOfMeasurementId,
         string? unitOfMeasurementOther, string? description,
         int? constructionStartingQuarter, int? constructionStartingYear,
@@ -748,6 +780,35 @@ public class Asset : AggregateRoot
             }
         }
 
+        if (sectorOther != null)
+        {
+            var normalized = string.IsNullOrWhiteSpace(sectorOther) ? null : sectorOther.Trim();
+            if (normalized != null && normalized.Length > 200)
+            {
+                return Result<bool>.Failure("Sector other cannot exceed 200 characters");
+            }
+
+            if (SectorOther != normalized)
+            {
+                changes.Add("SectorOther");
+                oldValues.Add(SectorOther ?? "");
+                newValues.Add(normalized ?? "");
+                SectorOther = normalized;
+            }
+
+            if (!string.IsNullOrWhiteSpace(normalized))
+            {
+                // Free-text sector selected => clear lookup id
+                if (SectorId != null)
+                {
+                    changes.Add("SectorId");
+                    oldValues.Add(SectorId?.ToString() ?? "Not set");
+                    newValues.Add("Not set");
+                    SectorId = null;
+                }
+            }
+        }
+
         if (sectorId.HasValue)
         {
             if (sectorId.Value == Guid.Empty)
@@ -755,13 +816,50 @@ public class Asset : AggregateRoot
                 return Result<bool>.Failure("Sector is required");
             }
 
-            var normalizedSectorId = sectorId.Value;
-            if (SectorId != normalizedSectorId)
+            if (SectorId != sectorId.Value)
             {
                 changes.Add("SectorId");
                 oldValues.Add(SectorId?.ToString() ?? "Not set");
-                newValues.Add(normalizedSectorId.ToString());
-                SectorId = normalizedSectorId;
+                newValues.Add(sectorId.Value.ToString());
+                SectorId = sectorId.Value;
+            }
+
+            // Predefined sector selected => clear free-text
+            if (!string.IsNullOrWhiteSpace(SectorOther))
+            {
+                changes.Add("SectorOther");
+                oldValues.Add(SectorOther);
+                newValues.Add("");
+                SectorOther = null;
+            }
+        }
+
+        if (subSectorOther != null)
+        {
+            var normalized = string.IsNullOrWhiteSpace(subSectorOther) ? null : subSectorOther.Trim();
+            if (normalized != null && normalized.Length > 200)
+            {
+                return Result<bool>.Failure("Sub sector other cannot exceed 200 characters");
+            }
+
+            if (SubSectorOther != normalized)
+            {
+                changes.Add("SubSectorOther");
+                oldValues.Add(SubSectorOther ?? "");
+                newValues.Add(normalized ?? "");
+                SubSectorOther = normalized;
+            }
+
+            if (!string.IsNullOrWhiteSpace(normalized))
+            {
+                // Free-text sub-sector selected => clear lookup id
+                if (SubSectorId != null)
+                {
+                    changes.Add("SubSectorId");
+                    oldValues.Add(SubSectorId?.ToString() ?? "Not set");
+                    newValues.Add("Not set");
+                    SubSectorId = null;
+                }
             }
         }
 
@@ -772,13 +870,21 @@ public class Asset : AggregateRoot
                 return Result<bool>.Failure("Sub sector is required");
             }
 
-            var normalizedSubSectorId = subSectorId.Value;
-            if (SubSectorId != normalizedSubSectorId)
+            if (SubSectorId != subSectorId.Value)
             {
                 changes.Add("SubSectorId");
                 oldValues.Add(SubSectorId?.ToString() ?? "Not set");
-                newValues.Add(normalizedSubSectorId.ToString());
-                SubSectorId = normalizedSubSectorId;
+                newValues.Add(subSectorId.Value.ToString());
+                SubSectorId = subSectorId.Value;
+            }
+
+            // Predefined sub-sector selected => clear free-text
+            if (!string.IsNullOrWhiteSpace(SubSectorOther))
+            {
+                changes.Add("SubSectorOther");
+                oldValues.Add(SubSectorOther);
+                newValues.Add("");
+                SubSectorOther = null;
             }
         }
 
@@ -1064,6 +1170,17 @@ public class Asset : AggregateRoot
             oldValues.Add(IsPifGuaranteesRequired?.ToString() ?? "Not set");
             newValues.Add(isPifGuaranteesRequired.Value.ToString());
             IsPifGuaranteesRequired = isPifGuaranteesRequired.Value;
+        }
+
+        // Ensure required classification values are still present.
+        if (SectorId == null && string.IsNullOrWhiteSpace(SectorOther))
+        {
+            return Result<bool>.Failure("Sector is required");
+        }
+
+        if (SubSectorId == null && string.IsNullOrWhiteSpace(SubSectorOther))
+        {
+            return Result<bool>.Failure("Sub sector is required");
         }
 
         if (changes.Any())

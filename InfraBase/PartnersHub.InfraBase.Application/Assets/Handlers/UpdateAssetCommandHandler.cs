@@ -37,8 +37,10 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
         var updateResult = asset.UpdateAssetInformation(
             command.AssetName, 
             command.LocationCity, 
-            command.SectorId, 
-            command.SubSectorId, 
+            command.SectorId,
+            command.SectorOther,
+            command.SubSectorId,
+            command.SubSectorOther,
             command.AssetTypeId, 
             command.AssetTypeOther, 
             command.QuantityOfAsset, 

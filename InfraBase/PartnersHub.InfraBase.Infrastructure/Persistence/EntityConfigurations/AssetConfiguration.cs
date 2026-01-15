@@ -32,7 +32,9 @@ public class AssetConfiguration : IEntityTypeConfiguration<Asset>
         });
 
         builder.Property(a => a.SectorId).IsRequired(false);
+        builder.Property(a => a.SectorOther).HasMaxLength(200).IsRequired(false);
         builder.Property(a => a.SubSectorId).IsRequired(false);
+        builder.Property(a => a.SubSectorOther).HasMaxLength(200).IsRequired(false);
         builder.Property(a => a.AssetTypeId).IsRequired(false);
         builder.Property(a => a.AssetTypeOther).HasMaxLength(200).IsRequired(false);
         builder.Property(a => a.QuantityOfAsset).HasColumnType("decimal(18,2)").IsRequired(false);

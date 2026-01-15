@@ -16,7 +16,9 @@ public record CreateAssetCommand : IRequest<Guid>
     public string? AssetName { get; init; }
     public string LocationCity { get; init; } = string.Empty;
     public Guid? SectorId { get; init; }
+    public string? SectorOther { get; init; }
     public Guid? SubSectorId { get; init; }
+    public string? SubSectorOther { get; init; }
     public Guid? AssetTypeId { get; init; }
     public string? AssetTypeOther { get; init; }
     public decimal? QuantityOfAsset { get; init; }
@@ -57,7 +59,9 @@ public record UpdateAssetCommand : IRequest<bool>
     public string? AssetName { get; init; }
     public string? LocationCity { get; init; }
     public Guid? SectorId { get; init; }
+    public string? SectorOther { get; init; }
     public Guid? SubSectorId { get; init; }
+    public string? SubSectorOther { get; init; }
     public Guid? AssetTypeId { get; init; }
     public string? AssetTypeOther { get; init; }
     public decimal? QuantityOfAsset { get; init; }

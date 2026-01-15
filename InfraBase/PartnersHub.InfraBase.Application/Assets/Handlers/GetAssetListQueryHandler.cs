@@ -72,11 +72,11 @@ public class GetAssetListQueryHandler : IRequestHandler<GetAssetListQuery, Pagin
             var sectorName = asset.SectorId.HasValue &&
                             sectorNamesById.TryGetValue(asset.SectorId.Value, out var foundSector)
                ? foundSector
-               : "N/A";
+               : asset.SectorOther ?? "N/A";
             var subSectorName = asset.SubSectorId.HasValue &&
                                 subSectorNamesById.TryGetValue(asset.SubSectorId.Value, out var foundSubSector)
                 ? foundSubSector
-                : "N/A";
+                : asset.SubSectorOther ?? "N/A";
             // Business rule: Use AssetTypeOther when AssetTypeId is null
             var assetTypeName = asset.AssetTypeId.HasValue &&
                                 assetTypeNamesById.TryGetValue(asset.AssetTypeId.Value, out var foundAssetType)

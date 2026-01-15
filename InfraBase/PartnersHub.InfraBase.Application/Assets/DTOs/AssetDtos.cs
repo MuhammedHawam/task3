@@ -10,8 +10,16 @@ public record AssetDto
     public string LocationCity { get; init; } = string.Empty;
     public Guid? SectorId { get; init; }
     public string? SectorName { get; init; }
+    public string? SectorOther { get; init; }
+    public string SectorDisplayName => !string.IsNullOrWhiteSpace(SectorName)
+        ? SectorName!
+        : SectorOther ?? "N/A";
     public Guid? SubSectorId { get; init; }
     public string? SubSectorName { get; init; }
+    public string? SubSectorOther { get; init; }
+    public string SubSectorDisplayName => !string.IsNullOrWhiteSpace(SubSectorName)
+        ? SubSectorName!
+        : SubSectorOther ?? "N/A";
     public Guid? AssetTypeId { get; init; }
     public string? AssetTypeName { get; init; }
     public string? AssetTypeOther { get; init; }
