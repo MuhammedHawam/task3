@@ -1,13 +1,9 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace PartnersHub.InfraBase.Infrastructure.Persistence.Migrations
 {
-    [DbContext(typeof(InfrabaseDbContext))]
-    [Migration("20260115171000_AddSectorAndSubSectorOtherToAssets")]
     public partial class AddSectorAndSubSectorOtherToAssets : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
