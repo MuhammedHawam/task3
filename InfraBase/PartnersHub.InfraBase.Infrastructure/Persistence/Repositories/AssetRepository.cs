@@ -36,6 +36,23 @@ public class AssetRepository : IAssetRepository
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
 
+    public async Task<Asset?> GetByIdWithFinancialsAsync(Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Assets
+            .Include(a => a.CapexDetails)
+            .Include(a => a.OpexDetails)
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+    }
+
+    public async Task<Asset?> GetByIdWithAttachmentsAsync(Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Assets
+            .Include(a => a.Attachments)
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+    }
+
     public async Task<PaginatedList<Asset>> GetPagedAsync(
         int pageNumber, 
         int pageSize, 

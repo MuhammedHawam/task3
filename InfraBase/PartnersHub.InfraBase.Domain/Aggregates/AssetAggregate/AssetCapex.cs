@@ -25,9 +25,9 @@ public class AssetCapex : Entity
             throw new ArgumentException("CAPEX amount must be greater than zero", nameof(amount));
         }
 
-        if (amount > 99999999999m) // Max 11 digits
+        if (amount > 999999999999999m) // Max 15 digits
         {
-            throw new ArgumentException("CAPEX amount cannot exceed 11 digits", nameof(amount));
+            throw new ArgumentException("CAPEX amount cannot exceed 15 digits", nameof(amount));
         }
 
         AssetId = assetId;
@@ -42,9 +42,9 @@ public class AssetCapex : Entity
             return Result<bool>.Failure("CAPEX amount must be greater than zero");
         }
 
-        if (newAmount > 99999999999m)
+        if (newAmount > 999999999999999m)
         {
-            return Result<bool>.Failure("CAPEX amount cannot exceed 11 digits");
+            return Result<bool>.Failure("CAPEX amount cannot exceed 15 digits");
         }
 
         Amount = newAmount;
