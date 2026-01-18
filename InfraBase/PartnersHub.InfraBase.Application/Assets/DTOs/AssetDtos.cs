@@ -1,4 +1,5 @@
 using PartnersHub.InfraBase.Domain.Enums;
+using System.Text.Json.Serialization;
 
 namespace PartnersHub.InfraBase.Application.Assets.DTOs;
 
@@ -52,10 +53,15 @@ public record AssetDto
     public decimal TotalOpex { get; init; }
     public FundingModels? FundingModel { get; init; }
     public string FundingModelDisplayName => FundingModel?.GetDisplayName() ?? "N/A";
+    [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
     public decimal? ExpectedDebt { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
     public decimal? ExpectedEquity { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
     public bool? IsRevenueGenerating { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
     public decimal? IRR { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
     public bool? IsPifGuaranteesRequired { get; init; }
     public AssetStatuses Status { get; init; }
     public string StatusDisplayName => Status.GetDisplayName();
