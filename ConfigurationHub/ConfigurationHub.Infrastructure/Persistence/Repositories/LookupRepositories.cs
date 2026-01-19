@@ -23,14 +23,16 @@ public class SectorRepository : ISectorRepository {
 
     public async Task<IEnumerable<Sector>> GetAllAsync(CancellationToken cancellationToken = default) {
         return await _context.Sectors
-            .OrderBy(s => s.DisplayOrder)
+            .OrderBy(s => s.Code == "OTHER" ? 1 : 0)
+            .ThenBy(s => s.DisplayOrder)
             .ToListAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<Sector>> GetActiveAsync(CancellationToken cancellationToken = default) {
         return await _context.Sectors
             .Where(s => s.IsActive)
-            .OrderBy(s => s.DisplayOrder)
+            .OrderBy(s => s.Code == "OTHER" ? 1 : 0)
+            .ThenBy(s => s.DisplayOrder)
             .ToListAsync(cancellationToken);
     }
 
@@ -75,21 +77,24 @@ public class SubSectorRepository : ISubSectorRepository {
 
     public async Task<IEnumerable<SubSector>> GetAllAsync(CancellationToken cancellationToken = default) {
         return await _context.SubSectors
-            .OrderBy(s => s.DisplayOrder)
+            .OrderBy(s => s.Code == "OTHER" ? 1 : 0)
+            .ThenBy(s => s.DisplayOrder)
             .ToListAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<SubSector>> GetActiveAsync(CancellationToken cancellationToken = default) {
         return await _context.SubSectors
             .Where(s => s.IsActive)
-            .OrderBy(s => s.DisplayOrder)
+            .OrderBy(s => s.Code == "OTHER" ? 1 : 0)
+            .ThenBy(s => s.DisplayOrder)
             .ToListAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<SubSector>> GetBySectorIdAsync(Guid sectorId, CancellationToken cancellationToken = default) {
         return await _context.SubSectors
             .Where(s => s.SectorId == sectorId && s.IsActive)
-            .OrderBy(s => s.DisplayOrder)
+            .OrderBy(s => s.Code == "OTHER" ? 1 : 0)
+            .ThenBy(s => s.DisplayOrder)
             .ToListAsync(cancellationToken);
     }
 
@@ -238,14 +243,16 @@ public class UnitOfMeasurementRepository : IUnitOfMeasurementRepository {
 
     public async Task<IEnumerable<UnitOfMeasurement>> GetAllAsync(CancellationToken cancellationToken = default) {
         return await _context.UnitsOfMeasurement
-            .OrderBy(u => u.DisplayOrder)
+            .OrderBy(u => u.Code == "OTHER" ? 1 : 0)
+            .ThenBy(u => u.DisplayOrder)
             .ToListAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<UnitOfMeasurement>> GetActiveAsync(CancellationToken cancellationToken = default) {
         return await _context.UnitsOfMeasurement
             .Where(u => u.IsActive)
-            .OrderBy(u => u.DisplayOrder)
+            .OrderBy(u => u.Code == "OTHER" ? 1 : 0)
+            .ThenBy(u => u.DisplayOrder)
             .ToListAsync(cancellationToken);
     }
 

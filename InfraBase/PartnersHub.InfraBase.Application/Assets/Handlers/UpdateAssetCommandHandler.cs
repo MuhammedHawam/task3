@@ -13,15 +13,18 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
     private readonly IAssetRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITokenService _tokenService;
+    private readonly IConfigurationLookupService _lookupService;
 
     public UpdateAssetCommandHandler(
         IAssetRepository repository, 
         IUnitOfWork unitOfWork,
-        ITokenService tokenService)
+        ITokenService tokenService,
+        IConfigurationLookupService lookupService)
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
         _tokenService = tokenService;
+        _lookupService = lookupService;
     }
 
     public async Task<bool> Handle(UpdateAssetCommand command, CancellationToken cancellationToken)
@@ -34,18 +37,40 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
             throw new NotFoundException("Asset", command.Id);
         }
 
+        var otherSectorId = await _lookupService.GetOtherSectorIdAsync(cancellationToken);
+        var sectorId = NormalizeOtherSelection(command.SectorId, otherSectorId);
+
+        var otherUomId = await _lookupService.GetOtherUomIdAsync(cancellationToken);
+        var unitOfMeasurementId = NormalizeOtherSelection(command.UnitOfMeasurementId, otherUomId);
+
+        var subSectorId = command.SubSectorId;
+        if (subSectorId.HasValue)
+        {
+            var sectorIdForSubSector = sectorId ?? otherSectorId;
+            if (sectorIdForSubSector.HasValue)
+            {
+                var otherSubSectorId = await _lookupService.GetOtherSubSectorIdAsync(
+                    sectorIdForSubSector.Value,
+                    cancellationToken);
+                if (otherSubSectorId.HasValue && subSectorId.Value == otherSubSectorId.Value)
+                {
+                    subSectorId = null;
+                }
+            }
+        }
+
         var updateResult = asset.UpdateAssetInformation(
             command.AssetName, 
             command.LocationCity, 
-            command.SectorId,
+            sectorId,
             command.SectorOther,
-            command.SubSectorId,
+            subSectorId,
             command.SubSectorOther,
             command.AssetTypeId, 
             command.AssetTypeOther, 
             command.QuantityOfAsset, 
             command.CapacityPerAsset, 
-            command.UnitOfMeasurementId, 
+            unitOfMeasurementId, 
             command.UnitOfMeasurementOther,
             command.Description, 
             command.ConstructionStartingQuarter, 
@@ -106,8 +131,34 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
             }
         }
 
+        if (_tokenService.IsInfrabaseAdmin())
+        {
+            var assetCode = asset.AssetCode;
+            if (string.IsNullOrWhiteSpace(assetCode))
+            {
+                var nextNumber = await _repository.GetNextAssetNumberAsync(cancellationToken);
+                assetCode = $"Infra-{nextNumber:D6}";
+            }
+
+            var checkResult = asset.MarkAsCheckedByInfrabaseAdminOnEdit(userName, assetCode);
+            if (checkResult.IsFailure)
+            {
+                throw new ValidationException(checkResult.Error!);
+            }
+        }
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    private static Guid? NormalizeOtherSelection(Guid? selectedId, Guid? otherId)
+    {
+        if (selectedId.HasValue && otherId.HasValue && selectedId.Value == otherId.Value)
+        {
+            return null;
+        }
+
+        return selectedId;
     }
 
     private static void ValidateYearRows(IEnumerable<int> years, string label)

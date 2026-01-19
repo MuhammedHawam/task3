@@ -623,6 +623,54 @@ public class Asset : AggregateRoot
 
         return Result<bool>.Success(true);
     }
+
+    public Result<bool> MarkAsCheckedByInfrabaseAdminOnEdit(string userId, string assetCode)
+    {
+        if (Status != AssetStatuses.Draft && Status != AssetStatuses.RejectedByPcAdmin &&
+            Status != AssetStatuses.RejectedByInfrabase)
+        {
+            return Result<bool>.Failure("Only draft, rejected, or returned for correction assets can be checked by Infrabase Admin");
+        }
+
+        if (string.IsNullOrWhiteSpace(assetCode) && string.IsNullOrWhiteSpace(AssetCode))
+        {
+            return Result<bool>.Failure("Asset must have an asset code");
+        }
+
+        if (string.IsNullOrWhiteSpace(AssetCode))
+        {
+            AssignAssetCode(assetCode);
+        }
+
+        Status = AssetStatuses.AcceptedByInfrabase;
+        ApprovedBy = userId;
+        ApprovedAt = DateTime.Now;
+
+        if (string.IsNullOrWhiteSpace(SubmittedBy))
+        {
+            SubmittedBy = userId;
+            SubmittedAt = DateTime.Now;
+        }
+
+        UpdatedBy = userId;
+        UpdatedAt = DateTime.Now;
+
+        RejectionReason = null;
+        RejectedBy = null;
+        RejectedAt = null;
+
+        AddHistory("Checked by Infrabase Admin", !string.IsNullOrWhiteSpace(userId) ? userId : "Admin",
+            "Asset updated and marked as checked");
+
+        AddDomainEvent(new AssetCheckedByInfrabaseAdminEvent(
+            Id,
+            AssetCode!,
+            !string.IsNullOrWhiteSpace(userId) ? userId : "Admin",
+            CreatedBy ?? userId ?? "Admin",
+            CompanyId));
+
+        return Result<bool>.Success(true);
+    }
     public Result<bool> AcceptByPcAdmin(string userId)
     {
         //TODO: Review
