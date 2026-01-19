@@ -26,7 +26,7 @@ public class RemoveAssetAttachmentCommandHandler : IRequestHandler<RemoveAssetAt
     {
         var userName = _tokenService.GetUserName(); // Use username for readable history
 
-        var asset = await _repository.GetByIdWithDetailsAsync(command.AssetId, cancellationToken);
+        var asset = await _repository.GetByIdWithAttachmentsAsync(command.AssetId, cancellationToken);
         if (asset == null)
         {
             throw new NotFoundException("Asset", command.AssetId);

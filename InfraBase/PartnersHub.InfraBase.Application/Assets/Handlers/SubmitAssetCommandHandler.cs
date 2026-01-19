@@ -28,7 +28,7 @@ public class SubmitAssetCommandHandler : IRequestHandler<SubmitAssetCommand, str
         var userName = _tokenService.GetUserName(); // Use username for readable history
         var isPcAdmin = command.UserType == UserType.PcAdmin || _tokenService.IsPcAdmin();
 
-        var asset = await _repository.GetByIdWithDetailsAsync(command.Id, cancellationToken);
+        var asset = await _repository.GetByIdWithFinancialsAsync(command.Id, cancellationToken);
         if (asset == null)
         {
             throw new NotFoundException("Asset", command.Id);

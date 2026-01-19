@@ -8,6 +8,8 @@ public interface IAssetRepository
 {
     Task<Asset?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Asset?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Asset?> GetByIdWithFinancialsAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Asset?> GetByIdWithAttachmentsAsync(Guid id, CancellationToken cancellationToken = default);
     Task<PaginatedList<Asset>> GetPagedAsync(
         int pageNumber, 
         int pageSize, 
