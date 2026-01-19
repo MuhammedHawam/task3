@@ -43,6 +43,9 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
         var otherUomId = await _lookupService.GetOtherUomIdAsync(cancellationToken);
         var unitOfMeasurementId = NormalizeOtherSelection(command.UnitOfMeasurementId, otherUomId);
 
+        var otherAssetTypeId = await _lookupService.GetOtherAssetTypeIdAsync(cancellationToken);
+        var assetTypeId = NormalizeOtherSelection(command.AssetTypeId, otherAssetTypeId);
+
         var subSectorId = command.SubSectorId;
         if (subSectorId.HasValue)
         {
@@ -66,7 +69,7 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
             command.SectorOther,
             subSectorId,
             command.SubSectorOther,
-            command.AssetTypeId, 
+            assetTypeId, 
             command.AssetTypeOther, 
             command.QuantityOfAsset, 
             command.CapacityPerAsset, 

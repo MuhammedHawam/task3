@@ -139,14 +139,16 @@ public class AssetTypeRepository : IAssetTypeRepository {
 
     public async Task<IEnumerable<AssetType>> GetAllAsync(CancellationToken cancellationToken = default) {
         return await _context.AssetTypes
-            .OrderBy(a => a.DisplayOrder)
+            .OrderBy(a => a.Code == "OTHER" ? 1 : 0)
+            .ThenBy(a => a.DisplayOrder)
             .ToListAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<AssetType>> GetActiveAsync(CancellationToken cancellationToken = default) {
         return await _context.AssetTypes
             .Where(a => a.IsActive)
-            .OrderBy(a => a.DisplayOrder)
+            .OrderBy(a => a.Code == "OTHER" ? 1 : 0)
+            .ThenBy(a => a.DisplayOrder)
             .ToListAsync(cancellationToken);
     }
 
@@ -198,7 +200,8 @@ public class AssetTypeRepository : IAssetTypeRepository {
         return await _context.AssetTypes
             .AsNoTracking()
             .Where(a => a.IsActive && allowedAssetNames.Contains(a.NameEn, StringComparer.OrdinalIgnoreCase))
-            .OrderBy(a => a.DisplayOrder)
+            .OrderBy(a => a.Code == "OTHER" ? 1 : 0)
+            .ThenBy(a => a.DisplayOrder)
             .ToListAsync(cancellationToken);
     }
 

@@ -63,6 +63,12 @@ public class ConfigurationLookupService : IConfigurationLookupService
         return subSectors?.FirstOrDefault(IsOtherLookup)?.Id;
     }
 
+    public async Task<Guid?> GetOtherAssetTypeIdAsync(CancellationToken cancellationToken = default)
+    {
+        var assetTypes = await GetAssetTypesAsync(cancellationToken);
+        return assetTypes?.FirstOrDefault(IsOtherLookup)?.Id;
+    }
+
     public async Task<Guid?> GetOtherUomIdAsync(CancellationToken cancellationToken = default)
     {
         var uoms = await GetUomsAsync(cancellationToken);

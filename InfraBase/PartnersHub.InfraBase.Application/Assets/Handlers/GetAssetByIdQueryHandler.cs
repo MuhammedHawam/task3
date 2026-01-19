@@ -33,6 +33,7 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
 
         var usesSectorOther = !string.IsNullOrWhiteSpace(asset.SectorOther);
         var usesSubSectorOther = !string.IsNullOrWhiteSpace(asset.SubSectorOther);
+        var usesAssetTypeOther = !string.IsNullOrWhiteSpace(asset.AssetTypeOther);
         var usesUomOther = !string.IsNullOrWhiteSpace(asset.UnitOfMeasurementOther);
 
         var sectorName = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty
@@ -99,6 +100,16 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             }
         }
 
+        var effectiveAssetTypeId = asset.AssetTypeId;
+        if (usesAssetTypeOther)
+        {
+            var otherAssetTypeId = await _lookupService.GetOtherAssetTypeIdAsync(cancellationToken);
+            if (otherAssetTypeId.HasValue)
+            {
+                effectiveAssetTypeId = otherAssetTypeId.Value;
+            }
+        }
+
         var companyName = asset.CompanyName;
         try
         {
@@ -127,10 +138,10 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             SubSectorName = subSectorName,
             // Keep "Other" text when it was used, even if we map to the lookup id for editing.
             SubSectorOther = usesSubSectorOther ? asset.SubSectorOther : null,
-            AssetTypeId = asset.AssetTypeId,
+            AssetTypeId = effectiveAssetTypeId,
             AssetTypeName = assetTypeName,
-            // Only expose "Other" when no predefined lookup is selected.
-            AssetTypeOther = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty ? null : asset.AssetTypeOther,
+            // Keep "Other" text when it was used, even if we map to the lookup id for editing.
+            AssetTypeOther = usesAssetTypeOther ? asset.AssetTypeOther : null,
             QuantityOfAsset = asset.QuantityOfAsset,
             CapacityPerAsset = asset.CapacityPerAsset,
             TotalCapacity = asset.TotalCapacity,

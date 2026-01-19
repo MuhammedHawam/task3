@@ -12,5 +12,6 @@ public interface IConfigurationLookupService
     Task<string?> GetUomNameAsync(Guid uomId, CancellationToken cancellationToken = default);
     Task<Guid?> GetOtherSectorIdAsync(CancellationToken cancellationToken = default);
     Task<Guid?> GetOtherSubSectorIdAsync(Guid sectorId, CancellationToken cancellationToken = default);
+    Task<Guid?> GetOtherAssetTypeIdAsync(CancellationToken cancellationToken = default);
     Task<Guid?> GetOtherUomIdAsync(CancellationToken cancellationToken = default);
 }
