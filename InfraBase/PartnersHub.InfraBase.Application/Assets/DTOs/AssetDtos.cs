@@ -218,7 +218,7 @@ public static class AssetStatusExtensions
             AssetStatuses.AcceptedByPcAdmin => "Pending on Infrabase Admin Checking",
             AssetStatuses.RejectedByPcAdmin => "Return for correction",
             AssetStatuses.AcceptedByInfrabase => "Checked",
-            AssetStatuses.RejectedByInfrabase => "Request for updates",
+            AssetStatuses.RejectedByInfrabase => "Return for correction",
             _ => status.ToString()
         };
     }
@@ -235,7 +235,7 @@ public static class AssetStatusExtensions
             AssetStatuses.AcceptedByPcAdmin => "Pending on Infrabase Admin",
             AssetStatuses.RejectedByPcAdmin => "Return for correction",
             AssetStatuses.AcceptedByInfrabase => "Checked",
-            AssetStatuses.RejectedByInfrabase => "Request for updates",
+            AssetStatuses.RejectedByInfrabase => "Return for correction",
             _ => status.ToString()
         };
     }
