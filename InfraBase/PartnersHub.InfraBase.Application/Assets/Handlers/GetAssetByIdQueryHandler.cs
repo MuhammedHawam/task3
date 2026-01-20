@@ -31,6 +31,11 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             return null;
         }
 
+        var usesSectorOther = !string.IsNullOrWhiteSpace(asset.SectorOther);
+        var usesSubSectorOther = !string.IsNullOrWhiteSpace(asset.SubSectorOther);
+        var usesAssetTypeOther = !string.IsNullOrWhiteSpace(asset.AssetTypeOther);
+        var usesUomOther = !string.IsNullOrWhiteSpace(asset.UnitOfMeasurementOther);
+
         var sectorName = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty
             ? await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)
             : null;
@@ -59,6 +64,52 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             ? (asset.UnitOfMeasurementOther ?? "N/A")
             : uomName;
 
+        var effectiveSectorId = asset.SectorId;
+        if (usesSectorOther)
+        {
+            var otherSectorId = await _lookupService.GetOtherSectorIdAsync(cancellationToken);
+            if (otherSectorId.HasValue)
+            {
+                effectiveSectorId = otherSectorId.Value;
+            }
+        }
+
+        var effectiveSubSectorId = asset.SubSectorId;
+        if (usesSubSectorOther)
+        {
+            var sectorIdForOther = effectiveSectorId ?? asset.SectorId;
+            if (sectorIdForOther.HasValue)
+            {
+                var otherSubSectorId = await _lookupService.GetOtherSubSectorIdAsync(
+                    sectorIdForOther.Value,
+                    cancellationToken);
+                if (otherSubSectorId.HasValue)
+                {
+                    effectiveSubSectorId = otherSubSectorId.Value;
+                }
+            }
+        }
+
+        var effectiveUomId = asset.UnitOfMeasurementId;
+        if (usesUomOther)
+        {
+            var otherUomId = await _lookupService.GetOtherUomIdAsync(cancellationToken);
+            if (otherUomId.HasValue)
+            {
+                effectiveUomId = otherUomId.Value;
+            }
+        }
+
+        var effectiveAssetTypeId = asset.AssetTypeId;
+        if (usesAssetTypeOther)
+        {
+            var otherAssetTypeId = await _lookupService.GetOtherAssetTypeIdAsync(cancellationToken);
+            if (otherAssetTypeId.HasValue)
+            {
+                effectiveAssetTypeId = otherAssetTypeId.Value;
+            }
+        }
+
         var companyName = asset.CompanyName;
         try
         {
@@ -79,25 +130,25 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             AssetCode = asset.AssetCode,
             AssetName = asset.AssetName.Value,
             LocationCity = asset.LocationCity.Value,
-            SectorId = asset.SectorId,
+            SectorId = effectiveSectorId,
             SectorName = sectorName,
-            // Only expose "Other" when no predefined lookup is selected.
-            SectorOther = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty ? null : asset.SectorOther,
-            SubSectorId = asset.SubSectorId,
+            // Keep "Other" text when it was used, even if we map to the lookup id for editing.
+            SectorOther = usesSectorOther ? asset.SectorOther : null,
+            SubSectorId = effectiveSubSectorId,
             SubSectorName = subSectorName,
-            // Only expose "Other" when no predefined lookup is selected.
-            SubSectorOther = asset.SubSectorId.HasValue && asset.SubSectorId.Value != Guid.Empty ? null : asset.SubSectorOther,
-            AssetTypeId = asset.AssetTypeId,
+            // Keep "Other" text when it was used, even if we map to the lookup id for editing.
+            SubSectorOther = usesSubSectorOther ? asset.SubSectorOther : null,
+            AssetTypeId = effectiveAssetTypeId,
             AssetTypeName = assetTypeName,
-            // Only expose "Other" when no predefined lookup is selected.
-            AssetTypeOther = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty ? null : asset.AssetTypeOther,
+            // Keep "Other" text when it was used, even if we map to the lookup id for editing.
+            AssetTypeOther = usesAssetTypeOther ? asset.AssetTypeOther : null,
             QuantityOfAsset = asset.QuantityOfAsset,
             CapacityPerAsset = asset.CapacityPerAsset,
             TotalCapacity = asset.TotalCapacity,
-            UnitOfMeasurementId = asset.UnitOfMeasurementId,
+            UnitOfMeasurementId = effectiveUomId,
             UnitOfMeasurementName = uomName,
-            // Only expose "Other" when no predefined lookup is selected.
-            UnitOfMeasurementOther = asset.UnitOfMeasurementId.HasValue && asset.UnitOfMeasurementId.Value != Guid.Empty ? null : asset.UnitOfMeasurementOther,
+            // Keep "Other" text when it was used, even if we map to the lookup id for editing.
+            UnitOfMeasurementOther = usesUomOther ? asset.UnitOfMeasurementOther : null,
             Description = asset.Description?.Value,
             ConstructionStartingQuarter = asset.ConstructionStartingQuarter,
             ConstructionStartingYear = asset.ConstructionStartingYear,
