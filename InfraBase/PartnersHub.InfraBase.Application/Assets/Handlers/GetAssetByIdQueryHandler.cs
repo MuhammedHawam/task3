@@ -161,11 +161,11 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             TotalCapex = asset.TotalCapex,
             TotalOpex = asset.TotalOpex,
             FundingModel = asset.FundingModel,
-            ExpectedDebt = asset.ExpectedDebt,
-            ExpectedEquity = asset.ExpectedEquity,
-            IsRevenueGenerating = asset.IsRevenueGenerating,
-            IRR = asset.IRR,
-            IsPifGuaranteesRequired = asset.IsPifGuaranteesRequired,
+            ExpectedDebt = NormalizeOptionalDecimal(asset.ExpectedDebt),
+            ExpectedEquity = NormalizeOptionalDecimal(asset.ExpectedEquity),
+            IsRevenueGenerating = NormalizeOptionalBool(asset.IsRevenueGenerating),
+            IRR = NormalizeOptionalDecimal(asset.IRR),
+            IsPifGuaranteesRequired = NormalizeOptionalBool(asset.IsPifGuaranteesRequired),
             Status = asset.Status,
             SubmittedBy = asset.SubmittedBy,
             SubmittedAt = asset.SubmittedAt,
@@ -212,5 +212,15 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
                 UploadedAt = a.UploadedAt
             }).ToList()
         };
+    }
+
+    private static decimal? NormalizeOptionalDecimal(decimal? value)
+    {
+        return value.HasValue && value.Value != 0 ? value : null;
+    }
+
+    private static bool? NormalizeOptionalBool(bool? value)
+    {
+        return value == true ? true : null;
     }
 }
