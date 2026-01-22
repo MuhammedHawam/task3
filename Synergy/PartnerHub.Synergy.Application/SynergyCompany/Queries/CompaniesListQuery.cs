@@ -1,6 +1,6 @@
-﻿using MediatR;
+using MediatR;
 using PartnersHub.Synergy.Application.Models;
-using PartnersHub.Synergy.Application.SynergyCompany.DTOs;
+using PartnersHub.Shared.Integration.DTOs;
 using PartnersHub.Synergy.Domain.Common;
 
 

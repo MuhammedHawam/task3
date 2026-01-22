@@ -13,6 +13,8 @@ using PartnersHub.InfraBase.Application.Common.Services;
 using PartnersHub.InfraBase.Infrastructure.Persistence;
 using PartnersHub.InfraBase.Infrastructure.Persistence.Repositories;
 using PartnersHub.InfraBase.Infrastructure.Services;
+using PartnersHub.Shared.Integration;
+using PartnersHub.Shared.Integration.Options;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -130,6 +132,10 @@ builder.Services.AddHttpClient<IAdminCommunicationService, AdminCommunicationSer
     var baseUrl = builder.Configuration["ConfigurationHub:BaseUrl"];
     client.BaseAddress = new Uri(baseUrl!);
 });
+
+builder.Services.Configure<MiddlewareApiOptions>(
+    builder.Configuration.GetSection(MiddlewareApiOptions.SectionName));
+builder.Services.AddHttpClient<ICompanyIntegrationService, CompanyIntegrationService>();
 
 // Authentication Schemes
 const string ADFS_SCHEME = "ActiveDirectoryScheme";
