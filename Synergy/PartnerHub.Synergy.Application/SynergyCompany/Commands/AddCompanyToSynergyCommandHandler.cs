@@ -1,7 +1,7 @@
 using MediatR;
 using PartnersHub.Synergy.Application.Interfaces;
 using PartnersHub.Synergy.Application.Interfaces.Common;
-using PartnersHub.Synergy.Application.Interfaces.Integration;
+using PartnersHub.Shared.Integration;
 using PartnersHub.Synergy.Application.Interfaces.Repository;
 using PartnersHub.Synergy.Domain.Aggregates.SynergyCompanyAggregate;
 using PartnersHub.Synergy.Domain.Common;

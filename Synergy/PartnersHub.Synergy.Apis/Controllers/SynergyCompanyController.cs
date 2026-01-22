@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using PartnersHub.Synergy.Apis.Controllers.Base;
 using PartnersHub.Synergy.Application.SynergyCompany.Queries;
 using PartnersHub.Synergy.Application.SynergyCompany.Commands;
 using PartnersHub.Synergy.Domain.Common;
 using MediatR;
-using PartnersHub.Synergy.Application.SynergyCompany.DTOs;
+using PartnersHub.Shared.Integration.DTOs;
 using PartnersHub.Synergy.Application.Models;
 
 namespace PartnersHub.Synergy.Apis.Controllers;

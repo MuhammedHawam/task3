@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\PartnersHub.InfraBase.Application\PartnersHub.InfraBase.Application.csproj" />
     <ProjectReference Include="..\PartnersHub.InfraBase.Infrastructure\PartnersHub.InfraBase.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Shared\PartnersHub.Shared.Integration\PartnersHub.Shared.Integration.csproj" />
   </ItemGroup>
 
   <!-- Mail templates (HTML + images) -->
