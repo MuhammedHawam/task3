@@ -13,6 +13,8 @@ public record GetMiddlewareCompaniesQuery : IRequest<Result<PaginatedList<Middle
     public List<Guid>? CityIds { get; init; }
 }
 
+public record GetAllMiddlewareCompaniesQuery : IRequest<Result<List<MiddlewareCompanyDto>>>;
+
 public record GetMiddlewareCompanyByIdQuery : IRequest<Result<MiddlewareCompanyDto>>
 {
     public Guid CompanyId { get; init; }

@@ -9,6 +9,7 @@ namespace PartnersHub.ConfigurationHub.Infrastructure.Services;
 
 public class MiddlewareCompanyService : IMiddlewareCompanyService
 {
+    private const int DefaultAllCompaniesPageSize = 200;
     private readonly HttpClient _httpClient;
     private readonly ILogger<MiddlewareCompanyService> _logger;
     private readonly string _baseUrl;
@@ -77,6 +78,46 @@ public class MiddlewareCompanyService : IMiddlewareCompanyService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error while fetching companies from middleware");
+            throw;
+        }
+    }
+
+    public async Task<List<MiddlewareCompanyDto>> GetAllCompaniesAsync()
+    {
+        try
+        {
+            var request = new MiddlewareCompanyRequestDto
+            {
+                PageNumber = 1,
+                PageSize = DefaultAllCompaniesPageSize
+            };
+
+            var firstPage = await GetCompaniesAsync(request);
+            var companies = new List<MiddlewareCompanyDto>(firstPage.Items);
+
+            if (firstPage.TotalCount <= firstPage.PageSize)
+            {
+                return companies;
+            }
+
+            var totalPages = (int)Math.Ceiling((double)firstPage.TotalCount / request.PageSize);
+            for (var pageNumber = 2; pageNumber <= totalPages; pageNumber++)
+            {
+                request.PageNumber = pageNumber;
+                var page = await GetCompaniesAsync(request);
+                companies.AddRange(page.Items);
+            }
+
+            return companies;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "HTTP error while fetching all companies from middleware");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error while fetching all companies from middleware");
             throw;
         }
     }

@@ -47,6 +47,22 @@ public class MiddlewareCompaniesController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("companies")]
+    [ProducesResponseType(typeof(Result<List<MiddlewareCompanyDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<Result<List<MiddlewareCompanyDto>>>> GetAllCompanies()
+    {
+        var query = new GetAllMiddlewareCompaniesQuery();
+        var result = await _mediator.Send(query);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
     [HttpGet("companies/{companyId}")]
     [ProducesResponseType(typeof(Result<MiddlewareCompanyDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

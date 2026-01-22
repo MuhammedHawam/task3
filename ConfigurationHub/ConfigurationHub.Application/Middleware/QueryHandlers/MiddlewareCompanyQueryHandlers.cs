@@ -52,6 +52,42 @@ public class GetMiddlewareCompaniesQueryHandler
     }
 }
 
+public class GetAllMiddlewareCompaniesQueryHandler
+    : IRequestHandler<GetAllMiddlewareCompaniesQuery, Result<List<MiddlewareCompanyDto>>>
+{
+    private readonly IMiddlewareCompanyService _middlewareService;
+    private readonly ILogger<GetAllMiddlewareCompaniesQueryHandler> _logger;
+
+    public GetAllMiddlewareCompaniesQueryHandler(
+        IMiddlewareCompanyService middlewareService,
+        ILogger<GetAllMiddlewareCompaniesQueryHandler> logger)
+    {
+        _middlewareService = middlewareService;
+        _logger = logger;
+    }
+
+    public async Task<Result<List<MiddlewareCompanyDto>>> Handle(
+        GetAllMiddlewareCompaniesQuery request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var companies = await _middlewareService.GetAllCompaniesAsync();
+            return Result<List<MiddlewareCompanyDto>>.Success(companies);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "HTTP error while fetching all companies from middleware");
+            return Result<List<MiddlewareCompanyDto>>.Failure($"Failed to fetch companies from middleware: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error while fetching all companies from middleware");
+            return Result<List<MiddlewareCompanyDto>>.Failure($"An unexpected error occurred: {ex.Message}");
+        }
+    }
+}
+
 public class GetMiddlewareCompanyByIdQueryHandler 
     : IRequestHandler<GetMiddlewareCompanyByIdQuery, Result<MiddlewareCompanyDto>>
 {
