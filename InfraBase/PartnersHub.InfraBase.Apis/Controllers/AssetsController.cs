@@ -224,6 +224,22 @@ public class AssetsController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Infrabase Admin returns an asset back to pending
+    /// </summary>
+    [HttpPost("{id}/infrabase-admin/return")]
+    public async Task<ActionResult<bool>> ReturnByInfrabaseAdmin(Guid id,
+        [FromBody] ReturnAssetByInfrabaseAdminCommand command)
+    {
+        if (id != command.Id)
+        {
+            return BadRequest("Asset ID mismatch");
+        }
+
+        var result = await _mediator.Send(command);
+        return Ok(result);
+    }
+
     // ========== Asset Attachments ==========
 
     [HttpPost("{id}/attachments")]

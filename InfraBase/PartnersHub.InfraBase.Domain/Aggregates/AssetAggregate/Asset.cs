@@ -479,9 +479,9 @@ public class Asset : AggregateRoot
     public Result<bool> SaveAsDraft(string userId)
     {
         if (Status != AssetStatuses.Draft && Status != AssetStatuses.RejectedByPcAdmin &&
-            Status != AssetStatuses.RejectedByInfrabase)
+            Status != AssetStatuses.RejectedByInfrabase && Status != AssetStatuses.ReturnedByInfrabase)
         {
-            return Result<bool>.Failure("Only draft, rejected, or returned for correction assets can be saved as draft");
+            return Result<bool>.Failure("Only draft, rejected, or returned assets can be saved as draft");
         }
 
         UpdatedBy = userId;
@@ -531,9 +531,9 @@ public class Asset : AggregateRoot
     public Result<bool> Submit(string userId, string assetCode, bool isPcAdmin = false)
     {
         if (Status != AssetStatuses.Draft && Status != AssetStatuses.RejectedByPcAdmin &&
-            Status != AssetStatuses.RejectedByInfrabase)
+            Status != AssetStatuses.RejectedByInfrabase && Status != AssetStatuses.ReturnedByInfrabase)
         {
-            return Result<bool>.Failure("Can only submit assets with status Draft, Rejected, or Returned for correction");
+            return Result<bool>.Failure("Can only submit assets with status Draft, Rejected, or Returned");
         }
 
         if (_capexDetails.Count == 0)
@@ -627,9 +627,9 @@ public class Asset : AggregateRoot
     public Result<bool> MarkAsCheckedByInfrabaseAdminOnEdit(string userId, string assetCode)
     {
         if (Status != AssetStatuses.Draft && Status != AssetStatuses.RejectedByPcAdmin &&
-            Status != AssetStatuses.RejectedByInfrabase)
+            Status != AssetStatuses.RejectedByInfrabase && Status != AssetStatuses.ReturnedByInfrabase)
         {
-            return Result<bool>.Failure("Only draft, rejected, or returned for correction assets can be checked by Infrabase Admin");
+            return Result<bool>.Failure("Only draft, rejected, or returned assets can be checked by Infrabase Admin");
         }
 
         if (string.IsNullOrWhiteSpace(assetCode) && string.IsNullOrWhiteSpace(AssetCode))
@@ -774,6 +774,41 @@ public class Asset : AggregateRoot
         return Result<bool>.Success(true);
     }
 
+    public Result<bool> ReturnByInfrabaseAdmin(string userId, string returnReason)
+    {
+        if (Status != AssetStatuses.AcceptedByPcAdmin)
+        {
+            return Result<bool>.Failure("Only PC Admin accepted assets can be returned by Infrabase Admin");
+        }
+
+        if (string.IsNullOrEmpty(AssetCode))
+        {
+            return Result<bool>.Failure("Asset must have an asset code");
+        }
+
+        var rejectionReasonResult = RejectionReason.Create(returnReason);
+        if (rejectionReasonResult.IsFailure)
+        {
+            return Result<bool>.Failure(rejectionReasonResult.Error!);
+        }
+
+        Status = AssetStatuses.ReturnedByInfrabase;
+        RejectionReason = rejectionReasonResult.Value;
+        RejectedBy = userId;
+        RejectedAt = DateTime.Now;
+        UpdatedBy = userId;
+        UpdatedAt = DateTime.Now;
+        AddHistory("Returned by Infrabase Admin", userId ?? "Admin", returnReason);
+        AddDomainEvent(new AssetReturnedForCorrectionByInfrabaseAdminEvent(
+            Id,
+            AssetCode,
+            returnReason,
+            userId ?? "Admin",
+            CreatedBy ?? userId ?? "Admin",
+            CompanyId));
+        return Result<bool>.Success(true);
+    }
+
     public Result<bool> UpdateAssetInformation(string? assetName, string? locationCity,
         Guid? sectorId, string? sectorOther, Guid? subSectorId, string? subSectorOther, Guid? assetTypeId, string? assetTypeOther,
         decimal? quantityOfAsset, decimal? capacityPerAsset, Guid? unitOfMeasurementId,
@@ -785,9 +820,9 @@ public class Asset : AggregateRoot
         bool? isRevenueGenerating, decimal? irr, bool? isPifGuaranteesRequired, string userId)
     {
         if (Status != AssetStatuses.Draft && Status != AssetStatuses.RejectedByPcAdmin &&
-            Status != AssetStatuses.RejectedByInfrabase)
+            Status != AssetStatuses.RejectedByInfrabase && Status != AssetStatuses.ReturnedByInfrabase)
         {
-            return Result<bool>.Failure("Only draft, rejected, or returned for correction assets can be updated");
+            return Result<bool>.Failure("Only draft, rejected, or returned assets can be updated");
         }
 
         var changes = new List<string>();

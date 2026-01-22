@@ -99,6 +99,8 @@ public record CheckAssetByInfrabaseAdminCommand(Guid Id) : IRequest<bool>;
 
 public record ReturnAssetForCorrectionCommand(Guid Id, string CorrectionReason) : IRequest<bool>;
 
+public record ReturnAssetByInfrabaseAdminCommand(Guid Id, string ReturnReason) : IRequest<bool>;
+
 public record DeleteAssetCommand(Guid Id) : IRequest<bool>;
 
 public record AddAssetAttachmentCommand : IRequest<Guid>

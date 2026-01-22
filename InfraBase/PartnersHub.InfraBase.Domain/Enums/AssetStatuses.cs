@@ -38,5 +38,10 @@ public enum AssetStatuses : byte
     /// Asset rejected/returned for correction by Infrabase Admin
     /// User Story: "Infrabase rejected", "Return for correction"
     /// </summary>
-    RejectedByInfrabase = 5
+    RejectedByInfrabase = 5,
+
+    /// <summary>
+    /// Asset returned by Infrabase Admin (moves back to pending)
+    /// </summary>
+    ReturnedByInfrabase = 6
 }
