@@ -95,7 +95,8 @@ public class GetContributorDashboardQueryHandler
                 CheckedAssets = statusCounts.GetValueOrDefault(AssetStatuses.AcceptedByInfrabase, 0),
                 PendingOnPcAdmin = statusCounts.GetValueOrDefault(AssetStatuses.Submitted, 0),
                 PendingOnInfrabaseAdmin = statusCounts.GetValueOrDefault(AssetStatuses.AcceptedByPcAdmin, 0),
-                Draft = statusCounts.GetValueOrDefault(AssetStatuses.Draft, 0),
+                Draft = statusCounts.GetValueOrDefault(AssetStatuses.Draft, 0) +
+                        statusCounts.GetValueOrDefault(AssetStatuses.ReturnedByInfrabase, 0),
                 ReturnForCorrection =
                     statusCounts.GetValueOrDefault(AssetStatuses.RejectedByPcAdmin, 0) +
                     statusCounts.GetValueOrDefault(AssetStatuses.RejectedByInfrabase, 0)
@@ -225,7 +226,8 @@ public class GetPcAdminDashboardQueryHandler
             MyAssetsStatusCards = new PcAdminStatusCardsDto
             {
                 TotalAssets = statusCounts.Values.Sum(),
-                Draft = statusCounts.GetValueOrDefault(AssetStatuses.Draft, 0),
+                Draft = statusCounts.GetValueOrDefault(AssetStatuses.Draft, 0) +
+                        statusCounts.GetValueOrDefault(AssetStatuses.ReturnedByInfrabase, 0),
                 CheckedAssets = statusCounts.GetValueOrDefault(AssetStatuses.AcceptedByInfrabase, 0),
                 PendingOnInfrabaseAdmin = statusCounts.GetValueOrDefault(AssetStatuses.AcceptedByPcAdmin, 0),
                 ReturnForCorrection =
@@ -363,7 +365,9 @@ public class GetTeamAssetsDashboardQueryHandler
                 ReturnForCorrection =
                     statusCounts.GetValueOrDefault(AssetStatuses.RejectedByPcAdmin, 0) +
                     statusCounts.GetValueOrDefault(AssetStatuses.RejectedByInfrabase, 0),
-                PendingAssets = statusCounts.GetValueOrDefault(AssetStatuses.Submitted, 0)
+                PendingAssets = statusCounts.GetValueOrDefault(AssetStatuses.Submitted, 0) +
+                                statusCounts.GetValueOrDefault(AssetStatuses.Draft, 0) +
+                                statusCounts.GetValueOrDefault(AssetStatuses.ReturnedByInfrabase, 0)
             },
             Assets = new PaginatedList<AssetListDto>(
                 assetDtos,
@@ -490,7 +494,8 @@ public class GetInfrabaseAdminDashboardQueryHandler
             StatusCards = new InfrabaseAdminStatusCardsDto
             {
                 TotalAssets = statusCounts.Values.Sum(),
-                Draft = statusCounts.GetValueOrDefault(AssetStatuses.Draft, 0),
+                Draft = statusCounts.GetValueOrDefault(AssetStatuses.Draft, 0) +
+                        statusCounts.GetValueOrDefault(AssetStatuses.ReturnedByInfrabase, 0),
                 Submitted = statusCounts.GetValueOrDefault(AssetStatuses.Submitted, 0),
                 AcceptedByPcAdmin = statusCounts.GetValueOrDefault(AssetStatuses.AcceptedByPcAdmin, 0),
                 RejectedByPcAdmin = statusCounts.GetValueOrDefault(AssetStatuses.RejectedByPcAdmin, 0),
