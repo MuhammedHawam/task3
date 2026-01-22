@@ -213,12 +213,12 @@ public static class AssetStatusExtensions
     {
         return status switch
         {
-            AssetStatuses.Draft => "Draft",
-            AssetStatuses.Submitted => "Pending on PC Admin Checking",
-            AssetStatuses.AcceptedByPcAdmin => "Pending on Infrabase Admin Checking",
-            AssetStatuses.RejectedByPcAdmin => "Return for correction",
-            AssetStatuses.AcceptedByInfrabase => "Checked",
-            AssetStatuses.RejectedByInfrabase => "Return for correction",
+            AssetStatuses.Draft => "Pending",
+            AssetStatuses.Submitted => "Pending",
+            AssetStatuses.AcceptedByPcAdmin => "Pending PIF Review",
+            AssetStatuses.RejectedByPcAdmin => "Returned",
+            AssetStatuses.AcceptedByInfrabase => "Completed",
+            AssetStatuses.RejectedByInfrabase => "Returned",
             _ => status.ToString()
         };
     }
@@ -230,12 +230,12 @@ public static class AssetStatusExtensions
     {
         return status switch
         {
-            AssetStatuses.Draft => "Draft",
-            AssetStatuses.Submitted => "Pending on PC Admin",
-            AssetStatuses.AcceptedByPcAdmin => "Pending on Infrabase Admin",
-            AssetStatuses.RejectedByPcAdmin => "Return for correction",
-            AssetStatuses.AcceptedByInfrabase => "Checked",
-            AssetStatuses.RejectedByInfrabase => "Return for correction",
+            AssetStatuses.Draft => "Pending",
+            AssetStatuses.Submitted => "Pending",
+            AssetStatuses.AcceptedByPcAdmin => "Pending PIF Review",
+            AssetStatuses.RejectedByPcAdmin => "Returned",
+            AssetStatuses.AcceptedByInfrabase => "Completed",
+            AssetStatuses.RejectedByInfrabase => "Returned",
             _ => status.ToString()
         };
     }
