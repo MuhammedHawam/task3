@@ -201,6 +201,19 @@ public record AssetSummaryDto
     public int ReturnedForCorrectionAssets { get; init; }
 }
 
+public record AssetStatusDisplayDto
+{
+    public AssetStatuses Status { get; init; }
+    public string DisplayName { get; init; } = string.Empty;
+    public string ShortDisplayName { get; init; } = string.Empty;
+}
+
+public record AssetStatusSummaryDto
+{
+    public string DisplayName { get; init; } = string.Empty;
+    public int Count { get; init; }
+}
+
 /// <summary>
 /// Helper class for getting user-friendly status display names
 /// </summary>
@@ -213,12 +226,12 @@ public static class AssetStatusExtensions
     {
         return status switch
         {
-            AssetStatuses.Draft => "Draft",
-            AssetStatuses.Submitted => "Pending on PC Admin Checking",
-            AssetStatuses.AcceptedByPcAdmin => "Pending on Infrabase Admin Checking",
-            AssetStatuses.RejectedByPcAdmin => "Return for correction",
-            AssetStatuses.AcceptedByInfrabase => "Checked",
-            AssetStatuses.RejectedByInfrabase => "Return for correction",
+            AssetStatuses.Draft => "Pending",
+            AssetStatuses.Submitted => "Pending PC Admin",
+            AssetStatuses.AcceptedByPcAdmin => "Pending PIF Review",
+            AssetStatuses.RejectedByPcAdmin => "Returned",
+            AssetStatuses.AcceptedByInfrabase => "Completed",
+            AssetStatuses.RejectedByInfrabase => "Returned",
             _ => status.ToString()
         };
     }
@@ -230,12 +243,12 @@ public static class AssetStatusExtensions
     {
         return status switch
         {
-            AssetStatuses.Draft => "Draft",
-            AssetStatuses.Submitted => "Pending on PC Admin",
-            AssetStatuses.AcceptedByPcAdmin => "Pending on Infrabase Admin",
-            AssetStatuses.RejectedByPcAdmin => "Return for correction",
-            AssetStatuses.AcceptedByInfrabase => "Checked",
-            AssetStatuses.RejectedByInfrabase => "Return for correction",
+            AssetStatuses.Draft => "Pending",
+            AssetStatuses.Submitted => "Pending PC Admin",
+            AssetStatuses.AcceptedByPcAdmin => "Pending PIF Review",
+            AssetStatuses.RejectedByPcAdmin => "Returned",
+            AssetStatuses.AcceptedByInfrabase => "Completed",
+            AssetStatuses.RejectedByInfrabase => "Returned",
             _ => status.ToString()
         };
     }
