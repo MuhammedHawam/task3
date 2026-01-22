@@ -201,6 +201,19 @@ public record AssetSummaryDto
     public int ReturnedForCorrectionAssets { get; init; }
 }
 
+public record AssetStatusDisplayDto
+{
+    public AssetStatuses Status { get; init; }
+    public string DisplayName { get; init; } = string.Empty;
+    public string ShortDisplayName { get; init; } = string.Empty;
+}
+
+public record AssetStatusSummaryDto
+{
+    public string DisplayName { get; init; } = string.Empty;
+    public int Count { get; init; }
+}
+
 /// <summary>
 /// Helper class for getting user-friendly status display names
 /// </summary>
@@ -214,7 +227,7 @@ public static class AssetStatusExtensions
         return status switch
         {
             AssetStatuses.Draft => "Pending",
-            AssetStatuses.Submitted => "Pending",
+            AssetStatuses.Submitted => "Pending PC Admin",
             AssetStatuses.AcceptedByPcAdmin => "Pending PIF Review",
             AssetStatuses.RejectedByPcAdmin => "Returned",
             AssetStatuses.AcceptedByInfrabase => "Completed",
@@ -232,7 +245,7 @@ public static class AssetStatusExtensions
         return status switch
         {
             AssetStatuses.Draft => "Pending",
-            AssetStatuses.Submitted => "Pending",
+            AssetStatuses.Submitted => "Pending PC Admin",
             AssetStatuses.AcceptedByPcAdmin => "Pending PIF Review",
             AssetStatuses.RejectedByPcAdmin => "Returned",
             AssetStatuses.AcceptedByInfrabase => "Completed",
