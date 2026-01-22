@@ -40,7 +40,7 @@ public record ContributorStatusCardsDto
     public int PendingOnInfrabaseAdmin { get; init; }
 
     /// <summary>
-    /// Assets with status "Draft" or "ReturnedByInfrabase" (Pending)
+    /// Assets with status "Draft"
     /// </summary>
     public int Draft { get; init; }
 
@@ -96,7 +96,7 @@ public record TeamAssetsStatusCardsDto
     public int ReturnForCorrection { get; init; }
     
     /// <summary>
-    /// Assets pending PC admin review or returned by Infrabase
+    /// Assets with status "Submitted" (waiting for PC admin approval)
     /// </summary>
     public int PendingAssets { get; init; }
 }

@@ -24,15 +24,14 @@ public class GetAssetSummaryQueryHandler : IRequestHandler<GetAssetSummaryQuery,
         return new AssetSummaryDto
         {
             TotalAssets = statusCounts.Values.Sum(),
-            DraftAssets = statusCounts.GetValueOrDefault(AssetStatuses.Draft, 0) +
-                          statusCounts.GetValueOrDefault(AssetStatuses.ReturnedByInfrabase, 0),
+            DraftAssets = statusCounts.GetValueOrDefault(AssetStatuses.Draft, 0),
             SubmittedAssets = statusCounts.GetValueOrDefault(AssetStatuses.Submitted, 0),
             PcAdminApprovedAssets = statusCounts.GetValueOrDefault(AssetStatuses.AcceptedByPcAdmin, 0),
             RejectedAssets = statusCounts.GetValueOrDefault(AssetStatuses.RejectedByPcAdmin, 0) +
                              statusCounts.GetValueOrDefault(AssetStatuses.RejectedByInfrabase, 0),
             CheckedAssets = statusCounts.GetValueOrDefault(AssetStatuses.AcceptedByInfrabase, 0),
             ReturnedForCorrectionAssets = statusCounts.GetValueOrDefault(
-                AssetStatuses.ReturnedByInfrabase, 0)
+                AssetStatuses.RejectedByInfrabase, 0)
         };
     }
 }
