@@ -271,6 +271,37 @@ public class AssetsController : ControllerBase
 
     // ========== Utility Endpoints ==========
 
+    [HttpGet("status-display-names")]
+    public async Task<ActionResult<List<AssetStatusDisplayDto>>> GetStatusDisplayNames()
+    {
+        var result = await _mediator.Send(new GetAssetStatusDisplayNamesQuery());
+        return Ok(result);
+    }
+
+    [HttpGet("status-summary")]
+    public async Task<ActionResult<List<AssetStatusSummaryDto>>> GetStatusSummary(
+        [FromQuery] Guid? companyId = null)
+    {
+        Guid? effectiveCompanyId;
+        if (_tokenService.IsInfrabaseAdmin())
+        {
+            effectiveCompanyId = companyId;
+        }
+        else
+        {
+            var tokenCompanyId = _tokenService.GetCompanyId();
+            if (!tokenCompanyId.HasValue)
+            {
+                return BadRequest("Company ID not found in token");
+            }
+
+            effectiveCompanyId = companyId ?? tokenCompanyId;
+        }
+
+        var result = await _mediator.Send(new GetAssetStatusSummaryQuery(effectiveCompanyId));
+        return Ok(result);
+    }
+
     [HttpGet("next-code")]
     public async Task<ActionResult<string>> GetNextAssetCode()
     {
