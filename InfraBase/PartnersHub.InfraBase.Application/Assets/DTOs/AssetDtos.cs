@@ -216,9 +216,9 @@ public static class AssetStatusExtensions
             AssetStatuses.Draft => "Pending",
             AssetStatuses.Submitted => "Pending",
             AssetStatuses.AcceptedByPcAdmin => "Pending PIF Review",
-            AssetStatuses.RejectedByPcAdmin => "Returned",
+            AssetStatuses.RejectedByPcAdmin => "Return",
             AssetStatuses.AcceptedByInfrabase => "Completed",
-            AssetStatuses.RejectedByInfrabase => "Returned",
+            AssetStatuses.RejectedByInfrabase => "Return",
             _ => status.ToString()
         };
     }
@@ -233,9 +233,9 @@ public static class AssetStatusExtensions
             AssetStatuses.Draft => "Pending",
             AssetStatuses.Submitted => "Pending",
             AssetStatuses.AcceptedByPcAdmin => "Pending PIF Review",
-            AssetStatuses.RejectedByPcAdmin => "Returned",
+            AssetStatuses.RejectedByPcAdmin => "Return",
             AssetStatuses.AcceptedByInfrabase => "Completed",
-            AssetStatuses.RejectedByInfrabase => "Returned",
+            AssetStatuses.RejectedByInfrabase => "Return",
             _ => status.ToString()
         };
     }
