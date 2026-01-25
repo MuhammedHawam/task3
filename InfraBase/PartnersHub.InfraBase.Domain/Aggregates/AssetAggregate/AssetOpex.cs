@@ -25,9 +25,9 @@ public class AssetOpex : Entity
             throw new ArgumentException("OPEX amount must be greater than zero", nameof(amount));
         }
 
-        if (amount > 99999999999m) // Max 11 digits
+        if (amount > 999_999_999_999_999.99m) // Max 15 digits
         {
-            throw new ArgumentException("OPEX amount cannot exceed 11 digits", nameof(amount));
+            throw new ArgumentException("OPEX amount cannot exceed 15 digits", nameof(amount));
         }
 
         AssetId = assetId;

@@ -52,9 +52,9 @@ public class CreateSuccessStoryCommandHandler : IRequestHandler<CreateSuccessSto
         await _lock.WaitAsync(cancellationToken);
         string nextCode;
 
-        var isTitleExist = await _successStoryRepository.CheckTitleUniqueness(request.Title);
+        var isTitleExist = await _successStoryRepository.CheckTitleUniqueness(request.Title, null);
         if (isTitleExist)
-            return Result<Guid>.Failure("Title already exist");
+            return Result<Guid>.Failure("A success story with this title already exists.");
         try
         {
             int nextRequestId = await _successStoryRepository.GetNextRequestIdAsync();

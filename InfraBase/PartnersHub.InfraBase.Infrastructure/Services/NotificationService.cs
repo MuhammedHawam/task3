@@ -1,5 +1,11 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
+using PartnersHub.InfraBase.Domain.Common;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 
 namespace PartnersHub.InfraBase.Infrastructure.Services;
 
@@ -10,10 +16,58 @@ namespace PartnersHub.InfraBase.Infrastructure.Services;
 public class NotificationService : INotificationService
 {
     private readonly ILogger<NotificationService> _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly EmailParameters _emailParams;
 
-    public NotificationService(ILogger<NotificationService> logger)
+    public NotificationService(ILogger<NotificationService> logger, IOptions<EmailParameters> options, IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor)
     {
         _logger = logger;
+        _emailParams = options.Value;
+        _httpClientFactory = httpClientFactory;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    private async Task SendEmail(EmailNotificationModel emailDto)
+    {
+        // 1. Extract Token safely
+        var authHeader = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
+
+        if (string.IsNullOrWhiteSpace(authHeader) || !authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogError("Authorization header is missing or invalid.");
+            throw new UnauthorizedAccessException("Missing or invalid authorization token.");
+        }
+
+        // 2. Use HttpClient efficiently
+        var httpClient = _httpClientFactory.CreateClient(Constants.NotificationClient);
+
+        // Clear and set headers to avoid accumulation if the client is reused
+        httpClient.DefaultRequestHeaders.Authorization = AuthenticationHeaderValue.Parse(authHeader);
+
+        if (!httpClient.DefaultRequestHeaders.Accept.Any(h => h.MediaType == "application/json"))
+        {
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        }
+
+        try
+        {
+            // 3. PostAsJsonAsync handles serialization and Content-Type headers automatically
+            var response = await httpClient.PostAsJsonAsync(Constants.EmailNotificationPath, emailDto);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Email API returned {StatusCode}: {Error}", response.StatusCode, errorContent);
+            }
+
+            response.EnsureSuccessStatusCode();
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            _logger.LogError(ex, "Network or timeout error calling notification service at {Uri}", Constants.EmailNotificationPath);
+            throw;
+        }
     }
 
     public async Task SendEmailAsync(
@@ -26,8 +80,16 @@ public class NotificationService : INotificationService
         _logger.LogInformation(
             "Email notification (not sent - placeholder): To={To}, Subject={Subject}",
             to, subject);
-        
-        await Task.CompletedTask;
+
+        var email = to.Contains('@') ? to : $"{to}@pif.gov.sa";
+
+        await SendEmail(new EmailNotificationModel
+        {
+            to = new List<string> { email },
+            subject = subject,
+            body = body,
+            isHtml = true
+        });
     }
 
     public async Task SendEmailToMultipleAsync(
@@ -40,8 +102,14 @@ public class NotificationService : INotificationService
         _logger.LogInformation(
             "Bulk email notification (not sent - placeholder): Recipients={Count}, Subject={Subject}",
             recipients.Count(), subject);
-        
-        await Task.CompletedTask;
+
+        await SendEmail(new EmailNotificationModel
+        {
+            to = recipients.ToList(),
+            subject = subject,
+            body = body,
+            isHtml = true
+        });
     }
 
     public async Task SendPushNotificationAsync(

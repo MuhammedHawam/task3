@@ -127,7 +127,6 @@ public class ConfigurationLookupService : IConfigurationLookupService
         return string.Equals(dto.NameEn, "Other", StringComparison.OrdinalIgnoreCase) ||
                string.Equals(dto.NameAr, "Other", StringComparison.OrdinalIgnoreCase);
     }
-
     private sealed record LookupDto
     {
         public Guid Id { get; init; }

@@ -18,7 +18,7 @@ public class GetAssetAttachmentsQueryHandler : IRequestHandler<GetAssetAttachmen
         CancellationToken cancellationToken)
     {
         var asset = await _repository.GetByIdWithAttachmentsAsync(query.AssetId, cancellationToken);
-        
+
         if (asset == null)
             return new List<AssetAttachmentDto>();
 

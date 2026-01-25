@@ -14,6 +14,14 @@ public class UserRoleConfiguration : IEntityTypeConfiguration<UserRole>
             .IsRequired()
             .HasMaxLength(450);
 
+        builder.Property(ur => ur.UserEmail)
+            .IsRequired()
+            .HasMaxLength(450);
+
+        builder.Property(ur => ur.UserName)
+            .IsRequired()
+            .HasMaxLength(450);
+
         builder.Property(ur => ur.AssignedBy)
             .IsRequired()
             .HasMaxLength(450);

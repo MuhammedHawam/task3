@@ -63,11 +63,13 @@ public class Opportunity : AggregateRoot
 
     public bool IsHide {  get; private set; }  = false;
 
+    public bool? IsAdminUpdated { get; private set; }
+
     private Opportunity() { }
 
     private Opportunity(Guid companyId, Title title, Description description, Sector sector, RepresentativeInformation representativeInfo,
         string collaborationRationale, int opportunityTypeId, int thematicAreaId, string requestId, DateOnly startDate, DateOnly endDate,
-        Guid termsAndConditionId, Guid createdBy, bool? IsAdminCreated, string? ContactName, string? ContactAddress, string? ContactMobile, string? companyName, string? userEmail)
+        Guid termsAndConditionId, Guid createdBy, bool? isAdminCreated, string? contactName, string? contactAddress, string? contactMobile, string? companyName, string? userEmail)
     {
         CompanyId = companyId;
         CompanyName = companyName;
@@ -81,13 +83,13 @@ public class Opportunity : AggregateRoot
         EndDate = endDate;
         TermsAndConditionId = termsAndConditionId;
         TermsAccepted = true;
-        Status = IsAdminCreated == true ? OpportunityStatus.Published : OpportunityStatus.PendingReview;
+        Status = isAdminCreated == true ? OpportunityStatus.Published : OpportunityStatus.PendingReview;
         CollaborationRationale = collaborationRationale;
         RequestId = requestId;
-        IsAdminCreated = IsAdminCreated;
-        ContactName = ContactName;
-        ContactAddress = ContactAddress;
-        ContactMobile = ContactMobile;
+        IsAdminCreated = isAdminCreated;
+        ContactName = contactName;
+        ContactAddress = contactAddress;
+        ContactMobile = contactMobile;
         CompanyName = companyName;
         UserEmail = userEmail;
         MarkAsCreated(createdBy);
@@ -429,7 +431,8 @@ public class Opportunity : AggregateRoot
     DateOnly endDate,
     string? contactName,
     string? contactAddress,
-    string? contactMobile)
+    string? contactMobile,
+    bool? IsAdmin)
     {
 
 
@@ -466,6 +469,7 @@ public class Opportunity : AggregateRoot
         ContactName = contactName;
         ContactAddress = contactAddress;
         ContactMobile = contactMobile;
+        IsAdminUpdated = IsAdmin;
 
         MarkAsUpdated(userId);
         AddDomainEvent(new OpportunityUpdatedEvent(Id, CompanyId, Status, Title.Value, CompanyName, UserEmail));

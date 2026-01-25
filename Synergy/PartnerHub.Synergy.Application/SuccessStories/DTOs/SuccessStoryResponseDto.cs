@@ -23,11 +23,10 @@ namespace PartnersHub.Synergy.Application.SuccessStories.DTOs
         [JsonIgnore]
         public byte[]? Logo
         {
-            get => _logo;
             set
             {
                 _logo = value;
-                CompanyLogo = LogoHelper.ToBase64String(_logo);
+                CompanyLogo = LogoHelper.ToBase64String(value);
             }
         }
         public string CompanyLogo { get; set; }
@@ -64,6 +63,10 @@ namespace PartnersHub.Synergy.Application.SuccessStories.DTOs
         public int SuccessStoryCollaborationStatusId { get; set; }
 
         public Guid? AssociatedOpportunityId => AssociatedOpportunitiesList?.FirstOrDefault()?.Id;
+
+        public bool? IsAdmin { get; set; }
+
+        public bool? IsEditByAdmin { get; set; }
     }
 
 

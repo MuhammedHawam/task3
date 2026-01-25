@@ -29,6 +29,7 @@ public class SubmitAssetCommandHandler : IRequestHandler<SubmitAssetCommand, str
         var isPcAdmin = command.UserType == UserType.PcAdmin || _tokenService.IsPcAdmin();
 
         var asset = await _repository.GetByIdWithFinancialsAsync(command.Id, cancellationToken);
+        
         if (asset == null)
         {
             throw new NotFoundException("Asset", command.Id);

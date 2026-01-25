@@ -98,7 +98,8 @@ public class UpdateOpportunityCommandHandler : IRequestHandler<UpdateOpportunity
             request.EndDate,
             request.ContactName,
             request.ContactAddress,
-            request.ContactMobile);
+            request.ContactMobile,
+            request.IsAdmin);
 
         if (result.IsFailure)
             return Result.Failure(result.Error);

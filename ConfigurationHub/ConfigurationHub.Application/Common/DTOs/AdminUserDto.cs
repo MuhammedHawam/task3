@@ -11,9 +11,12 @@ namespace PartnersHub.ConfigurationHub.Application.Common.DTOs
         public string UserId { get; set; } = string.Empty;
         public string AssignedBy { get; set; } = string.Empty;
         public DateTime AssignedAt { get; set; }
-
+        public string Role { get; set; }
+        public Guid RoleId { get; set; }
         public string Email { get; set; }
         public string DisplayName { get; set; }
         public string ProductName { get; set; }
+        public Guid ModuleId { get; set; }
+
     }
 }

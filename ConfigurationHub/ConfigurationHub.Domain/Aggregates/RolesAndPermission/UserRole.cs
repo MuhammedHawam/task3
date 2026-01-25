@@ -3,6 +3,8 @@ namespace PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission;
 public class UserRole
 {
     public string UserId { get; set; } = string.Empty;
+    public string UserEmail {  get; set; } = string.Empty;
+    public string UserName { get; set; }
     public Guid RoleId { get; set; }
     public Guid ModuleId { get; set; }
     public string AssignedBy { get; set; } = string.Empty;

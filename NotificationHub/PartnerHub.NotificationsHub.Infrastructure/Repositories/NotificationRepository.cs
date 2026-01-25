@@ -41,4 +41,18 @@ public class NotificationRepository : INotificationRepository
             .Take(batchSize)
             .ToListAsync(ct);
     }
+
+    public async Task<List<NotificationEntity>> GetFailedNotificationsAsync(int maxRetryCount, int batchSize, CancellationToken ct = default)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        return await _context.Notifications
+            .Where(n =>
+                n.Status == NotificationStatus.Failed
+                && n.AttemptCount < maxRetryCount
+                && (n.NextAttemptAtUtc == null || n.NextAttemptAtUtc <= now))
+            .OrderBy(n => n.NextAttemptAtUtc)
+            .Take(batchSize)
+            .ToListAsync(ct);
+    }
 }

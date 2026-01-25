@@ -24,5 +24,7 @@ namespace PartnersHub.Synergy.Application.Interfaces.Repository
         Task<int> GetTotalCompaniesCountAsync();
         Task<int> GetTotalActiveCompaniesCountAsync();
         Task<List<Domain.Aggregates.SynergyCompanyAggregate.SynergyCompany>> GetRecentAsync(int count, bool asNoTracking = true, params Expression<Func<Domain.Aggregates.SynergyCompanyAggregate.SynergyCompany, object>>[] includes);
+
+        Task<bool> IsCompanyActiveAsync(Guid companyId);
     }
 }

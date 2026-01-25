@@ -1,7 +1,7 @@
 using MediatR;
 using PartnersHub.Synergy.Application.Interfaces;
 using PartnersHub.Synergy.Application.Interfaces.Common;
-using PartnersHub.Shared.Integration;
+using PartnersHub.Synergy.Application.Interfaces.Integration;
 using PartnersHub.Synergy.Application.Interfaces.Repository;
 using PartnersHub.Synergy.Domain.Aggregates.SynergyCompanyAggregate;
 using PartnersHub.Synergy.Domain.Common;
@@ -38,14 +38,14 @@ public class AddCompanyToSynergyCommandHandler : IRequestHandler<AddCompanyToSyn
         
         if (externalCompany == null)
         {
-            return Result<Guid>.Failure($"Company with ID {request.CompanyId} not found in PIF system");
+            return Result<Guid>.Failure($"Company not found in PIF system");
         }
 
         // 2. Check if company already exists in Synergy
         var existingCompany = await _companyRepository.GetByIdAsync(request.CompanyId, asNoTracking: true);
         if (existingCompany != null)
         {
-            return Result<Guid>.Failure($"Company with ID {request.CompanyId} already exists in Synergy");
+            return Result<Guid>.Failure($"Company already exists in Synergy");
         }
 
         // 3. Prepare representative information

@@ -64,13 +64,19 @@ public class UserRoleRepository : IUserRoleRepository
         var users = _context.UserRoles
             .Include(ur => ur.Role)
             .Include(ur => ur.Module)
-            .Where(ur => ur.Role.Name.ToLower() == "admin")
+            .Where(ur => ur.Role.Name.Contains("admin"))
             .Select(a => new AdminUserDto
             {
                 AssignedAt = a.AssignedAt,
                 AssignedBy = a.AssignedBy,
                 UserId = a.UserId,
-                ProductName = a.Module.Name
+                ProductName = a.Module.Name,
+                DisplayName = a.UserName,
+                Email = a.UserEmail,
+                Role = a.Role.Name,
+                RoleId = a.RoleId,
+                ModuleId = a.ModuleId
+                
             })
             .AsNoTracking();
 

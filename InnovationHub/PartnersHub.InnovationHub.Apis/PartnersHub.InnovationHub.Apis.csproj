@@ -18,7 +18,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PartnersHub.InnovationHub.Infrastructure\PartnersHub.InnovationHub.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Shared\PartnersHub.Shared.Integration\PartnersHub.Shared.Integration.csproj" />
   </ItemGroup>
 
 </Project>

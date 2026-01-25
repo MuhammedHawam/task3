@@ -19,13 +19,18 @@ public class UpdateSuccessStoryCommandHandler(ISuccessStoryRepository _successSt
         if (successStory == null)
             return Result.Failure("Success story not found");
 
+        var isTitleExist = await _successStoryRepository.CheckTitleUniqueness(request.Title, request.Id);
+        if (isTitleExist)
+            return Result.Failure("A success story with this title already exists.");
+
         var updateResult = successStory.Update(
             request.Title,
             request.Description,
             request.StartDate,
             request.EndDate,
             request.SuccessStoryTypeId,
-            request.SuccessStoryCollaborationStatusId);
+            request.SuccessStoryCollaborationStatusId,
+            request.IsAdmin);
 
         if (updateResult.IsFailure)
             return Result.Failure(updateResult.Error);

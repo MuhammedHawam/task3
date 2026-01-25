@@ -9,7 +9,7 @@ namespace PartnersHub.Synergy.Domain.Common
     static public class Constants
     {
         public const string Other = "Other";
-        public const string EmailNotificationPath = "/notifications/email";
+        public const string EmailNotificationPath = "/api/notifications/email";
         public const string NotificationClient = "Notification";
 
     }

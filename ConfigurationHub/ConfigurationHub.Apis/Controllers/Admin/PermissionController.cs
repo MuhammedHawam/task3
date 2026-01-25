@@ -9,7 +9,7 @@ namespace PartnersHub.ConfigurationHub.Apis.Controllers.Admin;
 
 [ApiController]
 [Route("api/admin/permissions")]
-//[Authorize]
+[Authorize]
 public class PermissionController : ControllerBase
 {
     private readonly IPermissionService _permissionService;

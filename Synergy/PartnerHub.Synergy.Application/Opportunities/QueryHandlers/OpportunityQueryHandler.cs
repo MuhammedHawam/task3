@@ -239,7 +239,7 @@ internal static class Helpers
             CreatedBy = opportunity.CreatedBy,
             RejectionReason = opportunity.RejectionReason,
             CollaboratedProfiles = associatedSynergyCompanies
-                    .Select(c => new GuidKeyValueDto(c.Id, c.Name.Value.ToString()))
+                    .Select(c => new PatnerCompany(c.Id, c.Name.Value.ToString(),c.Logo))
                     .ToList(),
             Attachments = opportunity.Attachments
                     .Select(a => new OpportunityAttachmentDto

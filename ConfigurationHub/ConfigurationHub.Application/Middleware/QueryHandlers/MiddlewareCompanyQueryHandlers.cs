@@ -87,7 +87,6 @@ public class GetAllMiddlewareCompaniesQueryHandler
         }
     }
 }
-
 public class GetMiddlewareCompanyByIdQueryHandler 
     : IRequestHandler<GetMiddlewareCompanyByIdQuery, Result<MiddlewareCompanyDto>>
 {

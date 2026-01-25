@@ -32,6 +32,7 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
         var userName = _tokenService.GetUserName(); // Use username for readable history
 
         var asset = await _repository.GetByIdWithFinancialsAsync(command.Id, cancellationToken);
+        
         if (asset == null)
         {
             throw new NotFoundException("Asset", command.Id);
@@ -61,7 +62,6 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
                 }
             }
         }
-
         var updateResult = asset.UpdateAssetInformation(
             command.AssetName, 
             command.LocationCity, 
@@ -149,7 +149,6 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
                 throw new ValidationException(checkResult.Error!);
             }
         }
-
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return true;
     }
@@ -163,7 +162,6 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
 
         return selectedId;
     }
-
     private static void ValidateYearRows(IEnumerable<int> years, string label)
     {
         var yearList = years.ToList();

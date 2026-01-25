@@ -95,7 +95,7 @@ public class OpportunityConfiguration : IEntityTypeConfiguration<Opportunity>
                .HasConversion<int>();
 
         // Other string properties with assumed max lengths
-        builder.Property(o => o.RejectionReason).HasMaxLength(500);
+        builder.Property(o => o.RejectionReason).HasMaxLength(3000);
         builder.Property(o => o.CollaborationRationale).HasMaxLength(1000);
         builder.Property(o => o.CollaborationRequirementOther).HasMaxLength(1000);
         builder.Property(o => o.ExpectedOutcomeOther).HasMaxLength(1000);

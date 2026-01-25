@@ -116,7 +116,9 @@ public class SearchOpportunitiesQueryHandler : IRequestHandler<SearchOpportuniti
                 StartDate = o.StartDate,
                 EndDate = o.EndDate,
                 CreatedAt = o.CreatedAt,
-                IsHide = o.IsHide
+                IsHide = o.IsHide,
+                IsAdmin = o.IsAdminCreated ?? false,
+                IsEditByAdmin = o.IsAdminUpdated ?? false
             };
         }).ToList();
 

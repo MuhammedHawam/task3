@@ -623,7 +623,6 @@ public class Asset : AggregateRoot
 
         return Result<bool>.Success(true);
     }
-
     public Result<bool> MarkAsCheckedByInfrabaseAdminOnEdit(string userId, string assetCode)
     {
         if (Status != AssetStatuses.Draft && Status != AssetStatuses.RejectedByPcAdmin &&
@@ -970,9 +969,9 @@ public class Asset : AggregateRoot
                 return Result<bool>.Failure("Quantity of asset cannot be negative");
             }
 
-            if (normalizedQuantity.Value.ToString().Replace(".", "").Replace(",", "").Length > 5)
+            if (normalizedQuantity.Value.ToString().Replace(".", "").Replace(",", "").Length > 15)
             {
-                return Result<bool>.Failure("Quantity of asset cannot exceed 5 digits");
+                return Result<bool>.Failure("Quantity of asset cannot exceed 15 digits");
             }
 
             if (QuantityOfAsset != normalizedQuantity.Value)
@@ -991,9 +990,9 @@ public class Asset : AggregateRoot
                 return Result<bool>.Failure("Capacity per asset must be greater than zero");
             }
 
-            if (capacityPerAsset.Value.ToString().Replace(".", "").Replace(",", "").Length > 5)
+            if (capacityPerAsset.Value.ToString().Replace(".", "").Replace(",", "").Length > 15)
             {
-                return Result<bool>.Failure("Capacity per asset cannot exceed 5 digits");
+                return Result<bool>.Failure("Capacity per asset cannot exceed 15 digits");
             }
 
             if (CapacityPerAsset != capacityPerAsset.Value)

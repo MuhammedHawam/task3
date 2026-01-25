@@ -202,6 +202,10 @@ public class CreateOpportunityCommandHandler : IRequestHandler<CreateOpportunity
     }
     private async Task<Result> ValidateCommand(CreateOpportunityCommand command)
     {
+        if(!await _synergyCompanyRepository.IsCompanyActiveAsync((command.IsAdmin == true ? command.CompanyId : _userService.CompanyId)))
+        {
+            return Result.Failure("Cann't create PartnerShip for inactive company");
+        }
 
         if (!await _opportunityTypeRepository.ExistsAsync(command.TypeId))
         {

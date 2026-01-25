@@ -397,6 +397,75 @@ namespace PartnersHub.ConfigurationHub.Infrastructure.Persistence.Migrations
                     b.ToTable("Permissions");
                 });
 
+            modelBuilder.Entity("PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission.RegisteredCompany", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CompanyId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("nvarchar(36)");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("ModuleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("SectorId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("SectorName")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_RegisteredCompany_CompanyId_Unique");
+
+                    b.HasIndex("ModuleId");
+
+                    b.HasIndex("Name")
+                        .HasDatabaseName("IX_RegisteredCompany_Name");
+
+                    b.ToTable("RegisteredCompanies", (string)null);
+                });
+
             modelBuilder.Entity("PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission.Role", b =>
                 {
                     b.Property<Guid>("Id")
@@ -488,6 +557,16 @@ namespace PartnersHub.ConfigurationHub.Infrastructure.Persistence.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("UserEmail")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("UserId", "RoleId", "ModuleId");
 
                     b.HasIndex("ModuleId");
@@ -529,6 +608,18 @@ namespace PartnersHub.ConfigurationHub.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ModuleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Module");
+                });
+
+            modelBuilder.Entity("PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission.RegisteredCompany", b =>
+                {
+                    b.HasOne("PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission.Module", "Module")
+                        .WithMany("RegisteredCompanies")
+                        .HasForeignKey("ModuleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_RegisteredCompany_Module");
 
                     b.Navigation("Module");
                 });
@@ -598,6 +689,11 @@ namespace PartnersHub.ConfigurationHub.Infrastructure.Persistence.Migrations
                     b.Navigation("Module");
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission.Module", b =>
+                {
+                    b.Navigation("RegisteredCompanies");
                 });
 
             modelBuilder.Entity("PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission.Role", b =>

@@ -42,7 +42,7 @@ public class AssetCapex : Entity
             return Result<bool>.Failure("CAPEX amount must be greater than zero");
         }
 
-        if (newAmount > 999999999999999m)
+        if (newAmount > 999999999999999m) // Max 15 digits
         {
             return Result<bool>.Failure("CAPEX amount cannot exceed 15 digits");
         }

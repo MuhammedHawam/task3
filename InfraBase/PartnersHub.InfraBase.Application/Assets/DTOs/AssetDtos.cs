@@ -200,7 +200,6 @@ public record AssetSummaryDto
     public int CheckedAssets { get; init; }
     public int ReturnedForCorrectionAssets { get; init; }
 }
-
 public record AssetStatusDisplayDto
 {
     public AssetStatuses Status { get; init; }
@@ -213,6 +212,7 @@ public record AssetStatusSummaryDto
     public string DisplayName { get; init; } = string.Empty;
     public int Count { get; init; }
 }
+
 
 /// <summary>
 /// Helper class for getting user-friendly status display names

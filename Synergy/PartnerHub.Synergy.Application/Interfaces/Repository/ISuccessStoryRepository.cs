@@ -33,6 +33,6 @@ public interface ISuccessStoryRepository
     Task<int> GetCountByCompanyAndStatusAsync(Guid companyId, SuccessStoryStatus status, DateTime? fromDate = null);
     Task<int> GetTotalCountByStatusAsync(SuccessStoryStatus status, DateTime? fromDate = null);
     Task<int> GetNextRequestIdAsync(CancellationToken cancellationToken = default);
-    Task<bool> CheckTitleUniqueness(string Title);
     Task<(int PublishedCount, int TotalCount)> GetTotalCount(DateTime? fromDate = null);
+    Task<bool> CheckTitleUniqueness(string Title, Guid? Id);
 }

@@ -121,7 +121,6 @@ public class MiddlewareCompanyService : IMiddlewareCompanyService
             throw;
         }
     }
-
     public async Task<MiddlewareCompanyDto?> GetCompanyByIdAsync(Guid companyId)
     {
         try

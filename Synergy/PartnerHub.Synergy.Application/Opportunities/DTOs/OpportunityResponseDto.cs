@@ -35,7 +35,7 @@ namespace PartnersHub.Synergy.Application.Opportunities.DTOs
         public string SectorName { get; set; } = null!;
         public Guid SectorId { get; set; }
         //public AttachmentMetaDataDto? Attachment { get; set; }
-        public List<GuidKeyValueDto> CollaboratedProfiles { get; set; } = new();
+        public List<PatnerCompany> CollaboratedProfiles { get; set; } = new();
         public string CollaborationRationale { get; set; } = null!;
         public List<KeyValueDto> CollaborationRequirements { get; set; } = new();
         public string? CollaborationRequirementOther { get; set; }

@@ -30,15 +30,15 @@ public class GetAdminDashboardQueryHandler : IRequestHandler<GetAdminDashboardQu
 
         int totalActiveCompaniesCount = await _companyRepository.GetTotalActiveCompaniesCountAsync();
 
-        var (PublishedSuccessStoriesCount, totalSuccessStoriesCount) = await _successStoryRepository.GetTotalCount(startOfYear);
-        int totalPendingApprovalSuccessStories = await _successStoryRepository.GetTotalCountByStatusAsync(SuccessStoryStatus.PendingReview, startOfYear);
+        var (PublishedSuccessStoriesCount, totalSuccessStoriesCount) = await _successStoryRepository.GetTotalCount();
+        int totalPendingApprovalSuccessStories = await _successStoryRepository.GetTotalCountByStatusAsync(SuccessStoryStatus.PendingReview);
 
-        var (PublishedOpportunityCount,totalOpportunitiesCount) = await _opportunityRepository.GetTotalCount(startOfYear);
-        int totalPendingReviewOpportunitiesCount = await _opportunityRepository.GetTotalCountByStatusAsync(OpportunityStatus.PendingReview, startOfYear);
+        var (PublishedOpportunityCount,totalOpportunitiesCount) = await _opportunityRepository.GetTotalCount();
+        int totalPendingReviewOpportunitiesCount = await _opportunityRepository.GetTotalCountByStatusAsync(OpportunityStatus.PendingReview);
 
-        var sectorsKPIs = await _dapperRepository.FetchSectorsKPIs(startOfYear);
+        var sectorsKPIs = await _dapperRepository.FetchSectorsKPIs();
         var engagementTrends = await _dapperRepository.FetchYTDMonthlyEngagementTrends();
-        var topPerformingCompanies = await _dapperRepository.FetchCompanyKPIsAsync(startOfYear,5);
+        var topPerformingCompanies = await _dapperRepository.FetchCompanyKPIsAsync(null,5);
         var collaborationTypeKPIs = await _dapperRepository.FetchCollaborationTypeKPIs();
 
 

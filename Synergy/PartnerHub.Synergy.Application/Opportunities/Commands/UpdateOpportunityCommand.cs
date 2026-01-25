@@ -27,5 +27,7 @@ public record UpdateOpportunityCommand : IRequest<Result>
     public string? CollaborationRequirementOther { get; init; }
     public List<int>? ExpectedOutcomes { get; init; }
     public string? ExpectedOutcomeOther { get; init; }
+
+    public bool? IsAdmin { get; init; }
 }
 

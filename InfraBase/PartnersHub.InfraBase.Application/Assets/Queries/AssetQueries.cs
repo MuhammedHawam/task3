@@ -20,10 +20,6 @@ public record GetAssetListQuery : IRequest<PaginatedList<AssetListDto>>
 
 public record GetAssetSummaryQuery(Guid? CompanyId = null) : IRequest<AssetSummaryDto>;
 
-public record GetAssetStatusSummaryQuery(Guid? CompanyId = null) : IRequest<List<AssetStatusSummaryDto>>;
-
-public record GetAssetStatusDisplayNamesQuery : IRequest<List<AssetStatusDisplayDto>>;
-
 public record GetAssetsByStatusQuery(AssetStatuses Status, Guid? CompanyId = null) 
     : IRequest<List<AssetListDto>>;
 
@@ -32,3 +28,7 @@ public record GetAssetHistoryQuery(Guid AssetId) : IRequest<List<AssetHistoryDto
 public record GetAssetAttachmentsQuery(Guid AssetId) : IRequest<List<AssetAttachmentDto>>;
 
 public record GetNextAssetCodeQuery() : IRequest<string>;
+
+public record GetAssetStatusSummaryQuery(Guid? CompanyId = null) : IRequest<List<AssetStatusSummaryDto>>;
+
+public record GetAssetStatusDisplayNamesQuery : IRequest<List<AssetStatusDisplayDto>>;

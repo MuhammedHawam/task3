@@ -41,11 +41,11 @@ public class ReviewChallengeRequestCommandHandler(
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         if (request.Status == ChallengeStatus.Approved )
         {
-            _NotificationService.SendChallengeApprovedNotificationAsync(request.ChallengeRequestId, challenge.UserEmail);
+            _NotificationService.SendChallengeApprovedNotificationAsync(request.ChallengeRequestId, challenge.Name,challenge.UserEmail);
         }
         else if (request.Status == ChallengeStatus.RevisionsRequest)
         {
-            _NotificationService.SendChallengeReturnedNotificationAsync(request.ChallengeRequestId, challenge.UserEmail, request.Comment);
+            _NotificationService.SendChallengeReturnedNotificationAsync(request.ChallengeRequestId,challenge.Name, challenge.UserEmail, request.Comment);
 
         }
 

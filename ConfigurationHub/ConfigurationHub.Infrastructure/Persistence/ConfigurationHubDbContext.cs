@@ -28,6 +28,7 @@ public class ConfigurationHubDbContext : DbContext {
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<RegisteredCompany> RegisteredCompanies => Set<RegisteredCompany>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) { }
     protected override void OnModelCreating(ModelBuilder modelBuilder) {

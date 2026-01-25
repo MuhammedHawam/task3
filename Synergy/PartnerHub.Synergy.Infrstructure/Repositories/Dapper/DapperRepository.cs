@@ -179,6 +179,8 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
         s.EndDate,
         s.RequestId,
         s.IsHide,
+        s.IsAdminCreated AS IsAdmin,
+        s.IsAdminUpdated AS IsEditByAdmin,
         s.Status AS SuccessStoryStatus,
         s.CreatedAt AS SubmissionDate,
         s.RejectionReason AS RejectionReason, 
@@ -187,12 +189,13 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
 
         c.Id AS CompanyId,
         c.Name AS CompanyName,
+        c.Logo AS Logo,
 
         t.Name AS SuccessStoryType,
 
         sc.Id AS CollabId,
         sc.Name AS CollabName,
-        sc.Logo as Logo,
+        sc.Logo as CollabLogo,
 
         o.Id AS OppId,
         o.Title AS OppName,
@@ -202,6 +205,7 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
 
         s.SectorId AS SectorId,
         s.SectorName AS SectorName
+        
 
         
 
@@ -258,7 +262,7 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
 
                     if (collab?.CollabId != null && collab.CollabId != Guid.Empty &&
                         !current.CollaboratingPartners.Any(x => x.Id == collab.CollabId))
-                        current.CollaboratingPartners.Add(new(collab.CollabId, collab.CollabName, collab.Logo));
+                        current.CollaboratingPartners.Add(new(collab.CollabId, collab.CollabName, collab.CollabLogo));
 
                     if (opp?.OppId != null && opp.OppId != Guid.Empty &&
                         !current.AssociatedOpportunities.Any(x => x.Id == opp.OppId))

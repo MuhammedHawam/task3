@@ -102,7 +102,7 @@ public class RoleController : ControllerBase
     public async Task<IActionResult> AssignRoleToUser(string userId, [FromBody] AssignRoleRequest request)
     {
         var assignedBy = User.Identity?.Name ?? "System";
-        var success = await _roleService.AssignRoleToUserAsync(userId, request.RoleId, request.ModuleId, assignedBy);
+        var success = await _roleService.AssignRoleToUserAsync(userId,request.userName,request.useremail, request.RoleId, request.ModuleId, assignedBy);
 
         return success ? Ok(new { message = "Role assigned successfully" }) : BadRequest(new { message = "User already has this role" });
     }
@@ -147,12 +147,19 @@ public class RoleController : ControllerBase
         var success = await _roleService.UpdateRolePermissionsAsync(roleId, request.PermissionsIds);
         return success ? Ok(new { message = "Role updated successfully" }) : NotFound(new { message = "Role not found" });
     }
+
+    [HttpGet("Moduleadmins")]
+    public async Task<ActionResult<IEnumerable<string>>> GetPaginatedAdmin(int pageNumber = 1, int pageSize = 10)
+    {
+        var adminUsers = await _roleService.GetPaginatedAdminAsync(pageNumber, pageSize);
+        return Ok(adminUsers);
+    }
 }
 
 public record CreateRoleRequest(string Name, string Description, Guid? ModuleId);
 public record UpdateRoleRequest(string Name, string Description);
 public record UpdateRolePermissionsRequest(List<Guid> PermissionsIds);
-public record AssignRoleRequest(Guid RoleId, Guid ModuleId);
+public record AssignRoleRequest(Guid RoleId, Guid ModuleId,string useremail,string userName);
 public record UserRoleResponse
 {
     public string UserId { get; set; } = string.Empty;

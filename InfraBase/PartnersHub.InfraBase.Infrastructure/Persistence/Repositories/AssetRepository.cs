@@ -37,7 +37,7 @@ public class AssetRepository : IAssetRepository
     }
 
     public async Task<Asset?> GetByIdWithFinancialsAsync(Guid id,
-        CancellationToken cancellationToken = default)
+       CancellationToken cancellationToken = default)
     {
         return await _context.Assets
             .Include(a => a.CapexDetails)
@@ -52,7 +52,6 @@ public class AssetRepository : IAssetRepository
             .Include(a => a.Attachments)
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
-
     public async Task<PaginatedList<Asset>> GetPagedAsync(
         int pageNumber, 
         int pageSize, 

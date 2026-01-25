@@ -1,4 +1,4 @@
-using MediatR;
+﻿using MediatR;
 using PartnersHub.InfraBase.Application.Assets.DTOs;
 using PartnersHub.InfraBase.Application.Assets.Queries;
 using PartnersHub.InfraBase.Domain.Enums;

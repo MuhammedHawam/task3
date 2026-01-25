@@ -1,4 +1,4 @@
-using MediatR;
+﻿using MediatR;
 using PartnersHub.InfraBase.Application.Assets.DTOs;
 using PartnersHub.InfraBase.Application.Assets.Queries;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Repository;
@@ -7,7 +7,7 @@ using PartnersHub.InfraBase.Domain.Enums;
 namespace PartnersHub.InfraBase.Application.Assets.Handlers;
 
 public class GetAssetStatusSummaryQueryHandler
-    : IRequestHandler<GetAssetStatusSummaryQuery, List<AssetStatusSummaryDto>>
+: IRequestHandler<GetAssetStatusSummaryQuery, List<AssetStatusSummaryDto>>
 {
     private readonly IAssetRepository _repository;
 
@@ -33,12 +33,12 @@ public class GetAssetStatusSummaryQueryHandler
 
         var orderedDisplayNames = new[]
         {
-            "Pending",
-            "Pending PC Admin",
-            "Pending PIF Review",
-            "Completed",
-            "Returned"
-        };
+        "Pending",
+        "Pending PC Admin",
+        "Pending PIF Review",
+        "Completed",
+        "Returned"
+    };
 
         var result = new List<AssetStatusSummaryDto>();
         foreach (var name in orderedDisplayNames)

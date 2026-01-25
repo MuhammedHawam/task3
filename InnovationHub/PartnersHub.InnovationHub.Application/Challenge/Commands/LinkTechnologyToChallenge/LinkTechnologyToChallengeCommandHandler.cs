@@ -39,7 +39,7 @@ namespace PartnersHub.InnovationHub.Application.Challenge.Commands.LinkTechnolog
             await _requestRepository.AddAsync(challengeRequest, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            _NotificationService.SendChallengeLinkedTechnologyNotificationAsync(request.ChallengeId, challenge.Result.UserEmail, request.LinkedTechnology.Name);
+            _NotificationService.SendChallengeLinkedTechnologyNotificationAsync(request.ChallengeId, challenge.Result.Name, challenge.Result.UserEmail, request.LinkedTechnology.Name);
 
             return Result.Success();
         }

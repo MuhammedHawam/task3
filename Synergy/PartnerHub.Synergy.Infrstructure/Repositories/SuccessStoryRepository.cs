@@ -134,7 +134,7 @@ public class SuccessStoryRepository : ISuccessStoryRepository
 
     public async Task<List<SuccessStory>> GetByCompanyIdAsync(Guid companyId)
     {
-        return await _context.SuccessStories.Include(e => e.CollaboratedProfiles)
+        return await _context.SuccessStories.Include(e => e.CollaboratedProfiles).Include(f=>f.SuccessStoryType)
             .Where(s => s.CompanyId == companyId)
             .OrderByDescending(s => s.CreatedAt)
             .ToListAsync();
@@ -201,8 +201,15 @@ public class SuccessStoryRepository : ISuccessStoryRepository
         return numbers.Any() ? numbers.Max() + 1 : 1;
     }
 
-    public async Task<bool> CheckTitleUniqueness(string Title)
+    public async Task<bool> CheckTitleUniqueness(string Title,Guid? Id)
     {
-       return await _context.SuccessStories.AnyAsync(x=> x.Title.Value == Title);
+        if (Id != null)
+        {
+            return await _context.SuccessStories.AnyAsync(x => x.Title.Value == Title && x.Id != Id);
+        }
+        else
+        {
+            return await _context.SuccessStories.AnyAsync(x => x.Title.Value == Title);
+        }
     }
 }

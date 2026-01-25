@@ -66,7 +66,7 @@ public class CreateChallengeRequestCommandHandler : IRequestHandler<CreateChalle
         await _repository.AddAsync(createResult.Value!, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        _NotificationService.SendChallengeSubmittedNotificationAsync(createResult.Value!.Id);
+        _NotificationService.SendChallengeSubmittedNotificationAsync(createResult.Value!.Id, request.Name);
 
 
         return Results<Guid>.Success(createResult.Value!.Id);

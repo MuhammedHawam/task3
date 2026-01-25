@@ -47,6 +47,8 @@ public class SuccessStory : AggregateRoot
 
     public bool IsHide { get; private set; }  = false;
 
+    public bool? IsAdminUpdated { get; private set; }
+
     private SuccessStory() { }
 
     private SuccessStory(Guid companyId, Title title, Description description, int successStoryTypeId, string requestId,
@@ -231,7 +233,7 @@ public class SuccessStory : AggregateRoot
             return Result<bool>.Failure("Rejection reason is required");
 
         Status = SuccessStoryStatus.AssetManagerRejected;
-        RejectionReason = rejectionReason.Trim();
+        RejectionReason = rejectionReason;
         RejectedBy = userId;
         RejectedAt = DateTime.UtcNow;
         MarkAsUpdated(userId);
@@ -299,7 +301,8 @@ public class SuccessStory : AggregateRoot
                           DateTime startDate,
                           DateTime endDate,
                           int successStoryTypeId,
-                          int collaborationStatusId
+                          int collaborationStatusId,
+                          bool? IsAdmin
                          )
     {
         if (Status != SuccessStoryStatus.Published)
@@ -322,6 +325,7 @@ public class SuccessStory : AggregateRoot
         EndDate = endDate;
         SuccessStoryTypeId = successStoryTypeId;
         CollaborationStatusId = collaborationStatusId;
+        IsAdminUpdated = IsAdmin;
 
         AddDomainEvent(new SuccessStoryUpdatedEvent(Id, CompanyId, Status, Title.Value, CompanyName, UserEmail));
 

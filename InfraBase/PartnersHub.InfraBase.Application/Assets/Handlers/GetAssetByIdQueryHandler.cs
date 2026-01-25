@@ -138,7 +138,7 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             SubSectorName = subSectorName,
             // Keep "Other" text when it was used, even if we map to the lookup id for editing.
             SubSectorOther = usesSubSectorOther ? asset.SubSectorOther : null,
-            AssetTypeId = effectiveAssetTypeId,
+            AssetTypeId =effectiveAssetTypeId,
             AssetTypeName = assetTypeName,
             // Keep "Other" text when it was used, even if we map to the lookup id for editing.
             AssetTypeOther = usesAssetTypeOther ? asset.AssetTypeOther : null,
@@ -213,7 +213,6 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             }).ToList()
         };
     }
-
     private static decimal? NormalizeOptionalDecimal(decimal? value)
     {
         return value.HasValue && value.Value != 0 ? value : null;

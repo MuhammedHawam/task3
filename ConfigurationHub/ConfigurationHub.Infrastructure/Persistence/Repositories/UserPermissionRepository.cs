@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PartnersHub.ConfigurationHub.Application.Common.DTOs;
 using PartnersHub.ConfigurationHub.Application.Common.Interfaces.Persistence;
 using PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission;
 

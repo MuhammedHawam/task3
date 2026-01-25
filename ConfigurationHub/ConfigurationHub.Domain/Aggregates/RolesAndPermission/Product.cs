@@ -9,4 +9,5 @@ public class Module : Entity
     public ModuleType ModuleType { get; set; }
     public string Description { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
+    public List<RegisteredCompany> RegisteredCompanies { get; set; }
 }

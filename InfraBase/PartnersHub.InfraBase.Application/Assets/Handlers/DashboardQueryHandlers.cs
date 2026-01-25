@@ -481,7 +481,8 @@ public class GetInfrabaseAdminDashboardQueryHandler
                 TotalCapex = asset.TotalCapex,
                 TotalOpex = asset.TotalOpex,
                 CompanyName = companyName,
-                CreatedAt = asset.CreatedAt
+                CreatedAt = asset.CreatedAt,
+                SubmittedBy = asset.CreatedBy
             });
         }
 

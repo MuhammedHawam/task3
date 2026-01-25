@@ -19,7 +19,7 @@ public class AssetConfiguration : IEntityTypeConfiguration<Asset>
         {
             an.Property(n => n.Value)
                 .HasColumnName("AssetName")
-                .HasMaxLength(300) 
+                .HasMaxLength(500) 
                 .IsRequired();
         });
 
@@ -27,7 +27,7 @@ public class AssetConfiguration : IEntityTypeConfiguration<Asset>
         {
             lc.Property(c => c.Value)
                 .HasColumnName("LocationCity")
-                .HasMaxLength(100)
+                .HasMaxLength(500)
                 .IsRequired();
         });
 

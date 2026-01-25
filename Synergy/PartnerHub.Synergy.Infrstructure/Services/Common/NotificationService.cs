@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using PartnersHub.Synergy.Application.Interfaces.Common;
 using PartnersHub.Synergy.Domain.Common;
 using PartnersHub.Synergy.Domain.ValueObjects;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -25,12 +26,15 @@ public class NotificationService : INotificationService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
+
     public NotificationService(IOptions<EmailParameters> options, ILogger<NotificationService> logger, IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor)
     {
         _emailParams = options.Value;
         _logger = logger;
         _httpClientFactory = httpClientFactory;
         _httpContextAccessor = httpContextAccessor;
+
+      
     }
     // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
     private async Task SendEmail(EmailNotificationModel emailDto)

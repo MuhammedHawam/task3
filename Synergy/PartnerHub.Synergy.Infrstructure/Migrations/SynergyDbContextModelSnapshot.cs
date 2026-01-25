@@ -72,6 +72,9 @@ namespace PartnersHub.Synergy.Infrastructure.Migrations
                     b.Property<bool?>("IsAdminCreated")
                         .HasColumnType("bit");
 
+                    b.Property<bool?>("IsAdminUpdated")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsHide")
                         .HasColumnType("bit");
 
@@ -85,8 +88,8 @@ namespace PartnersHub.Synergy.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("RejectionReason")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasMaxLength(3000)
+                        .HasColumnType("nvarchar(3000)");
 
                     b.Property<string>("RequestId")
                         .IsRequired()
@@ -275,6 +278,9 @@ namespace PartnersHub.Synergy.Infrastructure.Migrations
                     b.Property<bool?>("IsAdminCreated")
                         .HasColumnType("bit");
 
+                    b.Property<bool?>("IsAdminUpdated")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsHide")
                         .HasColumnType("bit");
 
@@ -285,8 +291,8 @@ namespace PartnersHub.Synergy.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("RejectionReason")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasMaxLength(3000)
+                        .HasColumnType("nvarchar(3000)");
 
                     b.Property<string>("RequestId")
                         .IsRequired()

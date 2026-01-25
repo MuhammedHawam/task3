@@ -66,6 +66,9 @@ public class OpportunitySearchCardDto
     public DateTime CreatedAt { get; set; }
 
     public bool IsHide {  get; set; }
+    public bool IsAdmin { get; set; }
+
+    public bool? IsEditByAdmin { get; set; }
 }
 
 /// <summary>

@@ -63,7 +63,7 @@ builder.Services.AddScoped<IModuleRepository, ModuleRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 builder.Services.AddScoped<IRolePermissionRepository, RolePermissionRepository>();
-
+builder.Services.AddScoped<IRegisteredCompanyRepository, RegisteredCompanyRepository>();
 // Services
 builder.Services.AddScoped<IModuleService, ModuleService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
@@ -111,7 +111,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(ADFS_SCHEME, ConfigureAdfsAuthentication)
 .AddJwtBearer(CIAM_SCHEME, ConfigureCiamAuthentication)
-//.AddJwtBearer(EXTERNAL_ALT_SCHEME, ConfigureExternalAltAuthentication)
+.AddJwtBearer(EXTERNAL_ALT_SCHEME, ConfigureExternalAltAuthentication)
 .AddScheme<AuthenticationSchemeOptions, MultiAuthHandler>("MultiAuth", null);
 
 // CORS
@@ -206,26 +206,26 @@ void ConfigureCiamAuthentication(JwtBearerOptions options)
     };
 }
 
-//void ConfigureExternalAltAuthentication(JwtBearerOptions options)
-//{
-//    var issuer = builder.Configuration["Authentication:ExternalPortal:Issuer"] ;
-//    var audience = builder.Configuration["Authentication:ExternalPortal:Audience"] ;
-    
-//    var publicKey = builder.Configuration["Authentication:ExternalPortal:PublicKey"];
-//    var rsa = RSA.Create();
-//    rsa.ImportRSAPrivateKey(Convert.FromBase64String(builder.Configuration["Authentication:ExternalPortal:PrivateKey"]), out _);
+void ConfigureExternalAltAuthentication(JwtBearerOptions options)
+{
+    var issuer = builder.Configuration["Authentication:ExternalPortal:Issuer"];
+    var audience = builder.Configuration["Authentication:ExternalPortal:Audience"];
 
-//    options.TokenValidationParameters = new TokenValidationParameters
-//    {
-//        ValidateIssuer = true,
-//        ValidateAudience = true,
-//        ValidateLifetime = true,
-//        ValidateIssuerSigningKey = true,
-//        ValidIssuer = issuer,
-//        ValidAudience = audience,
-//        IssuerSigningKey = new RsaSecurityKey(rsa)
-//    };
-//}
+    var publicKey = builder.Configuration["Authentication:ExternalPortal:PublicKey"];
+    var rsa = RSA.Create();
+    rsa.ImportRSAPrivateKey(Convert.FromBase64String(builder.Configuration["Authentication:ExternalPortal:PrivateKey"]), out _);
+
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = issuer,
+        ValidAudience = audience,
+        IssuerSigningKey = new RsaSecurityKey(rsa)
+    };
+}
 
 async Task InitializeDatabaseAsync(WebApplication application)
 {
@@ -242,7 +242,7 @@ async Task InitializeDatabaseAsync(WebApplication application)
             logger.LogInformation("Database migrations applied");
         }
 
-        await DbInitializer.InitializeDatabaseAsync(dbContext);
+        //await DbInitializer.InitializeDatabaseAsync(dbContext);
         await RulesEngineSeeder.SeedRbacDataAsync(dbContext);
         await DefaultSuperAdminSeeder.AssignDefaultSuperAdminAsync(dbContext, configuration, logger);
         await TestUsersSeeder.SeedTestUsersAsync(dbContext, configuration, logger);

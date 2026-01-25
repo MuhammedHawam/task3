@@ -10,11 +10,10 @@ using PartnersHub.InfraBase.Application.Common.Interfaces.Repository;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Services;
 using PartnersHub.InfraBase.Application.Common.Options;
 using PartnersHub.InfraBase.Application.Common.Services;
+using PartnersHub.InfraBase.Domain.Common;
 using PartnersHub.InfraBase.Infrastructure.Persistence;
 using PartnersHub.InfraBase.Infrastructure.Persistence.Repositories;
 using PartnersHub.InfraBase.Infrastructure.Services;
-using PartnersHub.Shared.Integration;
-using PartnersHub.Shared.Integration.Options;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -61,6 +60,13 @@ builder.Services.AddScoped<IAssetRepository, AssetRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
+
+builder.Services.AddHttpClient(Constants.NotificationClient, client =>
+{
+    var notificationBaseUrl = builder.Configuration["NotificationSettings:BaseUrl"];
+    client.BaseAddress = new Uri(notificationBaseUrl);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
 //builder.Services.AddScoped<IAdminCommunicationService, AdminCommunicationService>();
 
 //builder.Services.AddMemoryCache();
@@ -132,10 +138,6 @@ builder.Services.AddHttpClient<IAdminCommunicationService, AdminCommunicationSer
     var baseUrl = builder.Configuration["ConfigurationHub:BaseUrl"];
     client.BaseAddress = new Uri(baseUrl!);
 });
-
-builder.Services.Configure<MiddlewareApiOptions>(
-    builder.Configuration.GetSection(MiddlewareApiOptions.SectionName));
-builder.Services.AddHttpClient<ICompanyIntegrationService, CompanyIntegrationService>();
 
 // Authentication Schemes
 const string ADFS_SCHEME = "ActiveDirectoryScheme";

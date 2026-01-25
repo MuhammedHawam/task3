@@ -27,7 +27,7 @@ public interface IRoleService
     Task<IEnumerable<LookupDto>> GetRolePermissionsLookupAsync(Guid roleId);
 
     // User-Role Management
-    Task<bool> AssignRoleToUserAsync(string userId, Guid roleId, Guid moduleId, string assignedBy);
+    Task<bool> AssignRoleToUserAsync(string userId, string userName, string useremail, Guid roleId, Guid moduleId, string assignedBy);
     Task<bool> RemoveRoleFromUserAsync(string userId, Guid roleId, Guid moduleId);
     Task<IEnumerable<Role>> GetUserRolesAsync(string userId);
     Task<IEnumerable<UserRole>> GetUserRoleDetailsAsync(string userId);
@@ -37,4 +37,6 @@ public interface IRoleService
     Task<bool> UserHasPermissionAsync(string userId, string permissionName);
     Task<IEnumerable<string>> GetUserPermissionsAsync(string userId);
     Task<bool> UpdateRolePermissionsAsync(Guid roleId, List<Guid> permissionId);
+
+    Task<PaginatedList<AdminUserDto>> GetPaginatedAdminAsync(int pagenumber, int pageIndex);
 }

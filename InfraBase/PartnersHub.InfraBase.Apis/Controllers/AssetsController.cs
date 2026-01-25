@@ -271,6 +271,14 @@ public class AssetsController : ControllerBase
 
     // ========== Utility Endpoints ==========
 
+    [HttpGet("next-code")]
+    public async Task<ActionResult<string>> GetNextAssetCode()
+    {
+        var query = new GetNextAssetCodeQuery();
+        var result = await _mediator.Send(query);
+        return Ok(result);
+    }
+
     [HttpGet("status-display-names")]
     public async Task<ActionResult<List<AssetStatusDisplayDto>>> GetStatusDisplayNames()
     {
@@ -299,14 +307,6 @@ public class AssetsController : ControllerBase
         }
 
         var result = await _mediator.Send(new GetAssetStatusSummaryQuery(effectiveCompanyId));
-        return Ok(result);
-    }
-
-    [HttpGet("next-code")]
-    public async Task<ActionResult<string>> GetNextAssetCode()
-    {
-        var query = new GetNextAssetCodeQuery();
-        var result = await _mediator.Send(query);
         return Ok(result);
     }
 }

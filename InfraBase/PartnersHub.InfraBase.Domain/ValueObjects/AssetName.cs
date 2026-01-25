@@ -20,9 +20,9 @@ public class AssetName : ValueObject
         }
 
         var trimmed = value.Trim();
-        if (trimmed.Length > 300)
+        if (trimmed.Length > 500)
         {
-            return Result<AssetName>.Failure("Asset name cannot exceed 300 characters");
+            return Result<AssetName>.Failure("Asset name cannot exceed 500 characters");
         }
 
         return Result<AssetName>.Success(new AssetName(trimmed));

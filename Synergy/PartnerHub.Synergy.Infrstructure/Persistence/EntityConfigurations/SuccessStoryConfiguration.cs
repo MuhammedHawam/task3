@@ -51,7 +51,7 @@ public class SuccessStoryConfiguration : IEntityTypeConfiguration<SuccessStory>
         builder.Property(s => s.EndDate).IsRequired();
 
         // Optional properties
-        builder.Property(s => s.RejectionReason).HasMaxLength(500);
+        builder.Property(s => s.RejectionReason).HasMaxLength(3000);
 
         builder.HasMany(o => o.CollaboratedProfiles)
        .WithOne()

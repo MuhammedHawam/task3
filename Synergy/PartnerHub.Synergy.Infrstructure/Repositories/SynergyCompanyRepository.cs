@@ -144,4 +144,10 @@ public class SynergyCompanyRepository : ISynergyCompanyRepository
     }
 
     #endregion
+
+
+    public async Task<bool> IsCompanyActiveAsync(Guid companyId)
+    {
+        return await _context.SynergyCompanies.AnyAsync(c => c.Id == companyId && c.IsActive);
+    }
 }

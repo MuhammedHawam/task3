@@ -15,8 +15,6 @@ using PartnersHub.InnovationHub.Infrastructure.Persistence;
 using PartnersHub.InnovationHub.Infrastructure.Presistence;
 using PartnersHub.InnovationHub.Infrastructure.Presistence.Repositories;
 using PartnersHub.InnovationHub.Infrastructure.Presistence.Services;
-using PartnersHub.Shared.Integration;
-using PartnersHub.Shared.Integration.Options;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 
@@ -83,9 +81,6 @@ builder.Services.AddScoped<IEvaluatorRepository, EvaluatorRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-builder.Services.Configure<MiddlewareApiOptions>(
-    builder.Configuration.GetSection(MiddlewareApiOptions.SectionName));
-builder.Services.AddHttpClient<ICompanyIntegrationService, CompanyIntegrationService>();
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 
@@ -139,7 +134,7 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddHttpClient(Constants.NotificationClient, client =>
 {
-    var notificationBaseUrl = builder.Configuration["Norification:BaseUrl"];
+    var notificationBaseUrl = builder.Configuration["NotificationSettings:BaseUrl"];
     client.BaseAddress = new Uri(notificationBaseUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });

@@ -122,7 +122,7 @@ public class RoleService : IRoleService
     }
 
     // User-Role Management
-    public async Task<bool> AssignRoleToUserAsync(string userId, Guid roleId, Guid moduleId, string assignedBy)
+    public async Task<bool> AssignRoleToUserAsync(string userId,string userName,string useremail, Guid roleId, Guid moduleId, string assignedBy)
     {
         var exists = await _userRoleRepository.ExistsAsync(userId, roleId, moduleId);
         if (exists)
@@ -134,7 +134,9 @@ public class RoleService : IRoleService
             RoleId = roleId,
             ModuleId = moduleId,
             AssignedBy = assignedBy,
-            AssignedAt = DateTime.UtcNow
+            AssignedAt = DateTime.UtcNow,
+            UserName = userName,
+            UserEmail = useremail,
         };
 
          await _userRoleRepository.AddAsync(userRole);
@@ -159,6 +161,10 @@ public class RoleService : IRoleService
         return await _userRoleRepository.RemoveAsync(userId, roleId, moduleId);
     }
 
+    public async Task<PaginatedList<AdminUserDto>> GetPaginatedAdminAsync(int pagenumber, int pageIndex)
+    {
+        return await _userRoleRepository.GetAdminsPaginatedAsync(pagenumber, pageIndex);
+    }
     public async Task<IEnumerable<Role>> GetUserRolesAsync(string userId)
     {
         var userRoles = await _userRoleRepository.GetByUserIdAsync(userId);
