@@ -43,11 +43,11 @@ public class AssetHistoryConfiguration : IEntityTypeConfiguration<AssetHistory>
             .IsRequired(false);
 
         builder.Property(h => h.OldValues)
-            .HasMaxLength(2000)
+            .HasColumnType("nvarchar(max)")
             .IsRequired(false);
 
         builder.Property(h => h.NewValues)
-            .HasMaxLength(2000)
+            .HasColumnType("nvarchar(max)")
             .IsRequired(false);
 
         // Configure the relationship from the child side
