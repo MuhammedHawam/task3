@@ -77,7 +77,7 @@ public class AssetsController : ControllerBase
         [FromQuery] string? sortBy = null,
         [FromQuery] bool sortDescending = false)
     {
-        // Non-admins should always be scoped to their token company.
+        // Non-admins should be scoped to their token company when available.
         // Infrabase admins can view all companies unless a companyId filter is explicitly provided.
         Guid? effectiveCompanyId;
         if (_tokenService.IsInfrabaseAdmin())
@@ -87,12 +87,18 @@ public class AssetsController : ControllerBase
         else
         {
             var tokenCompanyId = _tokenService.GetCompanyId();
-            if (!tokenCompanyId.HasValue)
+            if (tokenCompanyId.HasValue)
             {
-                return BadRequest("Company ID not found in token");
+                effectiveCompanyId = tokenCompanyId.Value;
             }
-
-            effectiveCompanyId = tokenCompanyId.Value;
+            else if (companyId.HasValue)
+            {
+                effectiveCompanyId = companyId.Value;
+            }
+            else
+            {
+                return BadRequest("Company ID not found in token or request");
+            }
         }
         
         var query = new GetAssetListQuery
@@ -123,12 +129,18 @@ public class AssetsController : ControllerBase
         else
         {
             var tokenCompanyId = _tokenService.GetCompanyId();
-            if (!tokenCompanyId.HasValue)
+            if (tokenCompanyId.HasValue)
             {
-                return BadRequest("Company ID not found in token");
+                effectiveCompanyId = tokenCompanyId.Value;
             }
-
-            effectiveCompanyId = tokenCompanyId.Value;
+            else if (companyId.HasValue)
+            {
+                effectiveCompanyId = companyId.Value;
+            }
+            else
+            {
+                return BadRequest("Company ID not found in token or request");
+            }
         }
 
         var assets = await _mediator.Send(new GetAssetsByStatusQuery(status, effectiveCompanyId));
@@ -315,12 +327,18 @@ public class AssetsController : ControllerBase
         else
         {
             var tokenCompanyId = _tokenService.GetCompanyId();
-            if (!tokenCompanyId.HasValue)
+            if (tokenCompanyId.HasValue)
             {
-                return BadRequest("Company ID not found in token");
+                effectiveCompanyId = tokenCompanyId.Value;
             }
-
-            effectiveCompanyId = tokenCompanyId.Value;
+            else if (companyId.HasValue)
+            {
+                effectiveCompanyId = companyId.Value;
+            }
+            else
+            {
+                return BadRequest("Company ID not found in token or request");
+            }
         }
 
         var result = await _mediator.Send(new GetAssetStatusSummaryQuery(effectiveCompanyId));

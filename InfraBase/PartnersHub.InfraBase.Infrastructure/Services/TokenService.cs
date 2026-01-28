@@ -46,9 +46,11 @@ public class TokenService : ITokenService
 
     public Guid? GetCompanyId()
     {
-        var companyIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("CompanyId")?.Value;
+        var companyIdClaim = _httpContextAccessor.HttpContext?.User?.Claims
+            .FirstOrDefault(claim => IsCompanyIdClaim(claim.Type))
+            ?.Value;
 
-        if (string.IsNullOrEmpty(companyIdClaim) || !Guid.TryParse(companyIdClaim, out var companyId))
+        if (string.IsNullOrWhiteSpace(companyIdClaim) || !Guid.TryParse(companyIdClaim, out var companyId))
         {
             return null;  // Return null if CompanyId not found or ADFS admin user
         }
@@ -113,5 +115,17 @@ public class TokenService : ITokenService
             .Select(id => Guid.TryParse(id, out var guid) ? guid : Guid.Empty)
             .Where(id => id != Guid.Empty)
             .ToList();
+    }
+
+    private static bool IsCompanyIdClaim(string claimType)
+    {
+        if (string.IsNullOrWhiteSpace(claimType))
+        {
+            return false;
+        }
+
+        var normalized = string.Concat(claimType.Where(char.IsLetterOrDigit))
+            .ToLowerInvariant();
+        return normalized == "companyid";
     }
 }
