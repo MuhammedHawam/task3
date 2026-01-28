@@ -412,22 +412,26 @@ public class GetInfrabaseAdminDashboardQueryHandler
     private readonly IAssetRepository _repository;
     private readonly IConfigurationLookupService _lookupService;
     private readonly IMiddlewareIntegrationService _middlewareService;
+    private readonly ITokenService _tokenService;
 
     public GetInfrabaseAdminDashboardQueryHandler(
         IAssetRepository repository,
         IConfigurationLookupService lookupService,
-        IMiddlewareIntegrationService middlewareService)
+        IMiddlewareIntegrationService middlewareService,
+        ITokenService tokenService)
     {
         _repository = repository;
         _lookupService = lookupService;
         _middlewareService = middlewareService;
+        _tokenService = tokenService;
     }
 
     public async Task<InfrabaseAdminDashboardDto> Handle(
         GetInfrabaseAdminDashboardQuery request,
         CancellationToken cancellationToken)
     {
-        var statusCounts = await _repository.GetStatusCountsAsync(null, cancellationToken);
+        var requestingUser = _tokenService.GetUserName();
+        var statusCounts = await _repository.GetStatusCountsAsync(null, requestingUser, cancellationToken);
 
         var paginatedAssets = await _repository.GetPagedAsync(
             request.PageNumber,
@@ -437,6 +441,7 @@ public class GetInfrabaseAdminDashboardQueryHandler
             request.SearchTerm,
             null,
             false,
+            requestingUser,
             cancellationToken);
 
         var assetDtos = new List<AssetListDto>();

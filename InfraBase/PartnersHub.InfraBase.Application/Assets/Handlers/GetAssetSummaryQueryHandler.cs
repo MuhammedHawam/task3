@@ -1,6 +1,7 @@
 using MediatR;
 using PartnersHub.InfraBase.Application.Assets.DTOs;
 using PartnersHub.InfraBase.Application.Assets.Queries;
+using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Repository;
 using PartnersHub.InfraBase.Domain.Enums;
 
@@ -9,16 +10,21 @@ namespace PartnersHub.InfraBase.Application.Assets.Handlers;
 public class GetAssetSummaryQueryHandler : IRequestHandler<GetAssetSummaryQuery, AssetSummaryDto>
 {
     private readonly IAssetRepository _repository;
+    private readonly ITokenService _tokenService;
 
-    public GetAssetSummaryQueryHandler(IAssetRepository repository)
+    public GetAssetSummaryQueryHandler(IAssetRepository repository, ITokenService tokenService)
     {
         _repository = repository;
+        _tokenService = tokenService;
     }
 
     public async Task<AssetSummaryDto> Handle(GetAssetSummaryQuery query, 
         CancellationToken cancellationToken)
     {
-        var statusCounts = await _repository.GetStatusCountsAsync(query.CompanyId, 
+        var requestingUser = _tokenService.GetUserName();
+        var statusCounts = await _repository.GetStatusCountsAsync(
+            query.CompanyId,
+            requestingUser,
             cancellationToken);
 
         return new AssetSummaryDto

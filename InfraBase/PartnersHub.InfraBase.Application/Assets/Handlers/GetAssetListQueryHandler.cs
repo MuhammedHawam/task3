@@ -14,20 +14,24 @@ public class GetAssetListQueryHandler : IRequestHandler<GetAssetListQuery, Pagin
     private readonly IAssetRepository _repository;
     private readonly IConfigurationLookupService _lookupService;
     private readonly IMiddlewareIntegrationService _middlewareService;
+    private readonly ITokenService _tokenService;
 
     public GetAssetListQueryHandler(
         IAssetRepository repository,
         IConfigurationLookupService lookupService,
-        IMiddlewareIntegrationService middlewareService)
+        IMiddlewareIntegrationService middlewareService,
+        ITokenService tokenService)
     {
         _repository = repository;
         _lookupService = lookupService;
         _middlewareService = middlewareService;
+        _tokenService = tokenService;
     }
 
     public async Task<PaginatedList<AssetListDto>> Handle(GetAssetListQuery query,
         CancellationToken cancellationToken)
     {
+        var requestingUser = _tokenService.GetUserName();
         var paginatedAssets = await _repository.GetPagedAsync(
             query.PageNumber,
             query.PageSize,
@@ -36,6 +40,7 @@ public class GetAssetListQueryHandler : IRequestHandler<GetAssetListQuery, Pagin
             query.SearchTerm,
             query.SortBy,
             query.SortDescending,
+            requestingUser,
             cancellationToken);
 
         var items = new List<AssetListDto>();

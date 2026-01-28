@@ -12,20 +12,24 @@ public class GetAssetsByStatusQueryHandler : IRequestHandler<GetAssetsByStatusQu
     private readonly IAssetRepository _repository;
     private readonly IConfigurationLookupService _lookupService;
     private readonly IMiddlewareIntegrationService _middlewareService;
+    private readonly ITokenService _tokenService;
 
     public GetAssetsByStatusQueryHandler(
         IAssetRepository repository,
         IConfigurationLookupService lookupService,
-        IMiddlewareIntegrationService middlewareService)
+        IMiddlewareIntegrationService middlewareService,
+        ITokenService tokenService)
     {
         _repository = repository;
         _lookupService = lookupService;
         _middlewareService = middlewareService;
+        _tokenService = tokenService;
     }
 
     public async Task<List<AssetListDto>> Handle(GetAssetsByStatusQuery query,
         CancellationToken cancellationToken)
     {
+        var requestingUser = _tokenService.GetUserName();
         var paginatedAssets = await _repository.GetPagedAsync(
             1,
             int.MaxValue,
@@ -34,6 +38,7 @@ public class GetAssetsByStatusQueryHandler : IRequestHandler<GetAssetsByStatusQu
             null,
             null,
             false,
+            requestingUser,
             cancellationToken);
 
         var items = new List<AssetListDto>();
