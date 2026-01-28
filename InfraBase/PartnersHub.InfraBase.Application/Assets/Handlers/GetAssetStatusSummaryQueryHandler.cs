@@ -1,6 +1,7 @@
-﻿using MediatR;
+using MediatR;
 using PartnersHub.InfraBase.Application.Assets.DTOs;
 using PartnersHub.InfraBase.Application.Assets.Queries;
+using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Repository;
 using PartnersHub.InfraBase.Domain.Enums;
 
@@ -10,17 +11,23 @@ public class GetAssetStatusSummaryQueryHandler
 : IRequestHandler<GetAssetStatusSummaryQuery, List<AssetStatusSummaryDto>>
 {
     private readonly IAssetRepository _repository;
+    private readonly ITokenService _tokenService;
 
-    public GetAssetStatusSummaryQueryHandler(IAssetRepository repository)
+    public GetAssetStatusSummaryQueryHandler(IAssetRepository repository, ITokenService tokenService)
     {
         _repository = repository;
+        _tokenService = tokenService;
     }
 
     public async Task<List<AssetStatusSummaryDto>> Handle(
         GetAssetStatusSummaryQuery request,
         CancellationToken cancellationToken)
     {
-        var statusCounts = await _repository.GetStatusCountsAsync(request.CompanyId, cancellationToken);
+        var requestingUser = _tokenService.GetUserName();
+        var statusCounts = await _repository.GetStatusCountsAsync(
+            request.CompanyId,
+            requestingUser,
+            cancellationToken);
 
         var groupedCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         foreach (var status in Enum.GetValues<AssetStatuses>())

@@ -60,9 +60,10 @@ public class AssetRepository : IAssetRepository
         string? searchTerm = null,
         string? sortBy = null,
         bool sortDescending = false,
+        string? requestingUser = null,
         CancellationToken cancellationToken = default)
     {
-        var query = BuildAssetQuery(status, companyId, searchTerm);
+        var query = BuildAssetQuery(status, companyId, searchTerm, requestingUser);
 
         query = ApplySorting(query, sortBy, sortDescending);
 
@@ -126,6 +127,7 @@ public class AssetRepository : IAssetRepository
     {
         var query = _context.Assets
             .Where(a => a.CompanyId == companyId && a.CreatedBy != excludeUserId.ToString())
+            .Where(a => a.Status != AssetStatuses.Draft)
             .Include(a => a.CapexDetails)
             .Include(a => a.OpexDetails)
             .AsQueryable();
@@ -157,6 +159,7 @@ public class AssetRepository : IAssetRepository
 
     public async Task<Dictionary<AssetStatuses, int>> GetStatusCountsAsync(
         Guid? companyId = null, 
+        string? requestingUser = null,
         CancellationToken cancellationToken = default)
     {
         var query = _context.Assets.AsQueryable();
@@ -165,6 +168,8 @@ public class AssetRepository : IAssetRepository
         {
             query = query.Where(a => a.CompanyId == companyId.Value);
         }
+
+        query = ApplyDraftVisibilityFilter(query, requestingUser);
 
         return await query
             .GroupBy(a => a.Status)
@@ -190,6 +195,7 @@ public class AssetRepository : IAssetRepository
     {
         return await _context.Assets
             .Where(a => a.CompanyId == companyId && a.CreatedBy != excludeUserId.ToString())
+            .Where(a => a.Status != AssetStatuses.Draft)
             .GroupBy(a => a.Status)
             .Select(g => new { Status = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Status, x => x.Count, cancellationToken);
@@ -231,7 +237,8 @@ public class AssetRepository : IAssetRepository
     private IQueryable<Asset> BuildAssetQuery(
         AssetStatuses? status = null,
         Guid? companyId = null,
-        string? searchTerm = null)
+        string? searchTerm = null,
+        string? requestingUser = null)
     {
         var query = _context.Assets
             .Include(a => a.CapexDetails)
@@ -248,6 +255,8 @@ public class AssetRepository : IAssetRepository
             query = query.Where(a => a.CompanyId == companyId.Value);
         }
 
+        query = ApplyDraftVisibilityFilter(query, requestingUser);
+
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             var searchPattern = $"%{searchTerm}%";
@@ -259,6 +268,18 @@ public class AssetRepository : IAssetRepository
         }
 
         return query;
+    }
+
+    private static IQueryable<Asset> ApplyDraftVisibilityFilter(
+        IQueryable<Asset> query,
+        string? requestingUser)
+    {
+        if (string.IsNullOrWhiteSpace(requestingUser))
+        {
+            return query;
+        }
+
+        return query.Where(a => a.Status != AssetStatuses.Draft || a.CreatedBy == requestingUser);
     }
 
     private IQueryable<Asset> ApplySorting(IQueryable<Asset> query, string? sortBy, bool sortDescending)

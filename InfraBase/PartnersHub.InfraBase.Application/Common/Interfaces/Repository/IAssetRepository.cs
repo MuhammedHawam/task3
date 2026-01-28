@@ -18,6 +18,7 @@ public interface IAssetRepository
         string? searchTerm = null,
         string? sortBy = null,
         bool sortDescending = false,
+        string? requestingUser = null,
         CancellationToken cancellationToken = default);
     Task<PaginatedList<Asset>> GetPaginatedByUserAsync(
         Guid userId,
@@ -36,6 +37,7 @@ public interface IAssetRepository
         CancellationToken cancellationToken = default);
     Task<Dictionary<AssetStatuses, int>> GetStatusCountsAsync(
         Guid? companyId = null,
+        string? requestingUser = null,
         CancellationToken cancellationToken = default);
     Task<Dictionary<AssetStatuses, int>> GetStatusCountsByUserAsync(
         Guid userId, 
