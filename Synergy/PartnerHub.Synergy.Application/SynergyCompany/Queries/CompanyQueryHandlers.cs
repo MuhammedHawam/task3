@@ -149,7 +149,7 @@ public class GetCompanyDetailsQueryHandler : IRequestHandler<GetCompanyDetailsQu
         {
             StoryId = s.Id,
             Title = s.Title.Value,
-            Type = s.SuccessStoryType.Name ?? "Collaboration",
+            Type = "Collaboration",
             PartnerCompanies = s.CollaboratedProfiles?
                                     .Select(p => new CompanyNameLogoDto
                                     {

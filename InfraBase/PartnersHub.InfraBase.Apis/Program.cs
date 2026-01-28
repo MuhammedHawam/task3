@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PartnersHub.infraBase.Apis.Middleware;
@@ -14,6 +15,7 @@ using PartnersHub.InfraBase.Domain.Common;
 using PartnersHub.InfraBase.Infrastructure.Persistence;
 using PartnersHub.InfraBase.Infrastructure.Persistence.Repositories;
 using PartnersHub.InfraBase.Infrastructure.Services;
+using System.Globalization;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -176,7 +178,27 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
 var app = builder.Build();
+var culture = new CultureInfo("en-SA");
+var supportedCultures = new[] { culture };
 
+var options = new RequestLocalizationOptions
+{
+DefaultRequestCulture = new RequestCulture(culture),
+SupportedCultures = supportedCultures,
+SupportedUICultures = supportedCultures,
+
+// Optional: adds Content-Language: en-SA to the response headers
+ApplyCurrentCultureToResponseHeaders = true
+};
+
+// Force en-SA and ignore ALL client-side culture sources (Accept-Language, cookies, etc.)
+options.RequestCultureProviders = new IRequestCultureProvider[]
+{
+    new CustomRequestCultureProvider(_ =>
+        Task.FromResult(new ProviderCultureResult("en-SA", "en-SA")))
+};
+
+app.UseRequestLocalization(options);
 // Configure the HTTP request pipeline
 //TODO: uncomment the below on UAT
 //if (app.Environment.IsDevelopment())

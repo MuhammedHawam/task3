@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Mail;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PartnerHub.NotificationsHub.Application.Interfaces;
 using PartnerHub.NotificationsHub.Application.Models;
@@ -12,36 +11,27 @@ public class SmtpEmailSender : IEmailSender
 {
     private readonly SmtpOptions _smtpOptions;
     private readonly IEmailTemplateService _templateService;
-    private readonly ILogger<SmtpEmailSender> _logger;
 
-    public SmtpEmailSender(IOptions<SmtpOptions> smtpOptions, IEmailTemplateService templateService, ILogger<SmtpEmailSender> logger)
+    public SmtpEmailSender(IOptions<SmtpOptions> smtpOptions, IEmailTemplateService templateService)
     {
         _smtpOptions = smtpOptions.Value;
         _templateService = templateService;
-        _logger = logger;
     }
 
     public async Task<SendResult> SendAsync(EmailMessage message, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Preparing to send email {NotificationId} to {Recipients}",
-                message.Id, string.Join(", ", message.To.Select(t => t.Value)));
-
+            
             // Render template if not generic
             var body = message.Body;
             var subject = message.Subject;
             
             if (message.TemplateType != EmailTemplateType.Generic && message.TemplateData != null)
             {
-                _logger.LogInformation("Rendering template {TemplateType} for email {NotificationId}",
-                    message.TemplateType, message.Id);
-
                 body = await _templateService.RenderTemplateAsync(message.TemplateType, message.TemplateData, ct);
                 subject = message.TemplateData.GetValueOrDefault("Subject", subject);
             }
-
-            _logger.LogInformation("Connecting to SMTP server {Host}:{Port}", _smtpOptions.Host, _smtpOptions.Port);
 
             using var client = new SmtpClient(_smtpOptions.Host, _smtpOptions.Port)
             {
@@ -78,8 +68,6 @@ public class SmtpEmailSender : IEmailSender
 
             await client.SendMailAsync(mailMessage, ct);
 
-            _logger.LogInformation("Email {NotificationId} sent successfully via SMTP", message.Id);
-
             return new SendResult(
                 Success: true,
                 NotificationId: message.Id.ToString(),
@@ -88,8 +76,6 @@ public class SmtpEmailSender : IEmailSender
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send email {NotificationId}: {Error}", message.Id, ex.Message);
-
             return new SendResult(
                 Success: false,
                 NotificationId: message.Id.ToString(),

@@ -74,6 +74,33 @@ public class MiddlewareCompaniesController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("companies/{sectorId}")]
+    [ProducesResponseType(typeof(Result<MiddlewareCompanyDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<Result<MiddlewareCompanyDto>>> GetCompanyBySectorId(Guid sectorId)
+    {
+        if (sectorId == Guid.Empty)
+        {
+            return BadRequest(Result<MiddlewareCompanyDto>.Failure("Sector ID is required"));
+        }
+
+        var query = new GetMiddlewareCompanyBySectorIdQuery(sectorId);
+        var result = await _mediator.Send(query);
+
+        if (result.IsFailure)
+        {
+            if (result.Error!.Contains("not found"))
+            {
+                return NotFound(result);
+            }
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
     [HttpGet("sectors")]
     [ProducesResponseType(typeof(Result<List<MiddlewareSectorDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]

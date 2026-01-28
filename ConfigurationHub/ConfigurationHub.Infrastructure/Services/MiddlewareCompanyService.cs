@@ -174,6 +174,59 @@ public class MiddlewareCompanyService : IMiddlewareCompanyService
         }
     }
 
+    public async Task<MiddlewareCompanyDto?> GetCompanyBySectorIdAsync(Guid sectorId)
+    {
+        try
+        {
+            _logger.LogInformation("Fetching company with sector {SectorId} from middleware", sectorId);
+
+            var response = await _httpClient.GetAsync($"/Company/get-company-by-sectorId/{sectorId}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    _logger.LogWarning("Company with Sector {SectorId} not found in middleware", sectorId);
+                    return null;
+                }
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    _logger.LogError("Unauthorized access to middleware API for company with Sector {SectorId}. Check API key configuration.", sectorId);
+                    throw new HttpRequestException($"Unauthorized access to middleware API. Status: {response.StatusCode}");
+                }
+
+                _logger.LogError("Failed to fetch company with Sector {SectorId}. Status: {StatusCode}, Reason: {ReasonPhrase}",
+                    sectorId, response.StatusCode, response.ReasonPhrase);
+
+                throw new HttpRequestException($"Failed to fetch company from middleware API. Status: {response.StatusCode}");
+            }
+
+            var wrappedResponse = await response.Content.ReadFromJsonAsync<MiddlewareWrappedResponse<MiddlewareCompanyDto>>();
+
+            if (wrappedResponse?.Data == null)
+            {
+                _logger.LogWarning("Company with Sector {SectorId} returned null data from middleware", sectorId);
+                return null;
+            }
+
+            _logger.LogInformation("Successfully fetched company with sector {SectorId} ({CompanyName}) from middleware",
+                sectorId, wrappedResponse.Data.Name);
+
+            return wrappedResponse.Data;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "HTTP error while fetching company with sector {SectorId} from middleware", sectorId);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error while fetching company with sector {SectorId} from middleware", sectorId);
+            throw;
+        }
+    }
+
     public async Task<List<MiddlewareSectorDto>> GetSectorsAsync()
     {
         try

@@ -134,7 +134,7 @@ public class SuccessStoryRepository : ISuccessStoryRepository
 
     public async Task<List<SuccessStory>> GetByCompanyIdAsync(Guid companyId)
     {
-        return await _context.SuccessStories.Include(e => e.CollaboratedProfiles).Include(f=>f.SuccessStoryType)
+        return await _context.SuccessStories.Include(e => e.CollaboratedProfiles)
             .Where(s => s.CompanyId == companyId)
             .OrderByDescending(s => s.CreatedAt)
             .ToListAsync();

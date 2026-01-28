@@ -8,5 +8,6 @@ public interface IMiddlewareCompanyService
     Task<PaginatedList<MiddlewareCompanyDto>> GetCompaniesAsync(MiddlewareCompanyRequestDto request);
     Task<List<MiddlewareCompanyDto>> GetAllCompaniesAsync();
     Task<MiddlewareCompanyDto?> GetCompanyByIdAsync(Guid companyId);
+    Task<MiddlewareCompanyDto?> GetCompanyBySectorIdAsync(Guid sectorId);
     Task<List<MiddlewareSectorDto>> GetSectorsAsync();
 }
