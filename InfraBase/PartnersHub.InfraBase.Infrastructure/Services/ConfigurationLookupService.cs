@@ -60,13 +60,13 @@ public class ConfigurationLookupService : IConfigurationLookupService
                 continue;
             }
 
-            var name = $"{dto.NameEn} {dto.NameAr}".Trim();
-            if (string.IsNullOrWhiteSpace(name))
+            var code = dto.Code?.Trim();
+            if (string.IsNullOrWhiteSpace(code))
             {
                 continue;
             }
 
-            dict[dto.Id] = name;
+            dict[dto.Id] = code;
         }
 
         return dict;
