@@ -48,6 +48,7 @@ public record CreateAssetCommand : IRequest<Guid>
     public bool? IsPifGuaranteesRequired { get; init; }
     public List<CapexDetailDto> CapexDetails { get; init; } = new();
     public List<OpexDetailDto> OpexDetails { get; init; } = new();
+    public List<AssetAttachmentRequest> Attachments { get; init; } = new();
 
     public Guid CompanyId { get; init; }
     public string CompanyName { get; init; }
@@ -85,6 +86,8 @@ public record UpdateAssetCommand : IRequest<bool>
     public bool? IsPifGuaranteesRequired { get; init; }
     public List<CapexDetailDto>? CapexDetails { get; init; }
     public List<OpexDetailDto>? OpexDetails { get; init; }
+    public List<AssetAttachmentRequest>? AttachmentsToAdd { get; init; }
+    public List<Guid>? AttachmentIdsToRemove { get; init; }
 }
 
 public record SaveAssetAsDraftCommand(Guid Id) : IRequest<bool>;
@@ -111,6 +114,14 @@ public record AddAssetAttachmentCommand : IRequest<Guid>
 }
 
 public record RemoveAssetAttachmentCommand(Guid AssetId, Guid AttachmentId) : IRequest<bool>;
+
+public record AssetAttachmentRequest
+{
+    public string FileName { get; init; } = string.Empty;
+    public long FileSizeInBytes { get; init; }
+    public string ContentType { get; init; } = string.Empty;
+    public string SharePointUrl { get; init; } = string.Empty;
+}
 
 public record CapexDetailDto(int Year, decimal Amount);
 

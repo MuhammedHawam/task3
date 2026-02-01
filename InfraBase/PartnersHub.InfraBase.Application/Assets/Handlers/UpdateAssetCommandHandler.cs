@@ -31,7 +31,7 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
     {
         var userName = _tokenService.GetUserName(); // Use username for readable history
 
-        var asset = await _repository.GetByIdWithFinancialsAsync(command.Id, cancellationToken);
+        var asset = await _repository.GetByIdWithDetailsAsync(command.Id, cancellationToken);
         
         if (asset == null)
         {
@@ -132,6 +132,16 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
             {
                 throw new ValidationException(modeResult.Error!);
             }
+        }
+
+        if (command.AttachmentIdsToRemove?.Count > 0)
+        {
+            RemoveAttachments(asset, command.AttachmentIdsToRemove, userName);
+        }
+
+        if (command.AttachmentsToAdd?.Count > 0)
+        {
+            AddAttachments(asset, command.AttachmentsToAdd, userName);
         }
 
         if (_tokenService.IsInfrabaseAdmin())
@@ -245,6 +255,41 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
                 {
                     throw new ValidationException(updateResult.Error!);
                 }
+            }
+        }
+    }
+
+    private static void AddAttachments(Asset asset, IEnumerable<AssetAttachmentRequest> attachments, string userId)
+    {
+        foreach (var attachment in attachments)
+        {
+            var attachmentResult = asset.AddAttachment(
+                attachment.FileName,
+                attachment.FileSizeInBytes,
+                attachment.ContentType,
+                attachment.SharePointUrl,
+                userId);
+
+            if (attachmentResult.IsFailure)
+            {
+                throw new ValidationException(attachmentResult.Error!);
+            }
+        }
+    }
+
+    private static void RemoveAttachments(Asset asset, IEnumerable<Guid> attachmentIds, string userId)
+    {
+        foreach (var attachmentId in attachmentIds.Distinct())
+        {
+            if (attachmentId == Guid.Empty)
+            {
+                continue;
+            }
+
+            var removeResult = asset.RemoveAttachment(attachmentId, userId);
+            if (removeResult.IsFailure)
+            {
+                throw new ValidationException(removeResult.Error!);
             }
         }
     }

@@ -141,6 +141,11 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
             }
         }
 
+        if (command.Attachments?.Count > 0)
+        {
+            AddAttachments(asset, command.Attachments, userName);
+        }
+
         // InfraBase Admin: assets created by InfraBase admin should be marked as checked immediately.
         if (_tokenService.IsInfrabaseAdmin())
         {
@@ -157,6 +162,24 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return asset.Id;
+    }
+
+    private static void AddAttachments(Asset asset, IEnumerable<AssetAttachmentRequest> attachments, string userId)
+    {
+        foreach (var attachment in attachments)
+        {
+            var attachmentResult = asset.AddAttachment(
+                attachment.FileName,
+                attachment.FileSizeInBytes,
+                attachment.ContentType,
+                attachment.SharePointUrl,
+                userId);
+
+            if (attachmentResult.IsFailure)
+            {
+                throw new ValidationException(attachmentResult.Error!);
+            }
+        }
     }
 
     private static void ValidateYearRows(IEnumerable<int> years, string label)
