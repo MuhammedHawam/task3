@@ -38,9 +38,64 @@ public class ConfigurationLookupService : IConfigurationLookupService
     public async Task<string?> GetAssetTypeNameAsync(Guid assetTypeId, CancellationToken cancellationToken = default)
     {
         // No by-id endpoint; fetch all and find
-        var list = await GetAssetTypesAsync(cancellationToken);
+        var list = await GetAssetTypesInternalAsync(cancellationToken);
         var dto = list?.FirstOrDefault(x => x.Id == assetTypeId);
         return dto?.NameEn ?? dto?.NameAr;
+    }
+
+    public async Task<IReadOnlyDictionary<string, string>> GetAssetTypeSearchValuesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var list = await GetAssetTypesInternalAsync(cancellationToken);
+        if (list == null || list.Count == 0)
+        {
+            return new Dictionary<string, string>();
+        }
+
+        var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var dto in list)
+        {
+            var code = dto.Code?.Trim();
+            var name = $"{dto.NameEn} {dto.NameAr}".Trim();
+
+            if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
+            {
+                continue;
+            }
+
+            dict[code] = name;
+        }
+
+        return dict;
+    }
+
+    public async Task<IReadOnlyDictionary<string, Guid>> GetAssetTypeIdsByCodeAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var list = await GetAssetTypesInternalAsync(cancellationToken);
+        if (list == null || list.Count == 0)
+        {
+            return new Dictionary<string, Guid>();
+        }
+
+        var dict = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
+        foreach (var dto in list)
+        {
+            if (dto.Id == Guid.Empty)
+            {
+                continue;
+            }
+
+            var code = dto.Code?.Trim();
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                continue;
+            }
+
+            dict[code] = dto.Id;
+        }
+
+        return dict;
     }
 
     public async Task<string?> GetUomNameAsync(Guid uomId, CancellationToken cancellationToken = default)
@@ -65,7 +120,7 @@ public class ConfigurationLookupService : IConfigurationLookupService
 
     public async Task<Guid?> GetOtherAssetTypeIdAsync(CancellationToken cancellationToken = default)
     {
-        var assetTypes = await GetAssetTypesAsync(cancellationToken);
+        var assetTypes = await GetAssetTypesInternalAsync(cancellationToken);
         return assetTypes?.FirstOrDefault(IsOtherLookup)?.Id;
     }
 
@@ -84,7 +139,7 @@ public class ConfigurationLookupService : IConfigurationLookupService
     private Task<List<LookupDto>?> GetSubSectorsBySectorIdAsync(Guid sectorId, CancellationToken cancellationToken)
         => GetAsync<List<LookupDto>>($"api/lookups/sectors/{sectorId}/subsectors", cancellationToken);
 
-    private Task<List<LookupDto>?> GetAssetTypesAsync(CancellationToken cancellationToken)
+    private Task<List<LookupDto>?> GetAssetTypesInternalAsync(CancellationToken cancellationToken)
         => _assetTypesTask ??= GetAsync<List<LookupDto>>("api/lookups/assettypes", cancellationToken);
 
     private Task<List<LookupDto>?> GetUomsAsync(CancellationToken cancellationToken)

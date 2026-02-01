@@ -28,7 +28,7 @@ public class AssetDashboardController : ControllerBase
     /// <summary>
     /// Get PC Contributor dashboard data
     /// User Story: "As PC contributor, I want to view home page – landing page"
-    /// Automatically filters by company ID from token
+    /// Returns assets scoped to the specified user
     /// </summary>
     /// <param name="userId">The contributor's user ID</param>
     /// <param name="searchTerm">Search in asset name (max 500 characters)</param>
@@ -56,13 +56,6 @@ public class AssetDashboardController : ControllerBase
             return BadRequest(new { message = "Search term cannot exceed 500 characters" });
         }
 
-        // Apply company ID filter from token for contributors
-        var tokenCompanyId = _tokenService.GetCompanyId();
-        if (!tokenCompanyId.HasValue)
-        {
-            return BadRequest(new { message = "Company ID not found in token. Contributors must be associated with a company." });
-        }
-
         var query = new GetContributorDashboardQuery(
             userId, 
             pageNumber, 
@@ -77,7 +70,7 @@ public class AssetDashboardController : ControllerBase
     /// <summary>
     /// Get PC Admin dashboard data for their own assets
     /// User Story: "As PC admin, I want to view home page – landing page"
-    /// Automatically filters by company ID from token if available
+    /// Returns assets scoped to the specified user
     /// </summary>
     /// <param name="userId">The PC admin's user ID</param>
     /// <param name="searchTerm">Search in asset name (max 500 characters)</param>
@@ -105,13 +98,6 @@ public class AssetDashboardController : ControllerBase
             return BadRequest(new { message = "Search term cannot exceed 500 characters" });
         }
 
-        // Apply company ID filter from token for PC Admins if available
-        var tokenCompanyId = _tokenService.GetCompanyId();
-        if (!tokenCompanyId.HasValue)
-        {
-            return BadRequest(new { message = "Company ID not found in token. PC Admins must be associated with a company." });
-        }
-
         var query = new GetPcAdminDashboardQuery(
             userId, 
             pageNumber, 
@@ -127,7 +113,7 @@ public class AssetDashboardController : ControllerBase
     /// Get PC Admin team assets dashboard data
     /// User Story: "As PC admin, I want to view team assets"
     /// Shows assets submitted by contributors in the same company
-    /// Automatically uses company ID from token
+    /// Uses company ID from token or request
     /// </summary>
     /// <param name="userId">PC Admin user ID (to exclude their own assets)</param>
     /// <param name="searchTerm">Search in asset name (max 500 characters)</param>
@@ -140,6 +126,7 @@ public class AssetDashboardController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<TeamAssetsDashboardDto>> GetTeamAssetsDashboard(
         [FromQuery] Guid userId,
+        [FromQuery] Guid? companyId = null,
         [FromQuery] string? searchTerm = null,
         [FromQuery] AssetStatuses? statusFilter = null,
         [FromQuery] int pageNumber = 1,
@@ -155,15 +142,16 @@ public class AssetDashboardController : ControllerBase
             return BadRequest(new { message = "Search term cannot exceed 500 characters" });
         }
 
-        // Apply company ID from token - required for team assets
+        // Apply company ID from token when available - required for team assets
         var tokenCompanyId = _tokenService.GetCompanyId();
-        if (!tokenCompanyId.HasValue)
+        var effectiveCompanyId = tokenCompanyId ?? companyId;
+        if (!effectiveCompanyId.HasValue)
         {
-            return BadRequest(new { message = "Company ID not found in token. Cannot retrieve team assets without company context." });
+            return BadRequest(new { message = "Company ID not found in token or request. Cannot retrieve team assets without company context." });
         }
 
         var query = new GetTeamAssetsDashboardQuery(
-            tokenCompanyId.Value,  // Use company ID from token
+            effectiveCompanyId.Value,  // Use company ID from token or request
             userId, 
             pageNumber, 
             pageSize, 

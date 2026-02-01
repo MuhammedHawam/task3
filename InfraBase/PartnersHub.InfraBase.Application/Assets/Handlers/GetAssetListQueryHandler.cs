@@ -4,6 +4,7 @@ using PartnersHub.InfraBase.Application.Assets.Queries;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Repository;
 using PartnersHub.InfraBase.Application.Common.Models;
+using System;
 using System.Collections.Concurrent;
 
 
@@ -32,6 +33,7 @@ public class GetAssetListQueryHandler : IRequestHandler<GetAssetListQuery, Pagin
         CancellationToken cancellationToken)
     {
         var requestingUser = _tokenService.GetUserName();
+        var assetTypeIdsForSearch = await GetAssetTypeIdsForSearchAsync(query.SearchTerm, cancellationToken);
         var paginatedAssets = await _repository.GetPagedAsync(
             query.PageNumber,
             query.PageSize,
@@ -40,6 +42,7 @@ public class GetAssetListQueryHandler : IRequestHandler<GetAssetListQuery, Pagin
             query.SearchTerm,
             query.SortBy,
             query.SortDescending,
+            assetTypeIdsForSearch,
             requestingUser,
             cancellationToken);
 
@@ -182,5 +185,44 @@ public class GetAssetListQueryHandler : IRequestHandler<GetAssetListQuery, Pagin
 
         await Task.WhenAll(tasks);
         return dict;
+    }
+
+    private async Task<IReadOnlyCollection<Guid>?> GetAssetTypeIdsForSearchAsync(
+        string? searchTerm,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            return null;
+        }
+
+        var searchValues = await _lookupService.GetAssetTypeSearchValuesAsync(cancellationToken);
+        if (searchValues.Count == 0)
+        {
+            return null;
+        }
+
+        var matchedCodes = searchValues
+            .Where(kvp => kvp.Value.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        if (matchedCodes.Count == 0)
+        {
+            return null;
+        }
+
+        var codeToId = await _lookupService.GetAssetTypeIdsByCodeAsync(cancellationToken);
+        if (codeToId.Count == 0)
+        {
+            return null;
+        }
+
+        var ids = matchedCodes
+            .Where(codeToId.ContainsKey)
+            .Select(code => codeToId[code])
+            .ToList();
+
+        return ids.Count == 0 ? null : ids;
     }
 }

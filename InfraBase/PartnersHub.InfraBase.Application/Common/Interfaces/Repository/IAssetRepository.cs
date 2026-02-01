@@ -18,6 +18,7 @@ public interface IAssetRepository
         string? searchTerm = null,
         string? sortBy = null,
         bool sortDescending = false,
+        IReadOnlyCollection<Guid>? assetTypeIds = null,
         string? requestingUser = null,
         CancellationToken cancellationToken = default);
     Task<PaginatedList<Asset>> GetPaginatedByUserAsync(
