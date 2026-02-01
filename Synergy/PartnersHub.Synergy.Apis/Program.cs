@@ -14,12 +14,14 @@ using PartnersHub.Synergy.Application.Interfaces.Common;
 using PartnersHub.Synergy.Application.Interfaces.Integration;
 using PartnersHub.Synergy.Application.Interfaces.Repository;
 using PartnersHub.Synergy.Application.Interfaces.Repository.Dapper;
+using PartnersHub.Synergy.Application.Interfaces.Services;
 using PartnersHub.Synergy.Domain.Aggregates.SynergyCompanyAggregate;
 using PartnersHub.Synergy.Domain.Common;
 using PartnersHub.Synergy.Domain.Resources;
 using PartnersHub.Synergy.Infrastructure.Persistence;
 using PartnersHub.Synergy.Infrastructure.Persistence.Interfaces;
 using PartnersHub.Synergy.Infrastructure.Persistence.Repositories;
+using PartnersHub.Synergy.Infrastructure.Persistence.StaticData;
 using PartnersHub.Synergy.Infrastructure.Repositories;
 using PartnersHub.Synergy.Infrastructure.Repositories.Dapper;
 using PartnersHub.Synergy.Infrastructure.Services;
@@ -41,10 +43,7 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNamingPolicy = null;
         options.JsonSerializerOptions.WriteIndented = true;
     });
-// Add MediatR
-builder.Services.AddMediatR(cfg => {
-    cfg.RegisterServicesFromAssembly(typeof(PartnersHub.Synergy.Application.SynergyCompany.Queries.GetRegisteredCompaniesQuery).Assembly);
-});
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
@@ -173,11 +172,15 @@ builder.Services.AddScoped<ISuccessStroyTypeRepository,  SuccessStroyTypeReposit
 builder.Services.AddScoped<IDapperRepository, DapperRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IStaticCompanyPifOwnerInfoProvider, StaticCompanyPifOwnerInfoProvider>();
+
 
 // Add MediatR
 builder.Services.AddMediatR(cfg => {
     cfg.RegisterServicesFromAssembly(typeof(PartnersHub.Synergy.Application.AssemblyReference).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(PartnersHub.Synergy.Application.SynergyCompany.Queries.GetRegisteredCompaniesQuery).Assembly);
 });
+
 
 // Add CORS
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];

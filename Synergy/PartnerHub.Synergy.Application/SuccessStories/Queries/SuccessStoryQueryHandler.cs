@@ -45,6 +45,7 @@ namespace PartnersHub.Synergy.Application.SuccessStories.Queries
                 searchTerm: request.SearchTerm,
                 companyIds: request.CompanyIds, 
                 collaborationTypeIds: request.CollaborationTypes, 
+                isIncludeIsHide: request.IsIncludeIsHide,
                 sortBy: request.SortBy);
 
             return Result<PaginatedList<SuccessStoryResponseDto>>.Success(new PaginatedList<SuccessStoryResponseDto>(successStories, count, request.PageNumber, request.PageSize));

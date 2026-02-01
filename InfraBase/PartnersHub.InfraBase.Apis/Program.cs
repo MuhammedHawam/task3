@@ -102,6 +102,7 @@ builder.Services.AddCors(options => {
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.Configure<EmailParameters>(builder.Configuration.GetSection("EmailParameters"));
 builder.Services.AddSwaggerGen(c => {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo {
         Title = "InfraBase API",

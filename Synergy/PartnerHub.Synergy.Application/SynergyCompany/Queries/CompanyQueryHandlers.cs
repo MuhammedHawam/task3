@@ -122,7 +122,6 @@ public class GetCompanyDetailsQueryHandler : IRequestHandler<GetCompanyDetailsQu
             StatusDescription = MapStatusToDisplay(o.Status),
             //CompanyId = o.CompanyId,
             CompanyName = company?.Name.Value ?? "Unknown Company",
-            //CompanyLogo = LogoHelper.ToBase64String(company?.Logo),
             OpportunityTypeId = o.OpportunityTypeId,
             OpportunityTypeName = o.OpportunityType?.Name ?? "N/A",
             ThematicAreaId = o.ThematicAreaId,
@@ -134,7 +133,10 @@ public class GetCompanyDetailsQueryHandler : IRequestHandler<GetCompanyDetailsQu
             ExpectedOutcomes = expectedOutcomes.
                   Where(eo => o.ExpectedOutcomes.Select(e => e.ExpectedOutcomeId).Contains(eo.Id)).Select(eo => eo.Name).ToList(),
             CollaboratedCompaniesCount = o.CollaboratedCompanies?.Count??0,
-            CreatedAt = o.CreatedAt
+            CreatedAt = o.CreatedAt,
+            IsEditByAdmin = o.IsAdminUpdated,
+            IsAdmin = o.IsAdminCreated ?? false,
+            CompanyLogo = LogoHelper.ToBase64String(company?.Logo)
         }).ToList();
 
         var successStories = await _successStoryRepository.GetByCompanyIdAsync(company.Id);
@@ -149,7 +151,7 @@ public class GetCompanyDetailsQueryHandler : IRequestHandler<GetCompanyDetailsQu
         {
             StoryId = s.Id,
             Title = s.Title.Value,
-            Type = "Collaboration",
+            Type = s.SuccessStoryType.Name ?? "Collaboration",
             PartnerCompanies = s.CollaboratedProfiles?
                                     .Select(p => new CompanyNameLogoDto
                                     {
@@ -166,10 +168,14 @@ public class GetCompanyDetailsQueryHandler : IRequestHandler<GetCompanyDetailsQu
             Id = s.Id,
             CompanyId = s.CompanyId,
             CompanyName = company?.Name.Value ?? "Unknown Company",
-            SuccessStoryType = s.SuccessStoryType?.ToString(),
+            SuccessStoryType = s.SuccessStoryType.Name,
             SuccessStoryStatus = s.Status,
             SuccessStoryStatusDescription = s.Status.ToString(),    
-            SubmissionDate = s.CreatedAt
+            SubmissionDate = s.CreatedAt,
+            IsAdmin = s.IsAdminCreated ?? false,
+            IsEditByAdmin = s.IsAdminUpdated,
+            CompanyLogo = LogoHelper.ToBase64String(company?.Logo)
+
         }).ToList();
 
         var responseDto = new CompanyDetailsDto

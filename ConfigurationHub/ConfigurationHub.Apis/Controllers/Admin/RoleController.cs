@@ -70,12 +70,13 @@ public class RoleController : ControllerBase
         return success ? Ok(new { message = "Role deleted successfully" }) : NotFound(new { message = "Role not found" });
     }
 
-    [HttpPost("{roleId}/permissions/{permissionId}")]
-    public async Task<IActionResult> AssignPermissionToRole(Guid roleId, Guid permissionId)
+    [HttpPost("{roleId}/permissions")]
+    public async Task<IActionResult> AssignPermissionToRole(Guid roleId, [FromBody] AddRolePermissionsRequest request)
     {
-        var success = await _roleService.AssignPermissionToRoleAsync(roleId, permissionId);
+        var success = await _roleService.AssignPermissionToRoleAsync(roleId, request.PermissionsIds);
         return success ? Ok(new { message = "Permission assigned successfully" }) : BadRequest(new { message = "Permission already assigned" });
     }
+
 
     [HttpDelete("{roleId}/permissions/{permissionId}")]
     public async Task<IActionResult> RemovePermissionFromRole(Guid roleId, Guid permissionId)
@@ -149,15 +150,16 @@ public class RoleController : ControllerBase
     }
 
     [HttpGet("Moduleadmins")]
-    public async Task<ActionResult<IEnumerable<string>>> GetPaginatedAdmin(int pageNumber = 1, int pageSize = 10)
+    public async Task<ActionResult<IEnumerable<string>>> GetPaginatedAdmin(string? searchTerm = null, string? sortBy = null, int pageNumber = 1, int pageSize = 10)
     {
-        var adminUsers = await _roleService.GetPaginatedAdminAsync(pageNumber, pageSize);
+        var adminUsers = await _roleService.GetPaginatedAdminAsync(pageNumber, pageSize, searchTerm, sortBy);
         return Ok(adminUsers);
     }
 }
 
 public record CreateRoleRequest(string Name, string Description, Guid? ModuleId);
 public record UpdateRoleRequest(string Name, string Description);
+public record AddRolePermissionsRequest(List<Guid> PermissionsIds);
 public record UpdateRolePermissionsRequest(List<Guid> PermissionsIds);
 public record AssignRoleRequest(Guid RoleId, Guid ModuleId,string useremail,string userName);
 public record UserRoleResponse

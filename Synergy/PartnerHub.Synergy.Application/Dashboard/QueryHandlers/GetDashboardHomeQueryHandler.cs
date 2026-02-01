@@ -89,6 +89,7 @@ public class GetDashboardHomeQueryHandler : IRequestHandler<GetDashboardHomeQuer
             pageSize: 4,
             statuses: new List<OpportunityStatus> { OpportunityStatus.Published },
             sortBy: "CreatedAt",
+            IncludeIsHide:false,
             asNoTracking: true);
 
         var companies = await _companyRepository.GetByIdsAsync(opportunities.Items.Select(o => o.CompanyId).Distinct().ToList());
@@ -127,6 +128,7 @@ public class GetDashboardHomeQueryHandler : IRequestHandler<GetDashboardHomeQuer
             status: SuccessStoryStatus.Published,
             sortBy: "CreatedAt",
             sortDescending: true,
+            includeIsHide : false,
             asNoTracking: true);
 
         var companyIds = stories.Items

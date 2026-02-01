@@ -3,6 +3,7 @@ using PartnersHub.Synergy.Application.Interfaces;
 using PartnersHub.Synergy.Application.Interfaces.Common;
 using PartnersHub.Synergy.Application.Interfaces.Integration;
 using PartnersHub.Synergy.Application.Interfaces.Repository;
+using PartnersHub.Synergy.Application.Interfaces.Services;
 using PartnersHub.Synergy.Domain.Aggregates.SynergyCompanyAggregate;
 using PartnersHub.Synergy.Domain.Common;
 using PartnersHub.Synergy.Domain.ValueObjects;
@@ -18,17 +19,20 @@ public class AddCompanyToSynergyCommandHandler : IRequestHandler<AddCompanyToSyn
     private readonly ISynergyCompanyRepository _companyRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserService _userService;
+    private readonly IStaticCompanyPifOwnerInfoProvider _companyPifOwnerInfoStore;
 
     public AddCompanyToSynergyCommandHandler(
         ICompanyIntegrationService integrationService,
         ISynergyCompanyRepository companyRepository,
         IUnitOfWork unitOfWork,
-        IUserService userService)
+        IUserService userService,
+        IStaticCompanyPifOwnerInfoProvider companyPifOwnerInfoStore)
     {
         _integrationService = integrationService;
         _companyRepository = companyRepository;
         _unitOfWork = unitOfWork;
         _userService = userService;
+        _companyPifOwnerInfoStore = companyPifOwnerInfoStore;
     }
 
     public async Task<Result<Guid>> Handle(AddCompanyToSynergyCommand request, CancellationToken cancellationToken)
@@ -47,6 +51,8 @@ public class AddCompanyToSynergyCommandHandler : IRequestHandler<AddCompanyToSyn
         {
             return Result<Guid>.Failure($"Company already exists in Synergy");
         }
+
+        var pifOwnerInfo = _companyPifOwnerInfoStore.GetByCompanyName(externalCompany.Name);
 
         // 3. Prepare representative information
         // Prefer mobile over phone if both available
@@ -73,7 +79,11 @@ public class AddCompanyToSynergyCommandHandler : IRequestHandler<AddCompanyToSyn
             repEmail: repEmail,
             repPhone: repPhone,
             createdBy: _userService.CurrentUserId,
-            logo: externalCompany.Logo);
+            logo: externalCompany.Logo,
+            companyPifOwnerName: pifOwnerInfo?.CompanyPIFOwnerName ?? "Not Provided",
+            companyPifOwnerEmail: pifOwnerInfo?.CompanyPIFOwnerEmail ?? "not.provided@pif.sa",
+            companyPifOwnerSupervisorName: pifOwnerInfo?.CompanyPIFOwnerSupervisorName ?? "Not Provided",
+            companyPifOwnerSupervisorEmail: pifOwnerInfo?.CompanyPIFOwnerSupervisorEmail ?? "not.provided@pif.sa");
 
         if (companyResult.IsFailure)
         {

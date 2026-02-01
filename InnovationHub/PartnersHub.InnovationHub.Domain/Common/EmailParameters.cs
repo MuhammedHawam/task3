@@ -57,5 +57,7 @@ namespace PartnersHub.InnovationHub.Domain.Common
         public string IdeaEvaluationCompletedBody { get; set; }
 
         #endregion
+
+        public string BaseURL { get; set; }
     }
 }

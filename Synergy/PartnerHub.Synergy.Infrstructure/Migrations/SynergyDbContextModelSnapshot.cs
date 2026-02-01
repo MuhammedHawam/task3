@@ -615,6 +615,18 @@ namespace PartnersHub.Synergy.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("CompanyPIFOwnerEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CompanyPIFOwnerName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CompanyPIFOwnerSupervisorEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CompanyPIFOwnerSupervisorName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 

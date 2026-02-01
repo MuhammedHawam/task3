@@ -89,6 +89,12 @@ namespace PartnersHub.Synergy.Application.SuccessStories.DTOs
         public DateTime? StartDate { get; set; }
 
         public DateTime? EndDate { get; set; }
+
+        public bool? IsAdmin { get; set; }
+
+        public bool? IsEditByAdmin { get; set; }
+
+        public int Status { get; set; }
     }
 
 }

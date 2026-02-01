@@ -35,6 +35,7 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
             List<int>? collaborationTypeIds = null,
             string? searchTerm = null,
             string? sortBy = null,
+            bool? isIncludeIsHide = true,
             bool asNoTracking = false)
         {
             var parameters = new DynamicParameters();
@@ -55,6 +56,11 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
                 AND ss2.SynergyCompanyId IN @CompanyIds
             ))");
                 parameters.Add("@CompanyIds", companyIds);
+            }
+
+            if(isIncludeIsHide == false)
+            {
+                whereConditions.Add("s.IsHide != 1");
             }
 
             if (!string.IsNullOrWhiteSpace(partnerCompanyName))
@@ -464,13 +470,14 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
             // Query 3: Associated Opportunities (requires joining to the Opportunities table)
             const string opportunitiesQuery = @"
         SELECT 
-         o.Id, o.Title AS Name , o.Description , o.OpportunityTypeId , t.Name as OpportunityTypeName,
-	     o.CompanyId , c.Name as CompanyName, c.Logo as CompanyLogo, o.SectorId , o.SectorName , o.StartDate , o.EndDate
-        FROM SuccessStoryOpportunities sso
-        JOIN Opportunities o ON sso.OpportunityId = o.Id
-        JOIN OpportunityTypes t on t.Id = o.OpportunityTypeId
-        LEFT JOIN SynergyCompanies C on C.Id = o.CompanyId
-        WHERE sso.SuccessStoryId = @Id;
+              o.Id, o.Title AS Name , o.Description , o.OpportunityTypeId , t.Name as OpportunityTypeName,
+              o.CompanyId , c.Name as CompanyName, c.Logo as CompanyLogo, o.SectorId , o.SectorName , o.StartDate , o.EndDate,
+              o.IsAdminCreated as IsAdmin , o.IsAdminUpdated as IsEditByAdmin , o.Status
+                 FROM SuccessStoryOpportunities sso
+                 JOIN Opportunities o ON sso.OpportunityId = o.Id
+                 JOIN OpportunityTypes t on t.Id = o.OpportunityTypeId
+                 LEFT JOIN SynergyCompanies C on C.Id = o.CompanyId
+                 WHERE sso.SuccessStoryId = @Id;
         ";
             const string expectedOutcomeQuery = @"
             SELECT 

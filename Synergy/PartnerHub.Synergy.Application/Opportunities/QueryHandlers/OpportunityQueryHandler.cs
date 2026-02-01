@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using PartnersHub.Synergy.Application.Common;
 using PartnersHub.Synergy.Application.Common.Helpers;
 using PartnersHub.Synergy.Application.Interfaces.Repository;
 using PartnersHub.Synergy.Application.Models;
@@ -219,7 +220,7 @@ internal static class Helpers
             TypeName = string.Concat(opportunity.OpportunityType.Name.ToString().Select(c => char.IsUpper(c) ?
                 " " + c.ToString() : c.ToString())),
             Status = opportunity.Status,
-            StatusDescription = MapStatusToDisplay(opportunity.Status),
+           // StatusDescription = MapStatusToDisplay(opportunity.Status),
             ThematicAreaId = opportunity.ThematicAreaId,
             ThematicAreaName = opportunity.ThematicArea.Name,
             SectorName = opportunity.Sector.Value,
@@ -254,7 +255,10 @@ internal static class Helpers
                         UploadedBy = a.UploadedBy
                     })
                     .OrderByDescending(a => a.UploadedAt)
-                    .ToList()
+                    .ToList(),
+            StatusDescription = (opportunity.StartDate > DateOnly.FromDateTime(DateTime.Now)) ? CollaborationStatusFilter.Upcoming.ToString() :
+                                                                   ((opportunity.StartDate <= DateOnly.FromDateTime(DateTime.Now) && (opportunity.EndDate == null || opportunity.EndDate >= DateOnly.FromDateTime(DateTime.Now))) ?
+                                                                   CollaborationStatusFilter.Active.ToString() : (opportunity.StartDate == null ? CollaborationStatusFilter.Upcoming.ToString() : CollaborationStatusFilter.Closed.ToString()))
         };
         return opportunityDetailsDto;
 

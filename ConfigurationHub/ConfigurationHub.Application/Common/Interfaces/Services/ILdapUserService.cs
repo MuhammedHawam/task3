@@ -9,7 +9,7 @@ namespace PartnersHub.ConfigurationHub.Application.Common.Interfaces.Services;
 public interface ILdapUserService
 {
     Task<PaginatedList<LdapUser>> SearchUsersAsync(string searchTerm, int pageNumber = 1, int pageSize = 20);
-    Task<LdapUser?> GetUserByUsernameAsync(string? username);
+    Task<LdapUser?> GetUserByUsernameAsync(string? username, string? useremail);
 
     Task<List<LdapUser>> GetUsersByUsernameAsync(string? username);
 }

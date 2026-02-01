@@ -97,7 +97,7 @@ public class RoleService : IRoleService
     }
 
     // Role-Permission Management
-    public async Task<bool> AssignPermissionToRoleAsync(Guid roleId, Guid permissionId)
+    public async Task<bool> AssignPermissionToRoleAsync(Guid roleId, List<Guid> permissionId)
     {
         var role = await _roleRepository.GetByIdAsync(roleId);
         if (role == null)
@@ -161,9 +161,9 @@ public class RoleService : IRoleService
         return await _userRoleRepository.RemoveAsync(userId, roleId, moduleId);
     }
 
-    public async Task<PaginatedList<AdminUserDto>> GetPaginatedAdminAsync(int pagenumber, int pageIndex)
+    public async Task<PaginatedList<AdminUserDto>> GetPaginatedAdminAsync( int pagenumber, int pageIndex,string? searchTerm = null, string? sortBy = null)
     {
-        return await _userRoleRepository.GetAdminsPaginatedAsync(pagenumber, pageIndex);
+        return await _userRoleRepository.GetAdminsPaginatedAsync(searchTerm, sortBy,pagenumber, pageIndex);
     }
     public async Task<IEnumerable<Role>> GetUserRolesAsync(string userId)
     {

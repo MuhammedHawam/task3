@@ -60,10 +60,11 @@ public class AssetRepository : IAssetRepository
         string? searchTerm = null,
         string? sortBy = null,
         bool sortDescending = false,
+        IReadOnlyCollection<Guid>? assetTypeIds = null,
         string? requestingUser = null,
         CancellationToken cancellationToken = default)
     {
-        var query = BuildAssetQuery(status, companyId, searchTerm, requestingUser);
+        var query = BuildAssetQuery(status, companyId, searchTerm, assetTypeIds, requestingUser);
 
         query = ApplySorting(query, sortBy, sortDescending);
 
@@ -238,6 +239,7 @@ public class AssetRepository : IAssetRepository
         AssetStatuses? status = null,
         Guid? companyId = null,
         string? searchTerm = null,
+        IReadOnlyCollection<Guid>? assetTypeIds = null,
         string? requestingUser = null)
     {
         var query = _context.Assets
@@ -260,10 +262,12 @@ public class AssetRepository : IAssetRepository
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             var searchPattern = $"%{searchTerm}%";
+            var hasAssetTypeMatches = assetTypeIds != null && assetTypeIds.Count > 0;
             query = query.Where(a => 
                 EF.Functions.Like(a.AssetName.Value, searchPattern) ||       // Search by Asset Name
                 (a.AssetCode != null && EF.Functions.Like(a.AssetCode, searchPattern)) ||  // Search by Asset Code
                 (a.AssetTypeOther != null && EF.Functions.Like(a.AssetTypeOther, searchPattern)) || // Search by Asset Type Other
+                (hasAssetTypeMatches && a.AssetTypeId.HasValue && assetTypeIds!.Contains(a.AssetTypeId.Value)) || // Search by Asset Type name
                 (a.CompanyName != null && EF.Functions.Like(a.CompanyName, searchPattern)));  // Search by Company Name
         }
 

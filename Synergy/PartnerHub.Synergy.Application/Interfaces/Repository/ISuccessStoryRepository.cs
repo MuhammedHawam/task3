@@ -27,6 +27,7 @@ public interface ISuccessStoryRepository
         string? searchTerm = null,
         string? sortBy = null,
         bool sortDescending = true,
+        bool includeIsHide = true,
         bool asNoTracking = false);
 
     // Dashboard statistics methods

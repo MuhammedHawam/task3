@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using PartnersHub.ConfigurationHub.Application.Common.DTOs;
+using PartnersHub.ConfigurationHub.Application.Common.Helpers;
 using PartnersHub.ConfigurationHub.Application.Common.Interfaces.Persistence;
 using PartnersHub.ConfigurationHub.Application.Common.Models;
 using PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission;
 using PartnersHub.ConfigurationHub.Infrastructure.Persistence;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace PartnersHub.ConfigurationHub.Infrastructure.Persistence.Repositories;
 
@@ -59,33 +61,59 @@ public class UserRoleRepository : IUserRoleRepository
             .AnyAsync(ur => ur.UserId == userId && ur.RoleId == roleId && ur.ModuleId == moduleId);
     }
 
-    public async Task<PaginatedList<AdminUserDto>> GetAdminsPaginatedAsync(int pageNumber = 1, int pageSize = 20)
+    public async Task<PaginatedList<AdminUserDto>> GetAdminsPaginatedAsync(string? searchTerm = null, string? sortBy = null, int pageNumber = 1, int pageSize = 20)
     {
-        var users = _context.UserRoles
-            .Include(ur => ur.Role)
-            .Include(ur => ur.Module)
-            .Where(ur => ur.Role.Name.Contains("admin"))
-            .Select(a => new AdminUserDto
-            {
-                AssignedAt = a.AssignedAt,
-                AssignedBy = a.AssignedBy,
-                UserId = a.UserId,
-                ProductName = a.Module.Name,
-                DisplayName = a.UserName,
-                Email = a.UserEmail,
-                Role = a.Role.Name,
-                RoleId = a.RoleId,
-                ModuleId = a.ModuleId
-                
-            })
-            .AsNoTracking();
+        var query = _context.UserRoles
+                            .Include(ur => ur.Role)
+                            .Include(ur => ur.Module)
+                            .Where(ur => ur.Role.Name.Contains("admin"))
+                            .AsNoTracking();
 
-        var totalCount = await users.CountAsync();
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(x =>
+                x.UserName.Contains(searchTerm) ||
+                x.UserEmail.Contains(searchTerm) ||
+                x.Module.Name.Contains(searchTerm));
+        }
 
-        var items = await users
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+        query = sortBy?.ToLower() switch
+        {
+            "assignedat:asc" => query.OrderBy(x => x.AssignedAt),
+            "assignedat:desc" => query.OrderByDescending(x => x.AssignedAt),
+
+            "displayname:asc" => query.OrderBy(x => x.UserName),
+            "displayname:desc" => query.OrderByDescending(x => x.UserName),
+
+            "productname:asc" => query.OrderBy(x => x.Module.Name),
+            "productname:desc" => query.OrderByDescending(x => x.Module.Name),
+
+            "email:asc" => query.OrderBy(x => x.UserEmail),
+            "email:desc" => query.OrderByDescending(x => x.UserEmail),
+
+            _ => query.OrderByDescending(x => x.AssignedAt) 
+        };
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
+                         .Skip((pageNumber - 1) * pageSize)
+                         .Take(pageSize)
+                         .Select(a => new AdminUserDto
+                                      {
+                                       AssignedAt = a.AssignedAt,
+                                       AssignedBy = a.AssignedBy,
+                                       UserId = a.UserId,
+                                       ProductName = a.Module.Name,
+                                       DisplayName = a.UserName,
+                                       Email = a.UserEmail,
+                                       Role = a.Role.Name,
+                                       RoleId = a.RoleId,
+                                       ModuleId = a.ModuleId
+                                       })
+                                      .ToListAsync();
+
+   
 
         return PaginatedList<AdminUserDto>.Create(items, totalCount, pageNumber, pageSize);
 

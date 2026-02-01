@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PartnersHub.Synergy.Application.Interfaces.Common;
+using PartnersHub.Synergy.Application.Interfaces.Repository;
 using PartnersHub.Synergy.Domain.Common;
 using PartnersHub.Synergy.Domain.ValueObjects;
 using System.Net.Http;
@@ -25,21 +26,27 @@ public class NotificationService : INotificationService
     private readonly ILogger<NotificationService> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ISynergyCompanyRepository _synergyCompanyRepository;
+    private const string TemplateFolderName = "Templates/Emails/Images";
 
 
-    public NotificationService(IOptions<EmailParameters> options, ILogger<NotificationService> logger, IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor)
+    public NotificationService(IOptions<EmailParameters> options,
+                               ILogger<NotificationService> logger, 
+                               IHttpClientFactory httpClientFactory,
+                               IHttpContextAccessor httpContextAccessor,
+                               ISynergyCompanyRepository synergyCompanyRepository)
     {
         _emailParams = options.Value;
         _logger = logger;
         _httpClientFactory = httpClientFactory;
         _httpContextAccessor = httpContextAccessor;
-
-      
+        _synergyCompanyRepository = synergyCompanyRepository;
     }
-    // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
+
     private async Task SendEmail(EmailNotificationModel emailDto)
     {
-        // 1. Extract Token safely
+        _logger.LogInformation("Sending email notification. Payload: {@EmailDto}",emailDto);
+
         var authHeader = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
 
         if (string.IsNullOrWhiteSpace(authHeader) || !authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
@@ -48,10 +55,8 @@ public class NotificationService : INotificationService
             throw new UnauthorizedAccessException("Missing or invalid authorization token.");
         }
 
-        // 2. Use HttpClient efficiently
         var httpClient = _httpClientFactory.CreateClient(Constants.NotificationClient);
 
-        // Clear and set headers to avoid accumulation if the client is reused
         httpClient.DefaultRequestHeaders.Authorization = AuthenticationHeaderValue.Parse(authHeader);
 
         if (!httpClient.DefaultRequestHeaders.Accept.Any(h => h.MediaType == "application/json"))
@@ -61,7 +66,6 @@ public class NotificationService : INotificationService
 
         try
         {
-            // 3. PostAsJsonAsync handles serialization and Content-Type headers automatically
             var response = await httpClient.PostAsJsonAsync(Constants.EmailNotificationPath, emailDto);
 
             if (!response.IsSuccessStatusCode)
@@ -89,9 +93,27 @@ public class NotificationService : INotificationService
             templateContent = templateContent.Replace(placeholder.Key, placeholder.Value);
         }
 
+        templateContent = InlineImage(templateContent, "BG.png");
+        templateContent = InlineImage(templateContent, "PIF_Logo.png");
+        templateContent = InlineImage(templateContent, "PIF.png");
+        templateContent = InlineImage(templateContent, "Platform_Logo.png");
+
         return templateContent;
     }
 
+    private static string InlineImage(string html, string fileName)
+    {
+        var filePath = Path.Combine(AppContext.BaseDirectory, TemplateFolderName, fileName);
+        if (!File.Exists(filePath))
+        {
+            return html;
+        }
+
+        var base64 = Convert.ToBase64String(File.ReadAllBytes(filePath));
+        var dataUri = $"data:image/png;base64,{base64}";
+
+        return html.Replace($"./Images/{fileName}", dataUri, StringComparison.Ordinal);
+    }
     public async Task SendSubmittedNotificationAsync(string moduleName, Guid Id, Guid companyId, Guid submitterId,string name,string? companyName ,CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("{moduleName} {Id} submitted. Notification sent.", moduleName, Id);
@@ -109,12 +131,20 @@ public class NotificationService : INotificationService
 
         var emailBody = LoadTemplate("Submitted.html", placeholders);
 
-        var assetManager = _emailParams.AssetManagersList.FirstOrDefault(x => x.PCName.Equals(companyName, StringComparison.OrdinalIgnoreCase));
+        var assetManager = _synergyCompanyRepository.GetByIdAsync(companyId);
+
+       var subjectTitle =  moduleName.ToLowerInvariant() switch
+                             {
+                                 "opportunity"  => _emailParams.OpportunitySubmittedSubject,
+                                 "successstory" => _emailParams.SuccessStorySubmittedSubject,
+                                              _ => _emailParams.OpportunitySubmittedSubject
+                             };
 
         await SendEmail(new EmailNotificationModel
         {
-            to = new List<string> { assetManager?.AssetManagerEmail },
-            subject = _emailParams.OpportunitySubmittedSubject,
+            to = new List<string>{assetManager?.Result?.CompanyPIFOwnerEmail, assetManager?.Result?.CompanyPIFOwnerSupervisorEmail, _emailParams.SynergyModuleCC}
+                                  .Where(email => !string.IsNullOrWhiteSpace(email)).ToList(),
+            subject = subjectTitle,
             body = emailBody,
             isHtml = true
         });
@@ -136,11 +166,17 @@ public class NotificationService : INotificationService
 
         var emailBody = LoadTemplate("PendingFinalApproval.html", placeholders);
 
+        var subjectTitle = moduleName.ToLowerInvariant() switch
+        {
+            "opportunity" => _emailParams.OpportunityApprovedSubject,
+            "successstory" => _emailParams.SuccessStoryApprovedSubject,
+            _ => _emailParams.OpportunityApprovedSubject
+        };
 
         await SendEmail(new EmailNotificationModel
         {
-            to = _emailParams.SynergyTeam.Select(e => e.Email).ToList(),
-            subject = _emailParams.OpportunityApprovedSubject,
+            to = (_emailParams.SynergyTeam.Select(e => e.Email).ToList()),
+            subject = subjectTitle,
             body = emailBody,
             isHtml = true
         });
@@ -160,10 +196,18 @@ public class NotificationService : INotificationService
                             };
 
         var emailBody = LoadTemplate("FinalApproved.html", placeholders);
+
+        var subjectTitle = moduleName.ToLowerInvariant() switch
+        {
+            "opportunity" => _emailParams.OpportunityPublishedSubject,
+            "successstory" => _emailParams.SuccessStoryPublishedSubject,
+            _ => _emailParams.OpportunityPublishedSubject
+        };
+
         await SendEmail(new EmailNotificationModel
         {
-            to = new List<string> { companyEmail ?? ""},
-            subject = _emailParams.OpportunityPublishedSubject,
+            to = new List<string> { companyEmail, _emailParams.SynergyModuleCC }.Where(email => !string.IsNullOrWhiteSpace(email)).ToList(),
+            subject = subjectTitle,
             body = emailBody,
             isHtml = true
         });
@@ -187,10 +231,17 @@ public class NotificationService : INotificationService
 
         var emailBody = LoadTemplate("Rejected.html", placeholders);
 
+        var subjectTitle = moduleName.ToLowerInvariant() switch
+        {
+            "opportunity" => _emailParams.OpportunityRejectedSubject,
+            "successstory" => _emailParams.SuccessStoryRejectedSubject,
+            _ => _emailParams.OpportunityRejectedSubject
+        };
+
         await SendEmail(new EmailNotificationModel
         {
-            to = new List<string> { companyEmail ?? "" },
-            subject = _emailParams.OpportunityRejectedSubject,
+            to = new List<string> { companyEmail, _emailParams.SynergyModuleCC }.Where(email => !string.IsNullOrWhiteSpace(email)).ToList(),
+            subject = subjectTitle,
             body = emailBody,
             isHtml = true
         });
@@ -214,65 +265,21 @@ public class NotificationService : INotificationService
 
         var emailBody = LoadTemplate("Updated.html", placeholders);
 
+        var subjectTitle = moduleName.ToLowerInvariant() switch
+        {
+            "opportunity" => _emailParams.OpportunityUpdatedSubject,
+            "successstory" => _emailParams.SuccessStoryUpdatedSubject,
+            _ => _emailParams.OpportunityUpdatedSubject
+        };
+
         await SendEmail(new EmailNotificationModel
         {
-            to = new List<string> { companyEmail  },
-            subject = _emailParams.OpportunityRejectedSubject,
+            to = new List<string> { companyEmail, _emailParams.SynergyModuleCC }.Where(email => !string.IsNullOrWhiteSpace(email)).ToList(),
+            subject = subjectTitle,
             body = emailBody,
             isHtml = true
         });
     }
 
 
-    public async Task SendSuccessStorySubmittedNotificationAsync(Guid successStoryId, Guid companyId, Guid submitterId, CancellationToken cancellationToken = default)
-    {
-        _logger.LogInformation("Success Story {SuccessStoryId} submitted. Notification sent.", successStoryId);
-
-        await SendEmail(new EmailNotificationModel
-        {
-            to = new List<string> { _emailParams.SynergyModuleReviever },
-            cc = new List<string> { _emailParams.SynergyModuleCC },
-            subject = _emailParams.SuccessStorySubmittedSubject,
-            body = _emailParams.SuccessStorySubmittedBody
-        });
-    }
-
-    public async Task SendSuccessStoryApprovedByAssetManagerNotificationAsync(Guid successStoryId, Guid companyId, Guid approverId, CancellationToken cancellationToken = default)
-    {
-        _logger.LogInformation("Success Story {SuccessStoryId} approved. Notification sent.", successStoryId);
-
-        await SendEmail(new EmailNotificationModel
-        {
-            to = new List<string> { _emailParams.SynergyModuleReviever },
-            cc = new List<string> { _emailParams.SynergyModuleCC },
-            subject = _emailParams.SuccessStoryApprovedSubject,
-            body = _emailParams.SuccessStoryApprovedBody
-        });
-    }
-
-    public async Task SendSuccessStoryPublishedNotificationAsync(Guid successStoryId, Guid companyId, Guid publisherId, CancellationToken cancellationToken = default)
-    {
-        _logger.LogInformation("Success Story {SuccessStoryId} published. Notification sent.", successStoryId);
-
-        await SendEmail(new EmailNotificationModel
-        {
-            to = new List<string> { _emailParams.SynergyModuleReviever },
-            cc = new List<string> { _emailParams.SynergyModuleCC },
-            subject = _emailParams.SuccessStoryPublishedSubject,
-            body = _emailParams.SuccessStoryPublishedBody
-        });
-    }
-
-    public async Task SendSuccessStoryRejectedNotificationAsync(Guid successStoryId, Guid companyId, string rejectionReason, Guid rejecterId, CancellationToken cancellationToken = default)
-    {
-        _logger.LogInformation("Success Story {SuccessStoryId} rejected. Reason: {RejectionReason}.", successStoryId, rejectionReason);
-
-        await SendEmail(new EmailNotificationModel
-        {
-            to = new List<string> { _emailParams.SynergyModuleReviever },
-            cc = new List<string> { _emailParams.SynergyModuleCC },
-            subject = _emailParams.SuccessStoryRejectedSubject,
-            body = $"{_emailParams.SuccessStoryRejectedBody} {rejectionReason}"
-        });
-    }
 }

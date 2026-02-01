@@ -108,6 +108,7 @@ public static class TestUsersSeeder
                     UserId = username,
                     RoleId = role.Id,
                     ModuleId = module.Id,
+                    UserName= username,
                     AssignedBy = "System",
                     AssignedAt = DateTime.UtcNow
                 };

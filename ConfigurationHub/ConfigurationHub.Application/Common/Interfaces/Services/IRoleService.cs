@@ -20,7 +20,7 @@ public interface IRoleService
     Task<List<LookupDto>> GetAllRolesLookupByModuleAsync(Guid moduleId);
 
     // Role-Permission Management
-    Task<bool> AssignPermissionToRoleAsync(Guid roleId, Guid permissionId);
+    Task<bool> AssignPermissionToRoleAsync(Guid roleId, List<Guid> permissionId);
     Task<bool> RemovePermissionFromRoleAsync(Guid roleId, Guid permissionId);
     Task<IEnumerable<Permission>> GetRolePermissionsAsync(Guid roleId);
 
@@ -38,5 +38,5 @@ public interface IRoleService
     Task<IEnumerable<string>> GetUserPermissionsAsync(string userId);
     Task<bool> UpdateRolePermissionsAsync(Guid roleId, List<Guid> permissionId);
 
-    Task<PaginatedList<AdminUserDto>> GetPaginatedAdminAsync(int pagenumber, int pageIndex);
+    Task<PaginatedList<AdminUserDto>> GetPaginatedAdminAsync(int pagenumber, int pageIndex, string? searchTerm = null, string? sortBy = null);
 }

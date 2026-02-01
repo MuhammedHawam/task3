@@ -43,9 +43,11 @@ namespace PartnersHub.Synergy.Apis.Controllers
             [FromQuery] List<int>? status,
             [FromQuery] string? startDate,
             [FromQuery] string? endDate,
+            [FromQuery] bool? includeIsHide,
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 12,
             [FromQuery] string? sortBy = "CreatedAt:desc"
+
             )
         {
             var query = new SearchOpportunitiesQuery
@@ -63,6 +65,7 @@ namespace PartnersHub.Synergy.Apis.Controllers
                 CollaborationStatuses = collaborationStatuses,
                 StartDate = ParseDateOnly(startDate),
                 EndDate = ParseDateOnly(endDate),
+                IncludeIsHide = includeIsHide,
                 SortBy = sortBy
             };
 

@@ -13,6 +13,8 @@ namespace PartnersHub.ConfigurationHub.Application.Common.DTOs
         public string Description { get; set; }
         public string ModuleName { get; set; }
         public string SectorName { get; set; }
+        public string? OnboardedBy { get; set; }
+        public DateTime? OnboardingDate { get; set; }
     }
 
     public class RegisteredCompanyDto

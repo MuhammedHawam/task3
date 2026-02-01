@@ -15,16 +15,20 @@ public class RolePermissionRepository : IRolePermissionRepository
         _context = context;
     }
 
-    public async Task<bool> AddAsync(Guid roleId, Guid permissionId)
+    public async Task<bool> AddAsync(Guid roleId, List<Guid> permissionIds)
     {
-        var exists = await ExistsAsync(roleId, permissionId);
-        if (exists) return false;
-
-        await _context.RolePermissions.AddAsync(new RolePermission
+        foreach (var id in permissionIds)
         {
-            RoleId = roleId,
-            PermissionId = permissionId
-        });
+            var exists = await ExistsAsync(roleId, id);
+            if (exists) return false;
+
+            await _context.RolePermissions.AddAsync(new RolePermission
+            {
+                RoleId = roleId,
+                PermissionId = id
+            });
+        }
+       
         await _context.SaveChangesAsync();
         return true;
     }

@@ -83,12 +83,16 @@ public class SuccessStoryRepository : ISuccessStoryRepository
         string? searchTerm = null,
         string? sortBy = null,
         bool sortDescending = true,
+        bool includeIsHide = true,
         bool asNoTracking = false)
     {
         IQueryable<SuccessStory> query = _context.SuccessStories;
 
         if (asNoTracking)
             query = query.AsNoTracking();
+
+        if (!includeIsHide)
+            query = query.Where(e => e.IsHide != true);
 
         // Apply filters
         if (companyId.HasValue)
@@ -102,7 +106,9 @@ public class SuccessStoryRepository : ISuccessStoryRepository
             var term = searchTerm.ToLower();
             query = query.Where(s => s.Title.Value.ToLower().Contains(term)||
                                      (s.Description != null && s.Description.Value != null && s.Description.Value.ToLower().Contains(term))||
-                                     (s.SectorName != null && s.SectorName.ToLower().Contains(term))
+                                     (s.SectorName != null && s.SectorName.ToLower().Contains(term))||
+                                     (s.SuccessStoryType != null && s.SuccessStoryType.Name.ToLower().Contains(term))
+                                     
                                      );
         }
 
@@ -134,8 +140,8 @@ public class SuccessStoryRepository : ISuccessStoryRepository
 
     public async Task<List<SuccessStory>> GetByCompanyIdAsync(Guid companyId)
     {
-        return await _context.SuccessStories.Include(e => e.CollaboratedProfiles)
-            .Where(s => s.CompanyId == companyId)
+        return await _context.SuccessStories.Include(e => e.CollaboratedProfiles).Include(f=>f.SuccessStoryType)
+            .Where(s => s.CompanyId == companyId && s.Status == SuccessStoryStatus.Published)
             .OrderByDescending(s => s.CreatedAt)
             .ToListAsync();
     }

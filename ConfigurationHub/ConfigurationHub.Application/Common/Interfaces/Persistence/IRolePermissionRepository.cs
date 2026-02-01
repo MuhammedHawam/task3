@@ -5,7 +5,7 @@ namespace PartnersHub.ConfigurationHub.Application.Common.Interfaces.Persistence
 
 public interface IRolePermissionRepository
 {
-    Task<bool> AddAsync(Guid roleId, Guid permissionId);
+    Task<bool> AddAsync(Guid roleId, List<Guid> permissionIds);
     Task<bool> RemoveAsync(Guid roleId, Guid permissionId);
     Task<IEnumerable<Permission>> GetPermissionsByRoleIdAsync(Guid roleId);
     Task<IEnumerable<LookupDto>> GetPermissionsLookupByRoleIdAsync(Guid roleId);

@@ -25,7 +25,7 @@
   </ItemGroup>
 
 	<ItemGroup>
-		<Content Include="Templates\Emails\**\*.html">
+		<Content Include="Templates\Emails\**\*.*">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>

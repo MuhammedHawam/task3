@@ -34,11 +34,14 @@ namespace PartnersHub.ConfigurationHub.Infrastructure.Persistence.Repositories
                    Description = r.Description,
                    SectorName = r.SectorName,
                    ModuleName = r.Module.Name,
+                   OnboardedBy= r.CreatedBy,
+                   OnboardingDate=r.CreatedAt
                 })
-                .ToListAsync();
+                .ToListAsync(); 
 
             return new PaginatedList<RegisteredCompanyListDto>(items, totalCount, pageIndex, pageSize);
         }
+
 
         public async Task<bool> AddAsync(Guid ModuleId,string sectorId,string sectorName,string description,List<RegisteredCompanyDto> companyDtos,CancellationToken cancellationToken)
         {

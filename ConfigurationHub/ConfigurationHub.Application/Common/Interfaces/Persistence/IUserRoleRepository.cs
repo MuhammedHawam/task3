@@ -11,5 +11,5 @@ public interface IUserRoleRepository
     Task<IEnumerable<UserRole>> GetByUserIdAsync(string userId);
     Task<IEnumerable<UserRole>> GetByRoleIdAsync(Guid roleId);
     Task<bool> ExistsAsync(string userId, Guid roleId, Guid moduleId);
-    Task<PaginatedList<AdminUserDto>> GetAdminsPaginatedAsync(int pageNumber = 1, int pageSize = 20);
+    Task<PaginatedList<AdminUserDto>> GetAdminsPaginatedAsync(string? searchTerm = null, string? sortBy = null, int pageNumber = 1, int pageSize = 20);
 }

@@ -70,6 +70,7 @@ public static class DefaultSuperAdminSeeder
                     UserId = fullUsername,
                     RoleId = superAdminRole.Id,
                     ModuleId = globalModule.Id,
+                    UserName= fullUsername,
                     AssignedBy = "System",
                     AssignedAt = DateTime.UtcNow
                 };

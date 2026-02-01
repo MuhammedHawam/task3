@@ -110,6 +110,10 @@ public class OpportunityCollaborationDto
     // Timeline
 
     public DateTime CreatedAt { get; set; }
+
+    public bool IsAdmin { get; set; }
+
+    public bool? IsEditByAdmin { get; set; }
 }
 
 public class SuccessStoryPreviewDto
@@ -134,6 +138,10 @@ public class SuccessStoryPreviewDto
     public SuccessStoryStatus SuccessStoryStatus { get; set; }
     public string SuccessStoryStatusDescription { get; set; }
     public DateTime SubmissionDate { get; set; }
+    public bool IsAdmin { get; set; }
+    public bool? IsEditByAdmin { get; set; }
+
+    public string? CompanyLogo { get; set; }
 
 }
 

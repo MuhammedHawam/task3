@@ -17,8 +17,15 @@ using PartnersHub.InnovationHub.Infrastructure.Presistence.Repositories;
 using PartnersHub.InnovationHub.Infrastructure.Presistence.Services;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 // FIX 1: Add HttpContextAccessor to resolve dependency error in AdminCommunicationService
 builder.Services.AddHttpContextAccessor();
@@ -178,6 +185,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
     app.UseDeveloperExceptionPage();
 }
+
+app.UseSerilogRequestLogging();
 
 // Remove sensitive headers
 app.Use(async (context, next) =>

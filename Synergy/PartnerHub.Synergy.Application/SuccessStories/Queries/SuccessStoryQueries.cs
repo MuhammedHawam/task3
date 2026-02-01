@@ -43,5 +43,7 @@ namespace PartnersHub.Synergy.Application.SuccessStories.Queries
         public string? SortBy { get; set; } = "CreatedAt:desc";
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 10;
+
+        public bool? IsIncludeIsHide { get; set; } = true;
     }
 }

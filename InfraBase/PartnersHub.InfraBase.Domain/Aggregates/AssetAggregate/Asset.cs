@@ -2,6 +2,7 @@ using PartnersHub.InfraBase.Domain.Common;
 using PartnersHub.InfraBase.Domain.Enums;
 using PartnersHub.InfraBase.Domain.Events;
 using PartnersHub.InfraBase.Domain.ValueObjects;
+using System.Numerics;
 
 namespace PartnersHub.InfraBase.Domain.Aggregates.AssetAggregate;
 
@@ -24,9 +25,9 @@ public class Asset : AggregateRoot
     public string? AssetTypeOther { get; private set; }
     public decimal? QuantityOfAsset { get; private set; }
     public decimal CapacityPerAsset { get; private set; }
-    public decimal? TotalCapacity => QuantityOfAsset.HasValue
-        ? QuantityOfAsset.Value * CapacityPerAsset
-        : (decimal?)null;
+    public BigInteger? TotalCapacity => QuantityOfAsset.HasValue 
+    ? (BigInteger?)(new BigInteger(QuantityOfAsset.Value) * new BigInteger(CapacityPerAsset))
+    : (BigInteger?)null;
     public Guid? UnitOfMeasurementId { get; private set; }
     public string? UnitOfMeasurementOther { get; private set; }
     public AssetDescription? Description { get; private set; }

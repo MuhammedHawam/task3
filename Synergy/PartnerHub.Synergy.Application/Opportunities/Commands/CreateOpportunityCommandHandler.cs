@@ -218,7 +218,7 @@ public class CreateOpportunityCommandHandler : IRequestHandler<CreateOpportunity
         }
         if (await _opportunityRepository.IsOpportunityWithTitleAndCompanyExistsAsync(command.Title,( command.IsAdmin == true ? command.CompanyId : _userService.CompanyId)))
         {
-            return Result.Failure("Opportunity with the same title exists");
+            return Result.Failure("Partnership with the same title exists");
 
         }
 

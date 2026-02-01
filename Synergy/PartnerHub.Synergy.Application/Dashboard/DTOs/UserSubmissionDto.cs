@@ -15,6 +15,7 @@ public class UserOpportunitySubmissionDto
     public string Sector { get; set; } = null!;
     public OpportunityStatus Status { get; set; }
     public string StatusDescription { get; set; } = null!;
+    public DateTime? EndDate { get; set; }
 }
 
 /// <summary>
@@ -30,4 +31,6 @@ public class UserSuccessStorySubmissionDto
     public string SubmissionStatus => Status.ToString();
     public SuccessStoryStatus Status { get; set; }
     public string StatusDescription { get; set; } = null!;
+
+    public string PartnershipStatus { get; set; }
 }

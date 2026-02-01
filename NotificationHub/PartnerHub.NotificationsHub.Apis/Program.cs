@@ -8,11 +8,18 @@ using PartnerHub.NotificationsHub.Application.Options;
 using PartnerHub.NotificationsHub.Application.Services;
 using PartnerHub.NotificationsHub.Infrastructure.Persistence;
 using PartnerHub.NotificationsHub.Infrastructure.Repositories;
+using PartnerHub.NotificationsHub.Infrastructure.Workers;
 using PartnerHub.NotificationsHub.Infrastructure.Services;
 using System.Security.Cryptography;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
@@ -87,15 +94,15 @@ builder.Services.AddAuthentication(options =>
 .AddJwtBearer(EXTERNAL_ALT_SCHEME, ConfigureExternalAltAuthentication)
 .AddScheme<AuthenticationSchemeOptions, MultiAuthHandler>("MultiAuth", null);
 #endregion
-// Queue-based processing
-builder.Services.AddSingleton<INotificationQueue, InMemoryNotificationQueue>();
-builder.Services.AddHostedService<InMemoryNotificationQueue>(provider => 
-    (InMemoryNotificationQueue)provider.GetRequiredService<INotificationQueue>());
+
+builder.Services.AddHostedService<NotificationRetryWorker>();
 
 var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.UseSerilogRequestLogging();
 
 // Remove sensitive headers
 app.Use(async (context, next) =>

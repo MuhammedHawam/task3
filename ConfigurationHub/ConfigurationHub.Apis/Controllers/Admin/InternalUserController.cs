@@ -30,10 +30,10 @@ public class InternalUserController : ControllerBase
         return Ok(users);
     }
 
-    [HttpGet("{username}")]
-    public async Task<ActionResult<LdapUser>> GetInternalUserByUsername(string username)
+    [HttpGet("{username}/{useremail}")]
+    public async Task<ActionResult<LdapUser>> GetInternalUserByUsername(string username,string useremail)
     {
-        var user = await _ldapUserService.GetUserByUsernameAsync(username);
+        var user = await _ldapUserService.GetUserByUsernameAsync(username, useremail);
 
         if (user == null)
             return NotFound(new { message = $"User '{username}' not found in Active Directory" });

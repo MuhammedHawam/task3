@@ -30,6 +30,7 @@ public class NotificationService : INotificationService
 
     private async Task SendEmail(EmailNotificationModel emailDto)
     {
+        _logger.LogInformation("Sending email notification. Payload: {@EmailDto}", emailDto);
         // 1. Extract Token safely
         var authHeader = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
 
@@ -85,7 +86,9 @@ public class NotificationService : INotificationService
 
         await SendEmail(new EmailNotificationModel
         {
-            to = new List<string> { email },
+            to = new List<string> { email, _emailParams.InfraBaseModuleCC }
+                                  .Where(email => !string.IsNullOrWhiteSpace(email)).ToList(),
+            //cc = new List<string> { _emailParams.InfraBaseModuleCC },
             subject = subject,
             body = body,
             isHtml = true
@@ -105,7 +108,8 @@ public class NotificationService : INotificationService
 
         await SendEmail(new EmailNotificationModel
         {
-            to = recipients.ToList(),
+            to = (recipients ?? Enumerable.Empty<string>()).Append(_emailParams.InfraBaseModuleCC).ToList(),
+            cc = new List<string> { _emailParams.InfraBaseModuleCC },
             subject = subject,
             body = body,
             isHtml = true

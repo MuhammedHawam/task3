@@ -242,7 +242,7 @@ async Task InitializeDatabaseAsync(WebApplication application)
             logger.LogInformation("Database migrations applied");
         }
 
-        //await DbInitializer.InitializeDatabaseAsync(dbContext);
+        await DbInitializer.InitializeDatabaseAsync(dbContext);
         await RulesEngineSeeder.SeedRbacDataAsync(dbContext);
         await DefaultSuperAdminSeeder.AssignDefaultSuperAdminAsync(dbContext, configuration, logger);
         await TestUsersSeeder.SeedTestUsersAsync(dbContext, configuration, logger);

@@ -11,16 +11,16 @@ namespace PartnerHub.NotificationsHub.Application.Services;
 public class NotificationService : INotificationService
 {
     private readonly INotificationRepository _repository;
-    private readonly INotificationQueue _queue;
+    private readonly INotificationDispatcher _dispatcher;
     private readonly ILogger<NotificationService> _logger;
 
     public NotificationService(
         INotificationRepository repository,
-        INotificationQueue queue,
+        INotificationDispatcher dispatcher,
         ILogger<NotificationService> logger)
     {
         _repository = repository;
-        _queue = queue;
+        _dispatcher = dispatcher;
         _logger = logger;
     }
 
@@ -78,18 +78,33 @@ public class NotificationService : INotificationService
             PayloadJson = JsonSerializer.Serialize(request)
         };
 
+        _logger.LogInformation("Creating {Channel} notification {NotificationId} from {SourceService}",
+            channel, entity.Id, entity.SourceService);
+
         await _repository.AddAsync(entity, ct);
 
-        // Queue for asynchronous processing
-        await _queue.EnqueueAsync(entity, ct);
-        
-        _logger.LogInformation("{Channel} notification {NotificationId} queued for processing", channel, entity.Id);
+        _logger.LogInformation("Dispatching {Channel} notification {NotificationId}", channel, entity.Id);
+        var result = await _dispatcher.DispatchAsync(entity, ct);
 
-        return new SendResult(
-            Success: true,
-            NotificationId: entity.Id.ToString(),
-            ErrorCode: null,
-            Message: "Notification queued for processing");
+        entity.Status = result.Success ? NotificationStatus.Sent : NotificationStatus.Failed;
+        entity.AttemptCount = 1;
+        entity.LastAttemptAtUtc = DateTimeOffset.UtcNow;
+        entity.LastError = result.Success ? null : result.Message;
+        entity.NextAttemptAtUtc = result.Success ? null : DateTimeOffset.UtcNow.AddMinutes(5);
+
+        await _repository.UpdateAsync(entity, ct);
+
+        if (result.Success)
+        {
+            _logger.LogInformation("{Channel} notification {NotificationId} sent successfully", channel, entity.Id);
+        }
+        else
+        {
+            _logger.LogError("{Channel} notification {NotificationId} failed: {Error}",
+                channel, entity.Id, result.Message);
+        }
+
+        return result;
     }
 
     private static string? GetSourceService<T>(T request)

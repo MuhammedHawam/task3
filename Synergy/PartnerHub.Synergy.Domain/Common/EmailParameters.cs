@@ -21,6 +21,10 @@ namespace PartnersHub.Synergy.Domain.Common
         public string OpportunityRejectedSubject { get; set; }
         public string OpportunityRejectedBody { get; set; }
 
+        public string OpportunityUpdatedSubject { get; set; }
+
+        public string SuccessStoryUpdatedSubject { get; set; }
+
         // Success Story Templates
         public string SuccessStorySubmittedSubject { get; set; }
         public string SuccessStorySubmittedBody { get; set; }

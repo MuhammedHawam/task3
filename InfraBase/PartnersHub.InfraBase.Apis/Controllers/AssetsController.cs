@@ -87,12 +87,7 @@ public class AssetsController : ControllerBase
         else
         {
             var tokenCompanyId = _tokenService.GetCompanyId();
-            if (!tokenCompanyId.HasValue)
-            {
-                return BadRequest("Company ID not found in token");
-            }
-
-            effectiveCompanyId = tokenCompanyId.Value;
+            effectiveCompanyId = companyId ?? tokenCompanyId;
         }
         
         var query = new GetAssetListQuery
@@ -115,22 +110,10 @@ public class AssetsController : ControllerBase
         AssetStatuses status,
         [FromQuery] Guid? companyId = null)
     {
-        Guid? effectiveCompanyId;
-        if (_tokenService.IsInfrabaseAdmin())
-        {
-            effectiveCompanyId = companyId;
-        }
-        else
-        {
-            var tokenCompanyId = _tokenService.GetCompanyId();
-            if (!tokenCompanyId.HasValue)
-            {
-                return BadRequest("Company ID not found in token");
-            }
-
-            effectiveCompanyId = tokenCompanyId.Value;
-        }
-
+        // Apply company ID filter from token if not provided
+        var tokenCompanyId = _tokenService.GetCompanyId();
+        var effectiveCompanyId = companyId ?? tokenCompanyId;
+        
         var assets = await _mediator.Send(new GetAssetsByStatusQuery(status, effectiveCompanyId));
         return Ok(assets);
     }
@@ -320,7 +303,7 @@ public class AssetsController : ControllerBase
                 return BadRequest("Company ID not found in token");
             }
 
-            effectiveCompanyId = tokenCompanyId.Value;
+            effectiveCompanyId = companyId ?? tokenCompanyId;
         }
 
         var result = await _mediator.Send(new GetAssetStatusSummaryQuery(effectiveCompanyId));

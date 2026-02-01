@@ -28,6 +28,8 @@ public class NotificationDispatcher : INotificationDispatcher
 
     public async Task<SendResult> DispatchAsync(NotificationEntity entity, CancellationToken ct = default)
     {
+        _logger.LogInformation("Dispatching {Channel} notification {NotificationId}", entity.Channel, entity.Id);
+
         return entity.Channel switch
         {
             NotificationChannel.Email => await DispatchEmailAsync(entity, ct),
@@ -39,6 +41,8 @@ public class NotificationDispatcher : INotificationDispatcher
 
     private async Task<SendResult> DispatchEmailAsync(NotificationEntity entity, CancellationToken ct)
     {
+        _logger.LogInformation("Sending email notification {NotificationId}", entity.Id);
+
         var request = JsonSerializer.Deserialize<SendEmailRequest>(entity.PayloadJson!);
         
         var message = new EmailMessage(
@@ -54,7 +58,19 @@ public class NotificationDispatcher : INotificationDispatcher
             IsHtml: request.IsHtml,
             Attachments: request.Attachments?.Select(a => new EmailAttachment(a.FileName, a.ContentType, a.Content)).ToList() ?? new List<EmailAttachment>());
 
-        return await _emailSender.SendAsync(message, ct);
+        var result = await _emailSender.SendAsync(message, ct);
+
+        if (result.Success)
+        {
+            _logger.LogInformation("Email notification {NotificationId} sent to {Recipients}",
+                entity.Id, string.Join(", ", request.To));
+        }
+        else
+        {
+            _logger.LogError("Email notification {NotificationId} failed: {Error}", entity.Id, result.Message);
+        }
+
+        return result;
     }
 
     private async Task<SendResult> DispatchSmsAsync(NotificationEntity entity, CancellationToken ct)

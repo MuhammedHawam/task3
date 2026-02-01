@@ -89,7 +89,7 @@ public class OpportunityRepository : IOpportunityRepository
 
     public async Task<List<Opportunity>> GetByPublishingCompanyId(Guid companyId, bool asNoTracking = false, params Expression<Func<Opportunity, object>>[] includes)
     {
-        IQueryable<Opportunity> query = _context.Opportunities.Where(o => o.CompanyId == companyId && o.Status == OpportunityStatus.Published);
+        IQueryable<Opportunity> query = _context.Opportunities.Include(f=>f.OpportunityType).Where(o => o.CompanyId == companyId && o.Status == OpportunityStatus.Published);
 
         if (asNoTracking)
             query = query.AsNoTracking();
@@ -269,6 +269,7 @@ public class OpportunityRepository : IOpportunityRepository
         DateOnly? startDate = null,
         DateOnly? endDate = null,
         string? sortBy = null,
+        bool IncludeIsHide = true,
         bool asNoTracking = true)
     {
         // Remove duplicate includes
@@ -283,6 +284,9 @@ public class OpportunityRepository : IOpportunityRepository
 
         if (asNoTracking)
             query = query.AsNoTracking();
+
+        if (!IncludeIsHide)
+            query = query.Where(e => e.IsHide != true);
 
         // Filter by companies (for user submissions or filtering by creator companies)
         if (companyIds != null && companyIds.Any())
@@ -383,8 +387,16 @@ public class OpportunityRepository : IOpportunityRepository
             ("enddate", false) => query.OrderBy(o => o.EndDate),
             ("status", true) => query.OrderByDescending(o => o.Status),
             ("status", false) => query.OrderBy(o => o.Status),
-            ("submissiondate", false) or ("createdate", false) => query.OrderBy(o => o.CreatedAt),
-            ("submissiondate", true) or ("createdate", true) => query.OrderByDescending(o => o.CreatedAt),
+            ("sectorname", true) => query.OrderByDescending(o => o.Sector.Value),
+            ("sectorname", false) => query.OrderBy(o => o.Sector.Value),
+            ("companyname", true) => query.OrderByDescending(o => o.CompanyName),
+            ("companyname", false) => query.OrderBy(o => o.CompanyName),
+            ("opportunitytypename", true) => query.OrderByDescending(o => o.OpportunityType.Name),
+            ("opportunitytypename", false) => query.OrderBy(o => o.OpportunityType.Name),
+            ("thematicareaname", true) => query.OrderByDescending(o => o.ThematicArea.Name),
+            ("thematicareaname", false) => query.OrderBy(o => o.ThematicArea.Name),
+            ("submissiondate", false) or ("createdat", false) => query.OrderBy(o => o.CreatedAt),
+            ("submissiondate", true) or ("createdat", true) => query.OrderByDescending(o => o.CreatedAt),
             _ => query.OrderByDescending(o => o.CreatedAt)
         };
 

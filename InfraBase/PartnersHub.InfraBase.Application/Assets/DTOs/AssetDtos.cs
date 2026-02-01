@@ -1,4 +1,5 @@
 using PartnersHub.InfraBase.Domain.Enums;
+using System.Numerics;
 using System.Text.Json.Serialization;
 
 namespace PartnersHub.InfraBase.Application.Assets.DTOs;
@@ -27,9 +28,9 @@ public record AssetDto
     public string AssetTypeDisplayName => !string.IsNullOrWhiteSpace(AssetTypeName)
         ? AssetTypeName!
         : AssetTypeOther ?? "N/A";
-    public decimal? QuantityOfAsset { get; init; }
-    public decimal CapacityPerAsset { get; init; }
-    public decimal? TotalCapacity { get; init; }
+    public double? QuantityOfAsset { get; init; }
+    public double? CapacityPerAsset { get; init; }
+    public string TotalCapacity { get; init; }
     public Guid? UnitOfMeasurementId { get; init; }
     public string? UnitOfMeasurementName { get; init; }
     public string? UnitOfMeasurementOther { get; init; }

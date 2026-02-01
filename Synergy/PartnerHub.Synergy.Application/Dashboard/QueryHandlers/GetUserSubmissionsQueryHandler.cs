@@ -34,6 +34,7 @@ public class GetUserSubmissionsQueryHandler : IRequestHandler<GetUserSubmissions
             expectedOutcomeIds: null,
             statuses: statuses,
             sortBy: request.SortBy ?? "CreatedAt",
+            IncludeIsHide: false,
             asNoTracking: true);
 
         var dtos = paginatedResult.Items.Select(o => new UserOpportunitySubmissionDto
@@ -45,7 +46,8 @@ public class GetUserSubmissionsQueryHandler : IRequestHandler<GetUserSubmissions
             CollaborationType = o.OpportunityType?.Name ?? "N/A",
             Sector = o.Sector?.Value ?? "N/A",
             Status = o.Status,
-            StatusDescription = MapStatusToDisplay(o.Status)
+            StatusDescription = MapStatusToDisplay(o.Status),
+            EndDate = o.EndDate.ToDateTime(TimeOnly.MinValue)
         }).ToList();
 
         var result = new PaginatedList<UserOpportunitySubmissionDto>(
@@ -146,6 +148,7 @@ public class GetUserSuccessStoriesQueryHandler : IRequestHandler<GetUserSuccessS
                     searchTerm: request.SearchTerm,
                     sortBy: request.SortBy ?? "CreatedAt",
                     sortDescending: request.SortDescending,
+                    includeIsHide: false,
                     asNoTracking: true);
 
                 allItems.AddRange(singleStatusResult.Items);
@@ -178,6 +181,7 @@ public class GetUserSuccessStoriesQueryHandler : IRequestHandler<GetUserSuccessS
                 searchTerm: request.SearchTerm,
                 sortBy: request.SortBy ?? "CreatedAt",
                 sortDescending: request.SortDescending,
+                includeIsHide: false,
                 asNoTracking: true);
         }
 
@@ -189,7 +193,8 @@ public class GetUserSuccessStoriesQueryHandler : IRequestHandler<GetUserSuccessS
             SubmissionDate = s.CreatedAt,
             Type = MapSuccessStoryType(s.SuccessStoryTypeId),
             Status = s.Status,
-            StatusDescription = MapStatusToDisplay(s.Status)
+            StatusDescription = MapStatusToDisplay(s.Status),
+            PartnershipStatus = MapSuccessStroyCollaborationToDisplay((SuccessStroyCollaborationStatus)s.CollaborationStatusId)
         }).ToList();
 
         var result = new PaginatedList<UserSuccessStorySubmissionDto>(
@@ -288,6 +293,15 @@ public class GetUserSuccessStoriesQueryHandler : IRequestHandler<GetUserSuccessS
             2 => "Collaboration",
             3 => "Joint Venture",
             _ => "Unknown"
+        };
+    }
+
+    private string MapSuccessStroyCollaborationToDisplay(SuccessStroyCollaborationStatus status)
+    {
+        return status switch
+        {
+            SuccessStroyCollaborationStatus.Ongoing => "Ongoing",
+            SuccessStroyCollaborationStatus.Successful => "Successful"
         };
     }
 }

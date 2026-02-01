@@ -1,9 +1,10 @@
-using System.DirectoryServices.Protocols;
-using System.Net;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using PartnersHub.ConfigurationHub.Application.Common.Interfaces.Services;
 using PartnersHub.ConfigurationHub.Application.Common.Models;
+using System.DirectoryServices.Protocols;
+using System.Net;
+using System.Text;
 
 namespace PartnersHub.ConfigurationHub.Infrastructure.Services;
 
@@ -57,14 +58,29 @@ public class LdapUserService : ILdapUserService
         return await Task.FromResult(PaginatedList<LdapUser>.Create(users, users.Count, pageNumber, pageSize));
     }
 
-    public async Task<LdapUser?> GetUserByUsernameAsync(string username)
+    public async Task<LdapUser?> GetUserByUsernameAsync(string? username,string? useremail)
     {
         using var connection = CreateConnection();
 
-        var filter = $"(&(objectClass=user)(sAMAccountName={username}))";
+        var filter = new StringBuilder("(&(objectClass=user)");
+
+        if (!string.IsNullOrEmpty(username))
+        {
+            filter.Append($"(sAMAccountName={username})");
+        }
+
+        if (!string.IsNullOrEmpty(useremail))
+        {
+            filter.Append($"(mail=*{useremail}*)");
+        }
+
+        filter.Append(")"); 
+        var finalFilter = filter.ToString();
+
+
         var searchRequest = new SearchRequest(
             _searchBase,
-            filter,
+            finalFilter,
             SearchScope.Subtree,
             "cn", "mail", "sAMAccountName", "displayName", "department", "title", "distinguishedName", "objectGuid"
         );

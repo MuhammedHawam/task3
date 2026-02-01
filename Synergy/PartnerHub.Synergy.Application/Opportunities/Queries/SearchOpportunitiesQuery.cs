@@ -29,4 +29,6 @@ public record SearchOpportunitiesQuery : IRequest<Result<PaginatedList<Opportuni
     public DateOnly? StartDate { get; set; }
     public DateOnly? EndDate { get; set; }
     public string? SortBy { get; init; } = "CreatedAt";
+
+    public bool? IncludeIsHide { get; init; } = true;
 }

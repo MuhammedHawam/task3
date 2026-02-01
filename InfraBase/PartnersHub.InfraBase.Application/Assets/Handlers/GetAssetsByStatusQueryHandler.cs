@@ -38,6 +38,7 @@ public class GetAssetsByStatusQueryHandler : IRequestHandler<GetAssetsByStatusQu
             null,
             null,
             false,
+            null,
             requestingUser,
             cancellationToken);
 

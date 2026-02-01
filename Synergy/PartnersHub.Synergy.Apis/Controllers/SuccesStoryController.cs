@@ -55,6 +55,7 @@ namespace PartnersHub.Synergy.Apis.Controllers
         [FromQuery] DateTime? endDate = null,
         [FromQuery] string? partnerCompanyName = null,
         [FromQuery] string? searchTerm = null,
+        [FromQuery] bool? isIncludeIsHide = true,
         [FromQuery] string? sortBy = "CreatedAt:desc",
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10)
@@ -71,7 +72,8 @@ namespace PartnersHub.Synergy.Apis.Controllers
                 SearchTerm = searchTerm,
                 SortBy = sortBy,
                 PageNumber = pageNumber,
-                PageSize = pageSize
+                PageSize = pageSize,
+                IsIncludeIsHide = isIncludeIsHide
             };
 
             var result = await _mediator.Send(query);

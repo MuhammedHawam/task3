@@ -17,13 +17,20 @@ public class SynergyCompany : AggregateRoot
     public Description Description { get; private set; } = null!;
     public byte[]? Logo { get; private set; }
     public bool IsActive { get; set; }
+    public string? CompanyPIFOwnerName { get;  set; }
+    public string? CompanyPIFOwnerEmail { get; set; }
+    public string? CompanyPIFOwnerSupervisorName { get; set; }
+    public string? CompanyPIFOwnerSupervisorEmail { get; set; }
+
     public RepresentativeInformation RepresentativeInformation { get; private set; } = null!;
     public IReadOnlyCollection<SynergyCompanySector> Sectors => _sectors.AsReadOnly();
 
     private SynergyCompany() { }
 
     private SynergyCompany(Guid id, CompanyName name, string headquarterCountry, string headquarterCity,
-        Description description, byte[]? logoUrl, RepresentativeInformation representativeInformation, Guid createdBy)
+        Description description, byte[]? logoUrl, RepresentativeInformation representativeInformation, Guid createdBy,
+        string? companyPifOwnerName = null, string? companyPifOwnerEmail = null,
+        string? companyPifOwnerSupervisorName = null, string? companyPifOwnerSupervisorEmail = null)
     {
         Id = id;
         Name = name;
@@ -33,13 +40,18 @@ public class SynergyCompany : AggregateRoot
         Logo = logoUrl;
         RepresentativeInformation = representativeInformation;
         IsActive = true;
+        CompanyPIFOwnerName = companyPifOwnerName;
+        CompanyPIFOwnerEmail = companyPifOwnerEmail;
+        CompanyPIFOwnerSupervisorName = companyPifOwnerSupervisorName;
+        CompanyPIFOwnerSupervisorEmail = companyPifOwnerSupervisorEmail;
         MarkAsCreated(createdBy);
         AddDomainEvent(new CompanyCreatedEvent(Id, name.Value, createdBy));
     }
 
     public static Result<SynergyCompany> Create(Guid companyId, string name, string headquarterCountry,
         string headquarterCity, string description, string repName, string repPosition, string repEmail,
-        string repPhone, Guid createdBy, byte[]? logo = null)
+        string repPhone, Guid createdBy, byte[]? logo = null,string? companyPifOwnerName = null , string? companyPifOwnerEmail = null,
+        string? companyPifOwnerSupervisorName = null , string? companyPifOwnerSupervisorEmail = null)
     {
         var nameResult = CompanyName.Create(name);
         if (nameResult.IsFailure)
@@ -60,7 +72,8 @@ public class SynergyCompany : AggregateRoot
             return Result<SynergyCompany>.Failure("Headquarter city is required");
 
         var company = new SynergyCompany(companyId, nameResult.Value!, headquarterCountry.Trim(),
-            headquarterCity.Trim(), descriptionResult.Value!, logo, repInfoResult.Value!, createdBy);
+            headquarterCity.Trim(), descriptionResult.Value!, logo, repInfoResult.Value!, createdBy,
+            companyPifOwnerName,companyPifOwnerEmail,companyPifOwnerSupervisorName,companyPifOwnerSupervisorEmail);
 
         return Result<SynergyCompany>.Success(company);
     }

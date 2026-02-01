@@ -74,6 +74,7 @@ public class SearchOpportunitiesQueryHandler : IRequestHandler<SearchOpportuniti
             startDate:request.StartDate, 
             endDate:request.EndDate,
             sortBy: request.SortBy,
+            IncludeIsHide: request.IncludeIsHide ?? true,
             asNoTracking: true);
 
         // Get company information for the opportunities

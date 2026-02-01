@@ -8,4 +8,5 @@ public interface INotificationRepository
     Task AddAsync(NotificationEntity entity, CancellationToken ct = default);
     Task UpdateAsync(NotificationEntity entity, CancellationToken ct = default);
     Task<IEnumerable<NotificationEntity>> GetPendingNotificationsAsync(DateTimeOffset cutoff, int batchSize, int maxRetryCount, CancellationToken ct = default);
+    Task<List<NotificationEntity>> GetFailedNotificationsAsync(int maxRetryCount, int batchSize, CancellationToken ct = default);
 }

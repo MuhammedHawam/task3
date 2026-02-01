@@ -142,9 +142,9 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             AssetTypeName = assetTypeName,
             // Keep "Other" text when it was used, even if we map to the lookup id for editing.
             AssetTypeOther = usesAssetTypeOther ? asset.AssetTypeOther : null,
-            QuantityOfAsset = asset.QuantityOfAsset,
-            CapacityPerAsset = asset.CapacityPerAsset,
-            TotalCapacity = asset.TotalCapacity,
+            QuantityOfAsset = (double?)asset.QuantityOfAsset,
+            CapacityPerAsset = (double?)asset.CapacityPerAsset,
+            TotalCapacity = asset.TotalCapacity.ToString(),
             UnitOfMeasurementId = effectiveUomId,
             UnitOfMeasurementName = uomName,
             // Keep "Other" text when it was used, even if we map to the lookup id for editing.

@@ -1,13 +1,10 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PartnerHub.NotificationsHub.Application.Interfaces;
 using PartnerHub.NotificationsHub.Application.Options;
-using PartnerHub.NotificationsHub.Domain.Entities;
 using PartnerHub.NotificationsHub.Domain.Enums;
-using PartnerHub.NotificationsHub.Infrastructure.Persistence;
 
 namespace PartnerHub.NotificationsHub.Infrastructure.Workers;
 
@@ -19,8 +16,8 @@ public class NotificationRetryWorker : BackgroundService
 
     public NotificationRetryWorker(
         IServiceProvider serviceProvider,
-        IOptions<NotificationRetryOptions> options,
-        ILogger<NotificationRetryWorker> logger)
+        ILogger<NotificationRetryWorker> logger,
+        IOptions<NotificationRetryOptions> options)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
@@ -29,109 +26,101 @@ public class NotificationRetryWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("NotificationRetryWorker started");
+        _logger.LogInformation("Notification Retry Worker started");
 
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                await ProcessPendingNotificationsAsync(stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(_options.ScanIntervalMinutes), stoppingToken);
+                await ProcessFailedNotificationsAsync(stoppingToken);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while processing pending notifications");
+                _logger.LogError(ex, "Error in retry worker");
             }
-
-            await Task.Delay(
-                TimeSpan.FromMinutes(_options.ScanIntervalMinutes),
-                stoppingToken);
         }
+
+        _logger.LogInformation("Notification Retry Worker stopped");
     }
 
-    private async Task ProcessPendingNotificationsAsync(CancellationToken ct)
+    private async Task ProcessFailedNotificationsAsync(CancellationToken ct)
     {
         using var scope = _serviceProvider.CreateScope();
         var repository = scope.ServiceProvider.GetRequiredService<INotificationRepository>();
         var dispatcher = scope.ServiceProvider.GetRequiredService<INotificationDispatcher>();
 
-        var now = DateTimeOffset.UtcNow;
-        var cutoff = now.AddMinutes(-_options.LookbackMinutes);
+        var failedNotifications = await repository.GetFailedNotificationsAsync(
+            _options.MaxRetryCount,
+            _options.BatchSize,
+            ct);
 
-        while (!ct.IsCancellationRequested)
+        if (!failedNotifications.Any())
         {
-            var batch = await repository.GetPendingNotificationsAsync(cutoff, _options.BatchSize, _options.MaxRetryCount, ct);
+            _logger.LogInformation("No failed notifications to retry");
+            return;
+        }
 
-            if (!batch.Any())
+        _logger.LogInformation("Found {Count} failed notifications to retry", failedNotifications.Count);
+
+        foreach (var notification in failedNotifications)
+        {
+            if (ct.IsCancellationRequested) break;
+
+            try
             {
-                break;
+                _logger.LogInformation("Retrying notification {NotificationId}, attempt {AttemptCount}",
+                    notification.Id, notification.AttemptCount + 1);
+
+                var result = await dispatcher.DispatchAsync(notification, ct);
+
+                notification.AttemptCount++;
+                notification.LastAttemptAtUtc = DateTimeOffset.UtcNow;
+
+                if (result.Success)
+                {
+                    notification.Status = NotificationStatus.Sent;
+                    notification.LastError = null;
+                    notification.NextAttemptAtUtc = null;
+                    _logger.LogInformation("Notification {NotificationId} sent successfully on retry", notification.Id);
+                }
+                else
+                {
+                    notification.LastError = result.Message;
+
+                    if (notification.AttemptCount >= _options.MaxRetryCount)
+                    {
+                        notification.Status = NotificationStatus.DeadLetter;
+                        notification.NextAttemptAtUtc = null;
+                        _logger.LogWarning("Notification {NotificationId} moved to dead letter after {AttemptCount} attempts",
+                            notification.Id, notification.AttemptCount);
+                    }
+                    else
+                    {
+                        notification.Status = NotificationStatus.Failed;
+                        var delayMinutes = GetRetryDelay(notification.AttemptCount);
+                        notification.NextAttemptAtUtc = DateTimeOffset.UtcNow.AddMinutes(delayMinutes);
+                        _logger.LogWarning("Notification {NotificationId} retry failed, next attempt in {Delay} minutes",
+                            notification.Id, delayMinutes);
+                    }
+                }
+
+                await repository.UpdateAsync(notification, ct);
             }
-
-            foreach (var entity in batch)
+            catch (Exception ex)
             {
-                await ProcessSingleNotificationAsync(entity, repository, dispatcher, ct);
+                _logger.LogError(ex, "Error retrying notification {NotificationId}", notification.Id);
             }
         }
     }
 
-    private async Task ProcessSingleNotificationAsync(
-        NotificationEntity entity,
-        INotificationRepository repository,
-        INotificationDispatcher dispatcher,
-        CancellationToken ct)
+    private int GetRetryDelay(int attemptCount)
     {
-        var now = DateTimeOffset.UtcNow;
-
-        entity.AttemptCount++;
-        entity.LastAttemptAtUtc = now;
-
-        try
-        {
-            var result = await dispatcher.DispatchAsync(entity, ct);
-
-            if (result.Success)
-            {
-                entity.Status = NotificationStatus.Sent;
-                entity.LastError = null;
-                entity.NextAttemptAtUtc = null;
-            }
-            else
-            {
-                HandleFailure(entity, result.Message ?? result.ErrorCode ?? "Unknown error");
-            }
-        }
-        catch (Exception ex)
-        {
-            HandleFailure(entity, ex.Message);
-        }
-
-        await repository.UpdateAsync(entity, ct);
-    }
-
-    private void HandleFailure(NotificationEntity entity, string error)
-    {
-        entity.LastError = error;
-
-        if (entity.AttemptCount >= _options.MaxRetryCount)
-        {
-            entity.Status = NotificationStatus.DeadLetter;
-            entity.NextAttemptAtUtc = null;
-        }
-        else
-        {
-            entity.Status = NotificationStatus.Failed;
-            entity.NextAttemptAtUtc = CalculateNextAttempt(entity.AttemptCount);
-        }
-    }
-
-    private DateTimeOffset? CalculateNextAttempt(int attemptCount)
-    {
-        if (attemptCount >= _options.MaxRetryCount)
-        {
-            return null;
-        }
-
         var index = Math.Min(attemptCount - 1, _options.RetryDelaysMinutes.Length - 1);
-        var delayMinutes = _options.RetryDelaysMinutes[index];
-        return DateTimeOffset.UtcNow.AddMinutes(delayMinutes);
+        return _options.RetryDelaysMinutes[index];
     }
 }

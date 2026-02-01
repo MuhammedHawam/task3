@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Options;
+using PartnersHub.InfraBase.Domain.Common;
 using System.Text;
 
 namespace PartnersHub.InfraBase.Application.Common.Services;
@@ -14,12 +16,18 @@ public class EmailTemplateService
 {
     private const string TemplateFolderName = "MailTemplate";
     private const string TemplateFileName = "emailTemplate.html";
+    private readonly EmailParameters _emailParams;
+
+    public EmailTemplateService(IOptions<EmailParameters> options)
+    {
+        _emailParams = options.Value;
+    }
 
     private static readonly Lazy<string> _baseTemplate = new(LoadAndInlineTemplate, isThreadSafe: true);
 
     public string BuildAssetSubmittedEmail(string creatorName, Guid assetId)
     {
-        var link = $"/assets/{assetId}";
+        var link = $"{_emailParams.BaseURL}/assets/{assetId}";
         return Render(
             messageEn: $"New asset submitted by \"{creatorName}\" and waiting your approval.",
             messageAr: "تم إرسال أصل جديد وبانتظار موافقتك.",
@@ -28,7 +36,7 @@ public class EmailTemplateService
 
     public string BuildAssetAcceptedByPcAdminEmail(Guid assetId)
     {
-        var link = $"/assets/{assetId}";
+        var link = $"{_emailParams.BaseURL}/assets/{assetId}";
         return Render(
             messageEn: "Your asset has been approved.",
             messageAr: "تمت الموافقة على الأصل.",
@@ -37,7 +45,7 @@ public class EmailTemplateService
 
     public string BuildAssetRejectedByPcAdminEmail(Guid assetId)
     {
-        var link = $"/assets/{assetId}";
+        var link = $"{_emailParams.BaseURL}/assets/{assetId}";
         return Render(
             messageEn: "Your asset has been rejected.",
             messageAr: "تم رفض الأصل.",
@@ -46,7 +54,7 @@ public class EmailTemplateService
 
     public string BuildNewRequestSubmittedEmail(string companyName, Guid assetId)
     {
-        var link = $"/assets/{assetId}";
+        var link = $"{_emailParams.BaseURL}/assets/{assetId}";
         return Render(
             messageEn: $"New request submitted by \"{companyName}\" and waiting your approval.",
             messageAr: $"تم إرسال طلب جديد من \"{companyName}\" وبانتظار موافقتك.",
@@ -55,7 +63,7 @@ public class EmailTemplateService
 
     public string BuildAssetAcceptedByInfrabaseAdminEmail(Guid assetId)
     {
-        var link = $"/assets/{assetId}";
+        var link = $"{_emailParams.BaseURL}/assets/{assetId}";
         return Render(
             messageEn: "Your asset has been approved.",
             messageAr: "تمت الموافقة على الأصل.",
@@ -64,7 +72,7 @@ public class EmailTemplateService
 
     public string BuildAssetRejectedByInfrabaseAdminEmail(Guid assetId)
     {
-        var link = $"/assets/{assetId}";
+        var link = $"{_emailParams.BaseURL}/assets/{assetId}";
         return Render(
             messageEn: "Your asset has been rejected and returned for correction.",
             messageAr: "تم إرجاع الأصل للتعديل.",

@@ -38,6 +38,7 @@ public interface IOpportunityRepository
         DateOnly? startDate = null,
         DateOnly? endDate = null,
         string? sortBy = null,
+        bool IncludeIsHide = true,
         bool asNoTracking = true);
     
     Task<List<OpportunityEntity>> GetOpportunitiesByCollaboratedCompanyAsync(Guid companyId);

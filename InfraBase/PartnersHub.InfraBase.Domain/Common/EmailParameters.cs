@@ -8,7 +8,8 @@ namespace PartnersHub.InfraBase.Domain.Common;
 
 public class EmailParameters
 {
-
+    public string InfraBaseModuleCC { get; set; }
+    public string BaseURL { get; set; }
 }
 
 
