@@ -561,11 +561,27 @@ public class GetInfrabaseAdminDashboardQueryHandler
             return null;
         }
 
-        var matches = searchValues
+        var matchedCodes = searchValues
             .Where(kvp => kvp.Value.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
             .Select(kvp => kvp.Key)
             .ToList();
 
-        return matches.Count == 0 ? null : matches;
+        if (matchedCodes.Count == 0)
+        {
+            return null;
+        }
+
+        var codeToId = await _lookupService.GetAssetTypeIdsByCodeAsync(cancellationToken);
+        if (codeToId.Count == 0)
+        {
+            return null;
+        }
+
+        var ids = matchedCodes
+            .Where(codeToId.ContainsKey)
+            .Select(code => codeToId[code])
+            .ToList();
+
+        return ids.Count == 0 ? null : ids;
     }
 }

@@ -43,16 +43,42 @@ public class ConfigurationLookupService : IConfigurationLookupService
         return dto?.NameEn ?? dto?.NameAr;
     }
 
-    public async Task<IReadOnlyDictionary<Guid, string>> GetAssetTypeSearchValuesAsync(
+    public async Task<IReadOnlyDictionary<string, string>> GetAssetTypeSearchValuesAsync(
         CancellationToken cancellationToken = default)
     {
         var list = await GetAssetTypesInternalAsync(cancellationToken);
         if (list == null || list.Count == 0)
         {
-            return new Dictionary<Guid, string>();
+            return new Dictionary<string, string>();
         }
 
-        var dict = new Dictionary<Guid, string>();
+        var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var dto in list)
+        {
+            var code = dto.Code?.Trim();
+            var name = $"{dto.NameEn} {dto.NameAr}".Trim();
+
+            if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
+            {
+                continue;
+            }
+
+            dict[code] = name;
+        }
+
+        return dict;
+    }
+
+    public async Task<IReadOnlyDictionary<string, Guid>> GetAssetTypeIdsByCodeAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var list = await GetAssetTypesInternalAsync(cancellationToken);
+        if (list == null || list.Count == 0)
+        {
+            return new Dictionary<string, Guid>();
+        }
+
+        var dict = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
         foreach (var dto in list)
         {
             if (dto.Id == Guid.Empty)
@@ -66,7 +92,7 @@ public class ConfigurationLookupService : IConfigurationLookupService
                 continue;
             }
 
-            dict[dto.Id] = code;
+            dict[code] = dto.Id;
         }
 
         return dict;
