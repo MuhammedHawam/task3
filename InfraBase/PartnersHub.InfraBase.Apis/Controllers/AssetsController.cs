@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PartnersHub.InfraBase.Application.Assets.Commands;
 using PartnersHub.InfraBase.Application.Assets.DTOs;
@@ -7,6 +8,11 @@ using PartnersHub.InfraBase.Application.Assets.Queries;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Models;
 using PartnersHub.InfraBase.Domain.Enums;
+using PartnersHub.InfraBase.Apis.Common;
+using PartnersHub.InfraBase.Apis.Models;
+using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace PartnersHub.InfraBase.Apis.Controllers;
 
@@ -17,6 +23,16 @@ public class AssetsController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly ITokenService _tokenService;
+    private static readonly JsonSerializerOptions AssetJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters =
+        {
+            new JsonStringEnumConverter(),
+            new NullableGuidConverter(),
+            new GuidConverter()
+        }
+    };
 
     public AssetsController(IMediator mediator, ITokenService tokenService)
     {
@@ -27,8 +43,30 @@ public class AssetsController : ControllerBase
     // ========== CRUD Operations ==========
 
     [HttpPost]
+    [Consumes("application/json")]
     public async Task<ActionResult<Guid>> CreateAsset([FromBody] CreateAssetCommand command)
     {
+        var assetId = await _mediator.Send(command);
+        return CreatedAtAction(nameof(GetAssetById), new { id = assetId }, assetId);
+    }
+
+    [HttpPost]
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<Guid>> CreateAssetWithAttachments([FromForm] AssetMultipartRequest request)
+    {
+        var command = ParseAsset<CreateAssetCommand>(request.Asset);
+        if (command == null)
+        {
+            return BadRequest("Invalid asset payload.");
+        }
+
+        var filesToUpload = MapFiles(request.Files);
+        command = command with
+        {
+            FilesToUpload = filesToUpload,
+            AttachmentDescription = request.AttachmentDescription
+        };
+
         var assetId = await _mediator.Send(command);
         return CreatedAtAction(nameof(GetAssetById), new { id = assetId }, assetId);
     }
@@ -46,6 +84,7 @@ public class AssetsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Consumes("application/json")]
     public async Task<ActionResult<bool>> UpdateAsset(Guid id, 
         [FromBody] UpdateAssetCommand command)
     {
@@ -53,6 +92,34 @@ public class AssetsController : ControllerBase
         {
             return BadRequest("Asset ID mismatch");
         }
+
+        var result = await _mediator.Send(command);
+        return Ok(result);
+    }
+
+    [HttpPut("{id}")]
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<bool>> UpdateAssetWithAttachments(
+        Guid id,
+        [FromForm] AssetMultipartRequest request)
+    {
+        var command = ParseAsset<UpdateAssetCommand>(request.Asset);
+        if (command == null)
+        {
+            return BadRequest("Invalid asset payload.");
+        }
+
+        if (id != command.Id)
+        {
+            return BadRequest("Asset ID mismatch");
+        }
+
+        var filesToUpload = MapFiles(request.Files);
+        command = command with
+        {
+            FilesToUpload = filesToUpload,
+            AttachmentDescription = request.AttachmentDescription
+        };
 
         var result = await _mediator.Send(command);
         return Ok(result);
@@ -308,5 +375,39 @@ public class AssetsController : ControllerBase
 
         var result = await _mediator.Send(new GetAssetStatusSummaryQuery(effectiveCompanyId));
         return Ok(result);
+    }
+
+    private static T? ParseAsset<T>(string? assetJson)
+    {
+        if (string.IsNullOrWhiteSpace(assetJson))
+        {
+            return default;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<T>(assetJson, AssetJsonOptions);
+        }
+        catch (JsonException)
+        {
+            return default;
+        }
+    }
+
+    private static List<FileUploadContent> MapFiles(IEnumerable<IFormFile>? files)
+    {
+        if (files == null)
+        {
+            return [];
+        }
+
+        return files
+            .Where(file => file is { Length: > 0 })
+            .Select(file => new FileUploadContent(
+                Path.GetFileName(file.FileName),
+                file.ContentType ?? string.Empty,
+                file.Length,
+                file.OpenReadStream))
+            .ToList();
     }
 }
