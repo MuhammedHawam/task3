@@ -3,7 +3,6 @@ using PartnersHub.InfraBase.Application.Assets.Commands;
 using PartnersHub.InfraBase.Application.Common.Exceptions;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Repository;
-using PartnersHub.InfraBase.Application.Common.Interfaces.Services;
 using PartnersHub.InfraBase.Application.Common.Models;
 using PartnersHub.InfraBase.Domain.Aggregates.AssetAggregate;
 using PartnersHub.InfraBase.Domain.Enums;
@@ -16,20 +15,20 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITokenService _tokenService;
     private readonly IConfigurationLookupService _lookupService;
-    private readonly IFileUploadService _fileUploadService;
+    private readonly IMiddlewareIntegrationService _middlewareService;
 
     public UpdateAssetCommandHandler(
         IAssetRepository repository, 
         IUnitOfWork unitOfWork,
         ITokenService tokenService,
         IConfigurationLookupService lookupService,
-        IFileUploadService fileUploadService)
+        IMiddlewareIntegrationService middlewareService)
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
         _tokenService = tokenService;
         _lookupService = lookupService;
-        _fileUploadService = fileUploadService;
+        _middlewareService = middlewareService;
     }
 
     public async Task<bool> Handle(UpdateAssetCommand command, CancellationToken cancellationToken)
@@ -295,7 +294,7 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
             string.IsNullOrWhiteSpace(description) ? "Asset attachment" : description,
             files);
 
-        var uploadResult = await _fileUploadService.UploadFilesAsync(uploadRequest, cancellationToken);
+        var uploadResult = await _middlewareService.UploadFilesAsync(uploadRequest, cancellationToken);
         if (!uploadResult.Success)
         {
             throw new ValidationException(uploadResult.Message ?? "Attachment upload failed.");

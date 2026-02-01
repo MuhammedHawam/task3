@@ -4,7 +4,6 @@ using PartnersHub.InfraBase.Application.Assets.Commands;
 using PartnersHub.InfraBase.Application.Common.Exceptions;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Repository;
-using PartnersHub.InfraBase.Application.Common.Interfaces.Services;
 using PartnersHub.InfraBase.Application.Common.Models;
 using PartnersHub.InfraBase.Domain.Aggregates.AssetAggregate;
 using PartnersHub.InfraBase.Domain.Enums;
@@ -17,7 +16,6 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITokenService _tokenService;
     private readonly IMiddlewareIntegrationService _middlewareService;
-    private readonly IFileUploadService _fileUploadService;
     private readonly ILogger<CreateAssetCommandHandler> _logger;
 
     public CreateAssetCommandHandler(
@@ -25,14 +23,12 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
         IUnitOfWork unitOfWork,
         ITokenService tokenService,
         IMiddlewareIntegrationService middlewareService,
-        IFileUploadService fileUploadService,
         ILogger<CreateAssetCommandHandler> logger)
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
         _tokenService = tokenService;
         _middlewareService = middlewareService;
-        _fileUploadService = fileUploadService;
         _logger = logger;
     }
 
@@ -200,7 +196,7 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
             string.IsNullOrWhiteSpace(description) ? "Asset attachment" : description,
             files);
 
-        var uploadResult = await _fileUploadService.UploadFilesAsync(uploadRequest, cancellationToken);
+        var uploadResult = await _middlewareService.UploadFilesAsync(uploadRequest, cancellationToken);
         if (!uploadResult.Success)
         {
             throw new ValidationException(uploadResult.Message ?? "Attachment upload failed.");

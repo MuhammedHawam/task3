@@ -135,16 +135,6 @@ builder.Services.AddHttpClient("MiddlewareApi", client =>
 });
 builder.Services.AddScoped<IMiddlewareIntegrationService, MiddlewareIntegrationService>();
 
-builder.Services.AddHttpClient<IFileUploadService, PartnerHubFileUploadService>(client =>
-{
-    var baseUrl = builder.Configuration["PartnerHubFiles:BaseUrl"];
-    if (!string.IsNullOrWhiteSpace(baseUrl))
-    {
-        client.BaseAddress = new Uri(baseUrl);
-        client.Timeout = TimeSpan.FromSeconds(60);
-    }
-});
-
 
 builder.Services.AddHttpClient<IAdminCommunicationService, AdminCommunicationService>(client =>
 {
