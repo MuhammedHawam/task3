@@ -33,15 +33,17 @@ public class GetAssetListQueryHandler : IRequestHandler<GetAssetListQuery, Pagin
         CancellationToken cancellationToken)
     {
         var requestingUser = _tokenService.GetUserName();
+        var (sortBy, sortDescending) = ParseSort(query.SortBy, query.SortDescending);
+        var requiresInMemorySort = RequiresInMemorySort(sortBy);
         var assetTypeIdsForSearch = await GetAssetTypeIdsForSearchAsync(query.SearchTerm, cancellationToken);
         var paginatedAssets = await _repository.GetPagedAsync(
-            query.PageNumber,
-            query.PageSize,
+            requiresInMemorySort ? 1 : query.PageNumber,
+            requiresInMemorySort ? int.MaxValue : query.PageSize,
             query.Status,
             query.CompanyId,
             query.SearchTerm,
-            query.SortBy,
-            query.SortDescending,
+            requiresInMemorySort ? null : sortBy,
+            requiresInMemorySort ? false : sortDescending,
             assetTypeIdsForSearch,
             requestingUser,
             cancellationToken);
@@ -113,11 +115,90 @@ public class GetAssetListQueryHandler : IRequestHandler<GetAssetListQuery, Pagin
             });
         }
 
+        if (requiresInMemorySort && !string.IsNullOrWhiteSpace(sortBy))
+        {
+            var sortedItems = SortItems(items, sortBy, sortDescending);
+            var skip = Math.Max(0, (query.PageNumber - 1) * query.PageSize);
+            var pagedItems = sortedItems
+                .Skip(skip)
+                .Take(query.PageSize)
+                .ToList();
+
+            return new PaginatedList<AssetListDto>(
+                pagedItems,
+                paginatedAssets.TotalCount,
+                query.PageNumber,
+                query.PageSize);
+        }
+
         return new PaginatedList<AssetListDto>(
             items,
             paginatedAssets.TotalCount,
             query.PageNumber,
             query.PageSize);
+    }
+
+    private static (string? SortBy, bool SortDescending) ParseSort(string? sortBy, bool sortDescending)
+    {
+        if (string.IsNullOrWhiteSpace(sortBy))
+        {
+            return (null, sortDescending);
+        }
+
+        var trimmed = sortBy.Trim();
+        var parts = trimmed.Split(':', 2, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 2)
+        {
+            var direction = parts[1];
+            sortDescending = direction.Equals("desc", StringComparison.OrdinalIgnoreCase);
+            trimmed = parts[0];
+        }
+
+        return string.IsNullOrWhiteSpace(trimmed) ? (null, sortDescending) : (trimmed, sortDescending);
+    }
+
+    private static bool RequiresInMemorySort(string? sortBy)
+    {
+        if (string.IsNullOrWhiteSpace(sortBy))
+        {
+            return false;
+        }
+
+        return sortBy.Equals("sectorName", StringComparison.OrdinalIgnoreCase) ||
+               sortBy.Equals("subSectorName", StringComparison.OrdinalIgnoreCase) ||
+               sortBy.Equals("assetTypeName", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static List<AssetListDto> SortItems(IEnumerable<AssetListDto> items, string sortBy, bool sortDescending)
+    {
+        var comparer = StringComparer.OrdinalIgnoreCase;
+        var normalized = sortBy.Trim();
+
+        return normalized.Equals("sectorName", StringComparison.OrdinalIgnoreCase)
+            ? (sortDescending
+                ? items.OrderByDescending(x => x.SectorName ?? string.Empty, comparer)
+                       .ThenBy(x => x.AssetName ?? string.Empty, comparer)
+                       .ToList()
+                : items.OrderBy(x => x.SectorName ?? string.Empty, comparer)
+                       .ThenBy(x => x.AssetName ?? string.Empty, comparer)
+                       .ToList())
+            : normalized.Equals("subSectorName", StringComparison.OrdinalIgnoreCase)
+                ? (sortDescending
+                    ? items.OrderByDescending(x => x.SubSectorName ?? string.Empty, comparer)
+                           .ThenBy(x => x.AssetName ?? string.Empty, comparer)
+                           .ToList()
+                    : items.OrderBy(x => x.SubSectorName ?? string.Empty, comparer)
+                           .ThenBy(x => x.AssetName ?? string.Empty, comparer)
+                           .ToList())
+                : normalized.Equals("assetTypeName", StringComparison.OrdinalIgnoreCase)
+                    ? (sortDescending
+                        ? items.OrderByDescending(x => x.AssetTypeName ?? string.Empty, comparer)
+                               .ThenBy(x => x.AssetName ?? string.Empty, comparer)
+                               .ToList()
+                        : items.OrderBy(x => x.AssetTypeName ?? string.Empty, comparer)
+                               .ThenBy(x => x.AssetName ?? string.Empty, comparer)
+                               .ToList())
+                    : items.ToList();
     }
 
     private static async Task<IReadOnlyDictionary<Guid, string>> LoadLookupNamesAsync(

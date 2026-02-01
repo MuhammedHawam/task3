@@ -1,5 +1,6 @@
 using MediatR;
 using PartnersHub.InfraBase.Application.Common.Converters;
+using PartnersHub.InfraBase.Application.Common.Models;
 using PartnersHub.InfraBase.Domain.Enums;
 using System.Text.Json.Serialization;
 
@@ -49,6 +50,9 @@ public record CreateAssetCommand : IRequest<Guid>
     public List<CapexDetailDto> CapexDetails { get; init; } = new();
     public List<OpexDetailDto> OpexDetails { get; init; } = new();
     public List<AssetAttachmentRequest> Attachments { get; init; } = new();
+    [JsonIgnore]
+    public List<FileUploadContent>? FilesToUpload { get; init; }
+    public string? AttachmentDescription { get; init; }
 
     public Guid CompanyId { get; init; }
     public string CompanyName { get; init; }
@@ -88,6 +92,9 @@ public record UpdateAssetCommand : IRequest<bool>
     public List<OpexDetailDto>? OpexDetails { get; init; }
     public List<AssetAttachmentRequest>? AttachmentsToAdd { get; init; }
     public List<Guid>? AttachmentIdsToRemove { get; init; }
+    [JsonIgnore]
+    public List<FileUploadContent>? FilesToUpload { get; init; }
+    public string? AttachmentDescription { get; init; }
 }
 
 public record SaveAssetAsDraftCommand(Guid Id) : IRequest<bool>;

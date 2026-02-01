@@ -5,6 +5,7 @@ public interface ITokenService
     string GetUserEmail();
     string GetUserName(); // Extract username from email (part before @)
     Guid? GetCompanyId();  // Changed to nullable
+    Guid? GetContactId();
     string? GetCompanyName();
     List<Guid> GetUserRoleIds();
     bool IsPcAdmin();

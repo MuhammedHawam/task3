@@ -4,6 +4,7 @@ using PartnersHub.InfraBase.Application.Assets.Commands;
 using PartnersHub.InfraBase.Application.Common.Exceptions;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Repository;
+using PartnersHub.InfraBase.Application.Common.Models;
 using PartnersHub.InfraBase.Domain.Aggregates.AssetAggregate;
 using PartnersHub.InfraBase.Domain.Enums;
 
@@ -141,6 +142,17 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
             }
         }
 
+        if (command.FilesToUpload?.Count > 0)
+        {
+            var uploadRequests = await UploadAttachmentsAsync(
+                asset.Id,
+                companyId,
+                command.FilesToUpload,
+                command.AttachmentDescription,
+                cancellationToken);
+            AddAttachments(asset, uploadRequests, userName);
+        }
+
         if (command.Attachments?.Count > 0)
         {
             AddAttachments(asset, command.Attachments, userName);
@@ -162,6 +174,68 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return asset.Id;
+    }
+
+    private async Task<List<AssetAttachmentRequest>> UploadAttachmentsAsync(
+        Guid assetId,
+        Guid companyId,
+        IReadOnlyCollection<FileUploadContent> files,
+        string? description,
+        CancellationToken cancellationToken)
+    {
+        var contactId = _tokenService.GetContactId();
+        if (!contactId.HasValue)
+        {
+            throw new ValidationException("Contact ID is required to upload attachments.");
+        }
+
+        var uploadRequest = new FileUploadRequest(
+            assetId.ToString(),
+            companyId,
+            contactId.Value,
+            string.IsNullOrWhiteSpace(description) ? "Asset attachment" : description,
+            files);
+
+        var uploadResult = await _middlewareService.UploadFilesAsync(uploadRequest, cancellationToken);
+        if (!uploadResult.Success)
+        {
+            throw new ValidationException(uploadResult.Message ?? "Attachment upload failed.");
+        }
+
+        return MapUploadToAttachmentRequests(uploadResult, files);
+    }
+
+    private static List<AssetAttachmentRequest> MapUploadToAttachmentRequests(
+        FileUploadResult uploadResult,
+        IReadOnlyCollection<FileUploadContent> originalFiles)
+    {
+        var fileLookup = originalFiles
+            .GroupBy(f => f.FileName, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+        var attachments = new List<AssetAttachmentRequest>();
+        foreach (var uploaded in uploadResult.UploadedFiles.Where(f => f.Uploaded))
+        {
+            if (!fileLookup.TryGetValue(uploaded.FileName, out var original))
+            {
+                continue;
+            }
+
+            var size = uploaded.FileSize > 0 ? uploaded.FileSize : original.Length;
+            var contentType = string.IsNullOrWhiteSpace(original.ContentType)
+                ? "application/octet-stream"
+                : original.ContentType;
+
+            attachments.Add(new AssetAttachmentRequest
+            {
+                FileName = original.FileName,
+                FileSizeInBytes = size,
+                ContentType = contentType,
+                SharePointUrl = uploaded.SharePointUrl
+            });
+        }
+
+        return attachments;
     }
 
     private static void AddAttachments(Asset asset, IEnumerable<AssetAttachmentRequest> attachments, string userId)

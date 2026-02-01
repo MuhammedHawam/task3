@@ -58,6 +58,20 @@ public class TokenService : ITokenService
         return companyId;
     }
 
+    public Guid? GetContactId()
+    {
+        var contactIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("ContactId")?.Value
+            ?? _httpContextAccessor.HttpContext?.User?.FindFirst("contactId")?.Value
+            ?? _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrWhiteSpace(contactIdClaim) || !Guid.TryParse(contactIdClaim, out var contactId))
+        {
+            return null;
+        }
+
+        return contactId;
+    }
+
     public string? GetCompanyName()
     {
         return _httpContextAccessor.HttpContext?.User?.FindFirst("company_name")?.Value
