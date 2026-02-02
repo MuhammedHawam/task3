@@ -45,7 +45,7 @@ public class AssetsController : ControllerBase
     [Consumes("application/json", "multipart/form-data")]
     public async Task<ActionResult<Guid>> CreateAsset()
     {
-        var (command, filesToUpload, attachmentDescription) =
+        var (command, filesToUpload, attachmentDescription, contactId) =
             await ParseAssetRequest<CreateAssetCommand>();
         if (command == null)
         {
@@ -55,7 +55,8 @@ public class AssetsController : ControllerBase
         command = command with
         {
             FilesToUpload = filesToUpload,
-            AttachmentDescription = attachmentDescription ?? command.AttachmentDescription
+            AttachmentDescription = attachmentDescription ?? command.AttachmentDescription,
+            ContactId = contactId ?? command.ContactId
         };
 
         var assetId = await _mediator.Send(command);
@@ -78,7 +79,7 @@ public class AssetsController : ControllerBase
     [Consumes("application/json", "multipart/form-data")]
     public async Task<ActionResult<bool>> UpdateAsset(Guid id)
     {
-        var (command, filesToUpload, attachmentDescription) =
+        var (command, filesToUpload, attachmentDescription, contactId) =
             await ParseAssetRequest<UpdateAssetCommand>();
         if (command == null)
         {
@@ -93,7 +94,8 @@ public class AssetsController : ControllerBase
         command = command with
         {
             FilesToUpload = filesToUpload,
-            AttachmentDescription = attachmentDescription ?? command.AttachmentDescription
+            AttachmentDescription = attachmentDescription ?? command.AttachmentDescription,
+            ContactId = contactId ?? command.ContactId
         };
 
         var result = await _mediator.Send(command);
@@ -369,7 +371,7 @@ public class AssetsController : ControllerBase
         }
     }
 
-    private async Task<(T? Command, List<FileUploadContent> Files, string? AttachmentDescription)>
+    private async Task<(T? Command, List<FileUploadContent> Files, string? AttachmentDescription, Guid? ContactId)>
         ParseAssetRequest<T>()
     {
         if (Request.HasFormContentType)
@@ -379,13 +381,14 @@ public class AssetsController : ControllerBase
             var command = ParseAsset<T>(assetJson);
             var files = MapFiles(form.Files);
             var description = form["attachmentDescription"].FirstOrDefault();
-            return (command, files, description);
+            var contactId = ParseContactId(form["ContactId"].FirstOrDefault());
+            return (command, files, description, contactId);
         }
 
         using var reader = new StreamReader(Request.Body);
         var body = await reader.ReadToEndAsync();
         var jsonCommand = ParseAsset<T>(body);
-        return (jsonCommand, new List<FileUploadContent>(), null);
+        return (jsonCommand, new List<FileUploadContent>(), null, null);
     }
 
     private static List<FileUploadContent> MapFiles(IEnumerable<IFormFile>? files)
@@ -403,5 +406,15 @@ public class AssetsController : ControllerBase
                 file.Length,
                 file.OpenReadStream))
             .ToList();
+    }
+
+    private static Guid? ParseContactId(string? contactIdValue)
+    {
+        if (string.IsNullOrWhiteSpace(contactIdValue))
+        {
+            return null;
+        }
+
+        return Guid.TryParse(contactIdValue, out var contactId) ? contactId : null;
     }
 }

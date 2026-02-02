@@ -183,7 +183,7 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
         string? description,
         CancellationToken cancellationToken)
     {
-        var contactId = _tokenService.GetContactId();
+        var contactId = _tokenService.GetContactId() ?? command.ContactId;
         if (!contactId.HasValue)
         {
             throw new ValidationException("Contact ID is required to upload attachments.");
