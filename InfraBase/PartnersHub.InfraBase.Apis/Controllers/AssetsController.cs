@@ -52,7 +52,7 @@ public class AssetsController : ControllerBase
         {
             FilesToUpload = filesToUpload,
             AttachmentDescription = request.AttachmentDescription,
-            ContactId = request.ContactId
+            ContactId = request.ContactId ?? request.Asset.ContactId
         };
 
         var assetId = await _mediator.Send(command);
@@ -106,7 +106,7 @@ public class AssetsController : ControllerBase
         {
             FilesToUpload = filesToUpload,
             AttachmentDescription = request.AttachmentDescription,
-            ContactId = request.ContactId
+            ContactId = request.ContactId ?? request.Asset.ContactId
         };
 
         var result = await _mediator.Send(command);
