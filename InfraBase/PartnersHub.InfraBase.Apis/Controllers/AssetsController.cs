@@ -30,15 +30,6 @@ public class AssetsController : ControllerBase
     // ========== CRUD Operations ==========
 
     [HttpPost]
-    [Consumes("application/json")]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    public async Task<ActionResult<Guid>> CreateAsset([FromBody] CreateAssetCommand command)
-    {
-        var assetId = await _mediator.Send(command);
-        return CreatedAtAction(nameof(GetAssetById), new { id = assetId }, assetId);
-    }
-
-    [HttpPost]
     [Consumes("multipart/form-data")]
     public async Task<ActionResult<Guid>> CreateAsset([FromForm] CreateAssetFormRequest request)
     {
@@ -69,20 +60,6 @@ public class AssetsController : ControllerBase
         }
 
         return Ok(asset);
-    }
-
-    [HttpPut("{id}")]
-    [Consumes("application/json")]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    public async Task<ActionResult<bool>> UpdateAsset(Guid id, [FromBody] UpdateAssetCommand command)
-    {
-        if (id != command.Id)
-        {
-            return BadRequest("Asset ID mismatch");
-        }
-
-        var result = await _mediator.Send(command);
-        return Ok(result);
     }
 
     [HttpPut("{id}")]
