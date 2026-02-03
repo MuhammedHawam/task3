@@ -8,10 +8,8 @@ using PartnersHub.InfraBase.Application.Assets.Queries;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Models;
 using PartnersHub.InfraBase.Domain.Enums;
-using PartnersHub.InfraBase.Apis.Common;
+using PartnersHub.InfraBase.Apis.Models;
 using System.IO;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace PartnersHub.InfraBase.Apis.Controllers;
 
@@ -22,16 +20,6 @@ public class AssetsController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly ITokenService _tokenService;
-    private static readonly JsonSerializerOptions AssetJsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        Converters =
-        {
-            new JsonStringEnumConverter(),
-            new NullableGuidConverter(),
-            new GuidConverter()
-        }
-    };
 
     public AssetsController(IMediator mediator, ITokenService tokenService)
     {
@@ -42,21 +30,29 @@ public class AssetsController : ControllerBase
     // ========== CRUD Operations ==========
 
     [HttpPost]
-    [Consumes("application/json", "multipart/form-data")]
-    public async Task<ActionResult<Guid>> CreateAsset()
+    [Consumes("application/json")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<ActionResult<Guid>> CreateAsset([FromBody] CreateAssetCommand command)
     {
-        var (command, filesToUpload, attachmentDescription, contactId) =
-            await ParseAssetRequest<CreateAssetCommand>();
-        if (command == null)
+        var assetId = await _mediator.Send(command);
+        return CreatedAtAction(nameof(GetAssetById), new { id = assetId }, assetId);
+    }
+
+    [HttpPost]
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<Guid>> CreateAsset([FromForm] CreateAssetFormRequest request)
+    {
+        if (!ModelState.IsValid || request.Asset == null)
         {
-            return BadRequest("Invalid asset payload.");
+            return BadRequest(ModelState);
         }
 
-        command = command with
+        var filesToUpload = MapFiles(request.Files);
+        var command = request.Asset with
         {
             FilesToUpload = filesToUpload,
-            AttachmentDescription = attachmentDescription ?? command.AttachmentDescription,
-            ContactId = contactId ?? command.ContactId
+            AttachmentDescription = request.AttachmentDescription,
+            ContactId = request.ContactId
         };
 
         var assetId = await _mediator.Send(command);
@@ -76,26 +72,41 @@ public class AssetsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Consumes("application/json", "multipart/form-data")]
-    public async Task<ActionResult<bool>> UpdateAsset(Guid id)
+    [Consumes("application/json")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    public async Task<ActionResult<bool>> UpdateAsset(Guid id, [FromBody] UpdateAssetCommand command)
     {
-        var (command, filesToUpload, attachmentDescription, contactId) =
-            await ParseAssetRequest<UpdateAssetCommand>();
-        if (command == null)
-        {
-            return BadRequest("Invalid asset payload.");
-        }
-
         if (id != command.Id)
         {
             return BadRequest("Asset ID mismatch");
         }
 
-        command = command with
+        var result = await _mediator.Send(command);
+        return Ok(result);
+    }
+
+    [HttpPut("{id}")]
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<bool>> UpdateAsset(
+        Guid id,
+        [FromForm] UpdateAssetFormRequest request)
+    {
+        if (!ModelState.IsValid || request.Asset == null)
+        {
+            return BadRequest(ModelState);
+        }
+
+        if (id != request.Asset.Id)
+        {
+            return BadRequest("Asset ID mismatch");
+        }
+
+        var filesToUpload = MapFiles(request.Files);
+        var command = request.Asset with
         {
             FilesToUpload = filesToUpload,
-            AttachmentDescription = attachmentDescription ?? command.AttachmentDescription,
-            ContactId = contactId ?? command.ContactId
+            AttachmentDescription = request.AttachmentDescription,
+            ContactId = request.ContactId
         };
 
         var result = await _mediator.Send(command);
@@ -354,43 +365,6 @@ public class AssetsController : ControllerBase
         return Ok(result);
     }
 
-    private static T? ParseAsset<T>(string? assetJson)
-    {
-        if (string.IsNullOrWhiteSpace(assetJson))
-        {
-            return default;
-        }
-
-        try
-        {
-            return JsonSerializer.Deserialize<T>(assetJson, AssetJsonOptions);
-        }
-        catch (JsonException)
-        {
-            return default;
-        }
-    }
-
-    private async Task<(T? Command, List<FileUploadContent> Files, string? AttachmentDescription, Guid? ContactId)>
-        ParseAssetRequest<T>()
-    {
-        if (Request.HasFormContentType)
-        {
-            var form = await Request.ReadFormAsync();
-            var assetJson = form["asset"].FirstOrDefault();
-            var command = ParseAsset<T>(assetJson);
-            var files = MapFiles(form.Files);
-            var description = form["attachmentDescription"].FirstOrDefault();
-            var contactId = ParseContactId(form["ContactId"].FirstOrDefault());
-            return (command, files, description, contactId);
-        }
-
-        using var reader = new StreamReader(Request.Body);
-        var body = await reader.ReadToEndAsync();
-        var jsonCommand = ParseAsset<T>(body);
-        return (jsonCommand, new List<FileUploadContent>(), null, null);
-    }
-
     private static List<FileUploadContent> MapFiles(IEnumerable<IFormFile>? files)
     {
         if (files == null)
@@ -406,15 +380,5 @@ public class AssetsController : ControllerBase
                 file.Length,
                 file.OpenReadStream))
             .ToList();
-    }
-
-    private static Guid? ParseContactId(string? contactIdValue)
-    {
-        if (string.IsNullOrWhiteSpace(contactIdValue))
-        {
-            return null;
-        }
-
-        return Guid.TryParse(contactIdValue, out var contactId) ? contactId : null;
     }
 }
