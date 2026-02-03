@@ -8,10 +8,8 @@ using PartnersHub.InfraBase.Application.Assets.Queries;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Models;
 using PartnersHub.InfraBase.Domain.Enums;
-using PartnersHub.InfraBase.Apis.Common;
+using PartnersHub.InfraBase.Apis.Models;
 using System.IO;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace PartnersHub.InfraBase.Apis.Controllers;
 
@@ -22,16 +20,6 @@ public class AssetsController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly ITokenService _tokenService;
-    private static readonly JsonSerializerOptions AssetJsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        Converters =
-        {
-            new JsonStringEnumConverter(),
-            new NullableGuidConverter(),
-            new GuidConverter()
-        }
-    };
 
     public AssetsController(IMediator mediator, ITokenService tokenService)
     {
@@ -42,20 +30,20 @@ public class AssetsController : ControllerBase
     // ========== CRUD Operations ==========
 
     [HttpPost]
-    [Consumes("application/json", "multipart/form-data")]
-    public async Task<ActionResult<Guid>> CreateAsset()
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<Guid>> CreateAsset([FromForm] CreateAssetFormRequest request)
     {
-        var (command, filesToUpload, attachmentDescription) =
-            await ParseAssetRequest<CreateAssetCommand>();
-        if (command == null)
+        if (!ModelState.IsValid || request.Asset == null)
         {
-            return BadRequest("Invalid asset payload.");
+            return BadRequest(ModelState);
         }
 
-        command = command with
+        var filesToUpload = MapFiles(request.Files);
+        var command = request.Asset with
         {
             FilesToUpload = filesToUpload,
-            AttachmentDescription = attachmentDescription ?? command.AttachmentDescription
+            AttachmentDescription = request.AttachmentDescription,
+            ContactId = request.ContactId ?? request.Asset.ContactId
         };
 
         var assetId = await _mediator.Send(command);
@@ -75,25 +63,27 @@ public class AssetsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Consumes("application/json", "multipart/form-data")]
-    public async Task<ActionResult<bool>> UpdateAsset(Guid id)
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<bool>> UpdateAsset(
+        Guid id,
+        [FromForm] UpdateAssetFormRequest request)
     {
-        var (command, filesToUpload, attachmentDescription) =
-            await ParseAssetRequest<UpdateAssetCommand>();
-        if (command == null)
+        if (!ModelState.IsValid || request.Asset == null)
         {
-            return BadRequest("Invalid asset payload.");
+            return BadRequest(ModelState);
         }
 
-        if (id != command.Id)
+        if (id != request.Asset.Id)
         {
             return BadRequest("Asset ID mismatch");
         }
 
-        command = command with
+        var filesToUpload = MapFiles(request.Files);
+        var command = request.Asset with
         {
             FilesToUpload = filesToUpload,
-            AttachmentDescription = attachmentDescription ?? command.AttachmentDescription
+            AttachmentDescription = request.AttachmentDescription,
+            ContactId = request.ContactId ?? request.Asset.ContactId
         };
 
         var result = await _mediator.Send(command);
@@ -350,42 +340,6 @@ public class AssetsController : ControllerBase
 
         var result = await _mediator.Send(new GetAssetStatusSummaryQuery(effectiveCompanyId));
         return Ok(result);
-    }
-
-    private static T? ParseAsset<T>(string? assetJson)
-    {
-        if (string.IsNullOrWhiteSpace(assetJson))
-        {
-            return default;
-        }
-
-        try
-        {
-            return JsonSerializer.Deserialize<T>(assetJson, AssetJsonOptions);
-        }
-        catch (JsonException)
-        {
-            return default;
-        }
-    }
-
-    private async Task<(T? Command, List<FileUploadContent> Files, string? AttachmentDescription)>
-        ParseAssetRequest<T>()
-    {
-        if (Request.HasFormContentType)
-        {
-            var form = await Request.ReadFormAsync();
-            var assetJson = form["asset"].FirstOrDefault();
-            var command = ParseAsset<T>(assetJson);
-            var files = MapFiles(form.Files);
-            var description = form["attachmentDescription"].FirstOrDefault();
-            return (command, files, description);
-        }
-
-        using var reader = new StreamReader(Request.Body);
-        var body = await reader.ReadToEndAsync();
-        var jsonCommand = ParseAsset<T>(body);
-        return (jsonCommand, new List<FileUploadContent>(), null);
     }
 
     private static List<FileUploadContent> MapFiles(IEnumerable<IFormFile>? files)
