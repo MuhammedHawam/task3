@@ -20,11 +20,16 @@ public class AssetsController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly ITokenService _tokenService;
+    private readonly IMiddlewareIntegrationService _middlewareIntegrationService;
 
-    public AssetsController(IMediator mediator, ITokenService tokenService)
+    public AssetsController(
+        IMediator mediator,
+        ITokenService tokenService,
+        IMiddlewareIntegrationService middlewareIntegrationService)
     {
         _mediator = mediator;
         _tokenService = tokenService;
+        _middlewareIntegrationService = middlewareIntegrationService;
     }
 
     // ========== CRUD Operations ==========
@@ -281,6 +286,25 @@ public class AssetsController : ControllerBase
         var query = new GetAssetAttachmentsQuery(id);
         var result = await _mediator.Send(query);
         return Ok(result);
+    }
+
+    [HttpGet("attachments/download")]
+    public async Task<ActionResult<DocumentInfo>> DownloadAttachment(
+        [FromQuery] string sourceFilePath,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(sourceFilePath))
+        {
+            return BadRequest("Document path is required");
+        }
+
+        var document = await _middlewareIntegrationService.DownloadDocumentAsync(sourceFilePath, cancellationToken);
+        if (document == null)
+        {
+            return NotFound("Document not found");
+        }
+
+        return Ok(document);
     }
 
     [HttpDelete("{id}/attachments/{attachmentId}")]

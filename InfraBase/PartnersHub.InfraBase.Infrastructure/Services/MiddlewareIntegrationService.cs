@@ -200,6 +200,71 @@ public class MiddlewareIntegrationService : IMiddlewareIntegrationService
         }
     }
 
+    public async Task<DocumentInfo?> DownloadDocumentAsync(
+        string sourceFilePath,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(sourceFilePath))
+        {
+            _logger.LogWarning("Download document request rejected because sourceFilePath is empty.");
+            return null;
+        }
+
+        try
+        {
+            var endpoint = $"{_baseUrl}/PartnerHubFiles/download?sourceFilePath={Uri.EscapeDataString(sourceFilePath)}";
+            using var requestMessage = new HttpRequestMessage(HttpMethod.Get, endpoint);
+
+            var token = GetAuthorizationToken();
+            if (!string.IsNullOrEmpty(token))
+            {
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            HttpResponseMessage response;
+            try
+            {
+                response = await _httpClient.SendAsync(requestMessage, cancellationToken);
+            }
+            catch (OperationCanceledException oce) when (cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogWarning(oce, "Download document request was canceled by cancellationToken.");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "SendAsync failed before receiving response for download endpoint: {Endpoint}",
+                    requestMessage.RequestUri?.ToString());
+                return null;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning(
+                    "Document download failed. Status: {StatusCode}, Reason: {ReasonPhrase}, Body: {Body}",
+                    response.StatusCode,
+                    response.ReasonPhrase,
+                    errorBody);
+                return null;
+            }
+
+            var document = await response.Content.ReadFromJsonAsync<DocumentInfo>(cancellationToken: cancellationToken);
+            if (document == null)
+            {
+                _logger.LogWarning("Document download response body was empty for path: {SourceFilePath}", sourceFilePath);
+            }
+
+            return document;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error downloading document from middleware. Path: {SourceFilePath}", sourceFilePath);
+            return null;
+        }
+    }
+
     private string? GetAuthorizationToken()
     {
         var authHeader = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault();
