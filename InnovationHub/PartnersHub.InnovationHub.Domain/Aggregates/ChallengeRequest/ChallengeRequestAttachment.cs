@@ -115,8 +115,8 @@ public class ChallengeRequestAttachment : Entity
         //if (string.IsNullOrWhiteSpace(sharePointLibrary))
         //    return Result<ChallengeRequestAttachment>.Failure("SharePoint library is required");
 
-        if (uploadedBy == Guid.Empty)
-            return Result<ChallengeRequestAttachment>.Failure("Uploaded by user is required");
+        //if (uploadedBy == Guid.Empty)
+        //    return Result<ChallengeRequestAttachment>.Failure("Uploaded by user is required");
 
         var attachment = new ChallengeRequestAttachment(
             challengeRequestId,

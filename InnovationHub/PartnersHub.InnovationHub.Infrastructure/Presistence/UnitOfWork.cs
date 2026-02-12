@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage;
 using PartnersHub.InnovationHub.Application.Common.Interfaces;
 using PartnersHub.InnovationHub.Domain.Common;
 using PartnersHub.InnovationHub.Infrastructure.Presistence;
@@ -38,5 +39,10 @@ public class UnitOfWork : IUnitOfWork
         }
 
         return await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Database.BeginTransactionAsync(cancellationToken);
     }
 }

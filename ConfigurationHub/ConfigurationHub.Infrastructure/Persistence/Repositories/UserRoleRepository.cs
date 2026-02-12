@@ -67,6 +67,7 @@ public class UserRoleRepository : IUserRoleRepository
                             .Include(ur => ur.Role)
                             .Include(ur => ur.Module)
                             .Where(ur => ur.Role.Name.Contains("admin"))
+                            .OrderByDescending(x=>x.AssignedAt)
                             .AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(searchTerm))

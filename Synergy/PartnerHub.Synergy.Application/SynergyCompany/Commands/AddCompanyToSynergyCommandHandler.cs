@@ -80,10 +80,10 @@ public class AddCompanyToSynergyCommandHandler : IRequestHandler<AddCompanyToSyn
             repPhone: repPhone,
             createdBy: _userService.CurrentUserId,
             logo: externalCompany.Logo,
-            companyPifOwnerName: pifOwnerInfo?.CompanyPIFOwnerName ?? "Not Provided",
-            companyPifOwnerEmail: pifOwnerInfo?.CompanyPIFOwnerEmail ?? "not.provided@pif.sa",
-            companyPifOwnerSupervisorName: pifOwnerInfo?.CompanyPIFOwnerSupervisorName ?? "Not Provided",
-            companyPifOwnerSupervisorEmail: pifOwnerInfo?.CompanyPIFOwnerSupervisorEmail ?? "not.provided@pif.sa");
+            companyPifOwnerName: pifOwnerInfo?.OwnerName,
+            companyPifOwnerEmail: pifOwnerInfo?.OwnerEmail,
+            companyPifOwnerSupervisorName: pifOwnerInfo?.SupervisorName,
+            companyPifOwnerSupervisorEmail: pifOwnerInfo?.SupervisorEmail);
 
         if (companyResult.IsFailure)
         {

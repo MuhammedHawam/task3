@@ -130,7 +130,7 @@ builder.Services.AddHttpClient("MiddlewareApi", client =>
     if (!string.IsNullOrEmpty(middlewareBaseUrl))
     {
         client.BaseAddress = new Uri(middlewareBaseUrl);
-        client.Timeout = TimeSpan.FromSeconds(30);
+        client.Timeout = TimeSpan.FromSeconds(60);
     }
 });
 builder.Services.AddScoped<IMiddlewareIntegrationService, MiddlewareIntegrationService>();

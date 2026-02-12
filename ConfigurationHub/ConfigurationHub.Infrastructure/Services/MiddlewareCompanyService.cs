@@ -1,9 +1,11 @@
+using Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using PartnersHub.ConfigurationHub.Application.Common.Models;
 using PartnersHub.ConfigurationHub.Application.Middleware.DTOs;
 using PartnersHub.ConfigurationHub.Application.Middleware.Interfaces;
 using System.Net.Http.Json;
+using System.Reflection.Metadata;
 
 namespace PartnersHub.ConfigurationHub.Infrastructure.Services;
 
@@ -26,7 +28,7 @@ public class MiddlewareCompanyService : IMiddlewareCompanyService
         _apiKey = configuration["MiddlewareApi:ApiKey"] ?? throw new InvalidOperationException("MiddlewareApi:ApiKey configuration is missing");
 
         _httpClient.BaseAddress = new Uri(_baseUrl);
-        _httpClient.Timeout = TimeSpan.FromSeconds(30);
+        _httpClient.Timeout = TimeSpan.FromSeconds(60);
         _httpClient.DefaultRequestHeaders.Add("X-API-KEY", _apiKey);
     }
 
@@ -174,13 +176,13 @@ public class MiddlewareCompanyService : IMiddlewareCompanyService
         }
     }
 
-    public async Task<MiddlewareCompanyDto?> GetCompanyBySectorIdAsync(Guid sectorId)
+    public async Task<List<MiddlewareCompanyDto?>> GetCompanyBySectorIdAsync(Guid sectorId)
     {
         try
         {
             _logger.LogInformation("Fetching company with sector {SectorId} from middleware", sectorId);
 
-            var response = await _httpClient.GetAsync($"/Company/get-company-by-sectorId/{sectorId}");
+            var response = await _httpClient.GetAsync($"/Companies/get-company-by-sectorId?sectorId={sectorId}");
 
             if (!response.IsSuccessStatusCode)
             {
@@ -201,19 +203,34 @@ public class MiddlewareCompanyService : IMiddlewareCompanyService
 
                 throw new HttpRequestException($"Failed to fetch company from middleware API. Status: {response.StatusCode}");
             }
+            // Handle 204 No Content(very common for “empty” responses)
+            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+            {
+                _logger.LogWarning("Company with Sector {SectorId} returned 204 NoContent from middleware", sectorId);
+                return new List<MiddlewareCompanyDto>();
+            }
 
-            var wrappedResponse = await response.Content.ReadFromJsonAsync<MiddlewareWrappedResponse<MiddlewareCompanyDto>>();
+            var body = await response.Content.ReadAsStringAsync();
 
-            if (wrappedResponse?.Data == null)
+            if (string.IsNullOrWhiteSpace(body) || body.Trim().Equals("null", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning("Middleware returned empty body for Sector {SectorId}", sectorId);
+                return new List<MiddlewareCompanyDto>(); // or return null (your choice)
+            }
+            var wrappedResponse =
+                await response.Content.ReadFromJsonAsync<MiddlewareWrappedResponse<List<MiddlewareCompanyDto>>>();
+
+            var companies = wrappedResponse?.Data;
+            if (!companies!.Any())
             {
                 _logger.LogWarning("Company with Sector {SectorId} returned null data from middleware", sectorId);
-                return null;
+                return new List<MiddlewareCompanyDto>();
             }
 
             _logger.LogInformation("Successfully fetched company with sector {SectorId} ({CompanyName}) from middleware",
-                sectorId, wrappedResponse.Data.Name);
+                sectorId, companies);
 
-            return wrappedResponse.Data;
+            return companies;
         }
         catch (HttpRequestException ex)
         {

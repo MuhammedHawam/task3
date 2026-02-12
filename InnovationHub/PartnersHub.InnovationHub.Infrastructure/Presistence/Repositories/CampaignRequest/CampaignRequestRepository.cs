@@ -116,7 +116,7 @@ public class CampaignRequestRepository(InnovationHubDbContext dbContext) : ICamp
 
     public async Task<CampaignRequest?> GetById(Guid id, CancellationToken cancellationToken)
     {
-        return await dbContext.campaignRequests.Include(c => c.EvaluationCriterias).Include(c => c.Sponsors).Include(c => c.LinkedChallenges).Include(s => s.TermsAndCondition.Where(f => !f.IsDeleted)).Include(e => e.Evaluators).FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        return await dbContext.campaignRequests.Include(c => c.EvaluationCriterias).Include(c => c.Sponsors).Include(c => c.LinkedChallenges).Include(s => s.TermsAndCondition.Where(f => !f.IsDeleted)).Include(e => e.Evaluators).Include(e => e.TermsAndCondition).FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
     }
 
     public async Task Update(CampaignRequest campaign, CancellationToken cancellationToken)

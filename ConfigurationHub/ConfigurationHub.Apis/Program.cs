@@ -14,6 +14,7 @@ using PartnersHub.ConfigurationHub.Infrastructure.Persistence.Services;
 using PartnersHub.ConfigurationHub.Infrastructure.Presistence.Repositories;
 using PartnersHub.ConfigurationHub.Infrastructure.Presistence.Services;
 using PartnersHub.ConfigurationHub.Infrastructure.Services;
+using PartnersHub.ConfigurationHub.Serices;
 using System.Security.Cryptography;
 using IModuleRepository = PartnersHub.ConfigurationHub.Application.Common.Interfaces.Persistence.IModuleRepository;
 
@@ -73,6 +74,7 @@ builder.Services.AddScoped<ILdapUserService, LdapUserService>();
 builder.Services.AddScoped<ITokenSourceService, TokenSourceService>();
 builder.Services.AddScoped<IMiddlewareCompanyService, MiddlewareCompanyService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // HTTP Client
 builder.Services.AddHttpClient(ScimApiConstants.ClientName, client =>

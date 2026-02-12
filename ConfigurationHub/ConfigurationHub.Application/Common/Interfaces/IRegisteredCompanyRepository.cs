@@ -10,7 +10,7 @@ namespace PartnersHub.ConfigurationHub.Application.Common.Interfaces
 {
     public interface IRegisteredCompanyRepository
     {
-        Task<PaginatedList<RegisteredCompanyListDto>> GetAllAsync(int pageSize, int pageIndex, string? searchparam);
+        Task<PaginatedList<RegisteredCompanyListDto>> GetAllAsync(int pageSize, int pageIndex, string? searchparam, string? sortBy = null);
         Task<bool> AddAsync(Guid ModuleId, string sectorId, string sectorName, string description, List<RegisteredCompanyDto> companyDtos, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(Guid companyId, CancellationToken cancellationToken = default);
     }

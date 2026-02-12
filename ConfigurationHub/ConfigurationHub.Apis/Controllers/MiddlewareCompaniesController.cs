@@ -74,7 +74,7 @@ public class MiddlewareCompaniesController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("companies/{sectorId}")]
+    [HttpGet("companiesBySector/{sectorId}")]
     [ProducesResponseType(typeof(Result<MiddlewareCompanyDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

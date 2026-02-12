@@ -18,6 +18,8 @@ using PartnersHub.InnovationHub.Infrastructure.Presistence.Services;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 using Serilog;
+using PartnersHub.InnovationHub.Application.Common.Interfaces.Integration;
+using PartnersHub.InnovationHub.Infrastructure.Presistence.Services.Integration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -88,6 +90,8 @@ builder.Services.AddScoped<IEvaluatorRepository, EvaluatorRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IMiddlewareIntegrationService, MiddlewareIntegrationService>();
+
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 

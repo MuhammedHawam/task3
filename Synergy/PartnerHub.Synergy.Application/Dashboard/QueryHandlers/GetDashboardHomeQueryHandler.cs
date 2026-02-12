@@ -159,7 +159,8 @@ public class GetDashboardHomeQueryHandler : IRequestHandler<GetDashboardHomeQuer
                                                       {
                                                          Id = p.SynergyCompanyId,
                                                          Name = companyDict.GetValueOrDefault(p.SynergyCompanyId)?.Name.Value ?? "Unknown",  
-                                                       })
+                                                         Logo = LogoHelper.ToBase64String(companyDict.GetValueOrDefault(p.SynergyCompanyId)?.Logo) 
+                                    })
                                     .ToList() ?? new List<CompanyInfoDto>(),
                 Description = s.Description.Value,
                 Type = MapSuccessStoryType(s.SuccessStoryTypeId),

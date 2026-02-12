@@ -1,7 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using PartnersHub.Synergy.Application.Models;
 using PartnersHub.Synergy.Application.Opportunities.DTOs;
 using PartnersHub.Synergy.Domain.Common;
+using System.Text.Json.Serialization;
 
 
 public record CreateOpportunityCommand : IRequest<Result<Guid>>
@@ -42,4 +44,8 @@ public record CreateOpportunityCommand : IRequest<Result<Guid>>
     public List<AttachmentMetaDataDto>? Attachments { get; set; }
 
     public string? CompanyName { get; set; }
+
+    [JsonIgnore]
+    public List<FileUploadContent>? FilesToUpload { get; set; }
+    public string? AttachmentDescription { get; set; }
 }

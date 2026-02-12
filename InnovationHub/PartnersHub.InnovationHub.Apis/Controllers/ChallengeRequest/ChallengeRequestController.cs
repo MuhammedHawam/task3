@@ -1,18 +1,16 @@
 ﻿using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PartnersHub.InnovationHub.Apis.Common;
 using PartnersHub.InnovationHub.Apis.Controllers.Base;
-using PartnersHub.InnovationHub.Application.Campaign.Queries;
-using PartnersHub.InnovationHub.Application.Campaign.Queries.DTOs;
+using PartnersHub.InnovationHub.Apis.Models;
 using PartnersHub.InnovationHub.Application.Challenge.Commands.ChallengeRequest;
 using PartnersHub.InnovationHub.Application.Challenge.Commands.LinkTechnologyToChallenge;
 using PartnersHub.InnovationHub.Application.Challenge.Queries;
 using PartnersHub.InnovationHub.Application.Challenge.Queries.ChallengeRequest;
 using PartnersHub.InnovationHub.Application.Challenge.Queries.DTOs;
 using PartnersHub.InnovationHub.Application.Common.Models;
+using PartnersHub.InnovationHub.Application.Models;
 using PartnersHub.InnovationHub.Domain.Common;
-using PartnersHub.InnovationHub.Domain.Enums;
+
 
 namespace PartnersHub.InnovationHub.Apis.Controllers.ChallengeRequest
 {
@@ -27,8 +25,26 @@ namespace PartnersHub.InnovationHub.Apis.Controllers.ChallengeRequest
         }
 
         [HttpPost]
-        public Task<ActionResult<ApiResponse>> Create([FromBody] CreateChallengeRequestCommand command, CancellationToken cancellationToken)
-             => Execute(command, cancellationToken);
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ApiResponse>> Create([FromForm] CreateChallengeFormRequest request)
+        {
+            var filesToUpload = MapFiles(request.Files);
+
+            var command = request.Challenge!;
+
+            command.FilesToUpload = filesToUpload;
+            command.AttachmentDescription = request.AttachmentDescription;
+
+            var requestId = await _mediator.Send(command);
+
+            if (requestId.IsFailure)
+            {
+                return BadRequest(requestId);
+            }
+
+            return Ok(requestId);
+
+        }
 
         [HttpPost("link-to-technology")]
         public Task<ActionResult<ApiResponse>> LinkToTechnology(LinkTechnologyToChallengeCommand command, CancellationToken cancellationToken)
@@ -95,8 +111,23 @@ namespace PartnersHub.InnovationHub.Apis.Controllers.ChallengeRequest
              => Execute(reviewChallenge, cancellationToken);
 
         [HttpPut("Edit")]
-        public Task<ActionResult<ApiResponse>> Edit([FromBody] EditChallengeRequestCommand editChallenge, CancellationToken cancellationToken)
-         => Execute(editChallenge, cancellationToken);
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ApiResponse>> Edit([FromForm] UpdateChallengeFormRequest request)
+        {
+
+            var filesToUpload = MapFiles(request.Files);
+            var command = request.Challenge!;
+            command.FilesToUpload = filesToUpload;
+            command.AttachmentDescription = request.AttachmentDescription;
+            var result = await _mediator.Send(command);
+
+            if (result.IsFailure)
+                return BadRequest(result);
+
+            return Ok(result);
+
+
+        }
 
 
         [HttpPost("ChallengeByCompanyId")]
@@ -181,6 +212,25 @@ namespace PartnersHub.InnovationHub.Apis.Controllers.ChallengeRequest
             }
 
             return Ok(result);
+        }
+
+
+
+        private static List<FileUploadContent> MapFiles(IEnumerable<IFormFile>? files)
+        {
+            if (files == null)
+            {
+                return [];
+            }
+
+            return files
+                .Where(file => file is { Length: > 0 })
+                .Select(file => new FileUploadContent(
+                    Path.GetFileName(file.FileName),
+                    file.ContentType ?? string.Empty,
+                    file.Length,
+                    file.OpenReadStream))
+                .ToList();
         }
     }
 }

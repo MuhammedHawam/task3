@@ -130,7 +130,7 @@ public class GetMiddlewareCompanyByIdQueryHandler
 }
 
 public class GetMiddlewareCompanyBySectorIdQueryHandler
-    : IRequestHandler<GetMiddlewareCompanyBySectorIdQuery, Result<MiddlewareCompanyDto>>
+    : IRequestHandler<GetMiddlewareCompanyBySectorIdQuery, Result<List<MiddlewareCompanyDto>>>
 {
     private readonly IMiddlewareCompanyService _middlewareService;
     private readonly ILogger<GetMiddlewareCompanyBySectorIdQueryHandler> _logger;
@@ -143,7 +143,7 @@ public class GetMiddlewareCompanyBySectorIdQueryHandler
         _logger = logger;
     }
 
-    public async Task<Result<MiddlewareCompanyDto>> Handle(
+    public async Task<Result<List<MiddlewareCompanyDto>>> Handle(
         GetMiddlewareCompanyBySectorIdQuery request,
         CancellationToken cancellationToken)
     {
@@ -153,20 +153,20 @@ public class GetMiddlewareCompanyBySectorIdQueryHandler
 
             if (company == null)
             {
-                return Result<MiddlewareCompanyDto>.Failure($"Company with Sector ID {request.SectorId} not found");
+                return Result<List<MiddlewareCompanyDto>>.Failure($"Company with Sector ID {request.SectorId} not found");
             }
 
-            return Result<MiddlewareCompanyDto>.Success(company);
+            return Result<List<MiddlewareCompanyDto>>.Success(company);
         }
         catch (HttpRequestException ex)
         {
             _logger.LogError(ex, "HTTP error while fetching company with sector {SectorId} from middleware", request.SectorId);
-            return Result<MiddlewareCompanyDto>.Failure($"Failed to fetch company from middleware: {ex.Message}");
+            return Result<List<MiddlewareCompanyDto>>.Failure($"Failed to fetch company from middleware: {ex.Message}");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error while fetching company with sector {SectorId} from middleware", request.SectorId);
-            return Result<MiddlewareCompanyDto>.Failure($"An unexpected error occurred: {ex.Message}");
+            return Result<List<MiddlewareCompanyDto>>.Failure($"An unexpected error occurred: {ex.Message}");
         }
     }
 }

@@ -75,10 +75,10 @@ public class RepresentativeInformation : ValueObject
         }
 
         return Result<RepresentativeInformation>.Success(new RepresentativeInformation(
-            name.Trim(),
-            position.Trim(),
-            email.Trim().ToLowerInvariant(),
-            phone.Trim()));
+            name?.Trim(),
+            position?.Trim(),
+            email?.Trim().ToLowerInvariant(),
+            phone?.Trim()));
     }
 
     protected override IEnumerable<object?> GetEqualityComponents()

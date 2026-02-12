@@ -11,6 +11,8 @@ namespace PartnersHub.InnovationHub.Application.Common.Interfaces
         string UserId { get; }
         string RoleId { get; }
         string UserName { get; }
+        Guid CompanyId { get; }
+        Guid CurrentUserId { get; }
 
     }
 }

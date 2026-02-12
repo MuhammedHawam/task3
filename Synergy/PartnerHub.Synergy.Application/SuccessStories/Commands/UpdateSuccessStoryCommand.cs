@@ -1,5 +1,7 @@
 ﻿using MediatR;
+using PartnersHub.Synergy.Application.Models;
 using PartnersHub.Synergy.Domain.Common;
+using System.Text.Json.Serialization;
 
 
 
@@ -16,6 +18,12 @@ public class UpdateSuccessStoryCommand : IRequest<Result>
     public DateTime EndDate { get; set; }
 
     public bool? IsAdmin { get; set; }
+
+    public List<Guid>? AttachmentIdsToRemove { get; init; }
+
+    [JsonIgnore]
+    public List<FileUploadContent>? FilesToUpload { get; set; }
+    public string? AttachmentDescription { get; set; }
 
 }
 

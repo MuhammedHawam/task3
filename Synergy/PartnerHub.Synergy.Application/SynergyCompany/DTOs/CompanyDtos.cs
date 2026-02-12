@@ -85,6 +85,7 @@ public class OpportunityCollaborationDto
     public OpportunityStatus Status { get; set; }
     public string StatusDescription { get; set; } = null!;
 
+    public string State { get; set; }
     // Company info
     public Guid CompanyId { get; set; }
     public string CompanyName { get; set; } = null!;

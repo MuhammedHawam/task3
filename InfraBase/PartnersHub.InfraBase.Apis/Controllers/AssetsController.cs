@@ -8,11 +8,8 @@ using PartnersHub.InfraBase.Application.Assets.Queries;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Models;
 using PartnersHub.InfraBase.Domain.Enums;
-using PartnersHub.InfraBase.Apis.Common;
 using PartnersHub.InfraBase.Apis.Models;
 using System.IO;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace PartnersHub.InfraBase.Apis.Controllers;
 
@@ -23,16 +20,6 @@ public class AssetsController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly ITokenService _tokenService;
-    private static readonly JsonSerializerOptions AssetJsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        Converters =
-        {
-            new JsonStringEnumConverter(),
-            new NullableGuidConverter(),
-            new GuidConverter()
-        }
-    };
 
     public AssetsController(IMediator mediator, ITokenService tokenService)
     {
@@ -43,28 +30,20 @@ public class AssetsController : ControllerBase
     // ========== CRUD Operations ==========
 
     [HttpPost]
-    [Consumes("application/json")]
-    public async Task<ActionResult<Guid>> CreateAsset([FromBody] CreateAssetCommand command)
-    {
-        var assetId = await _mediator.Send(command);
-        return CreatedAtAction(nameof(GetAssetById), new { id = assetId }, assetId);
-    }
-
-    [HttpPost]
     [Consumes("multipart/form-data")]
-    public async Task<ActionResult<Guid>> CreateAssetWithAttachments([FromForm] AssetMultipartRequest request)
+    public async Task<ActionResult<Guid>> CreateAsset([FromForm] CreateAssetFormRequest request)
     {
-        var command = ParseAsset<CreateAssetCommand>(request.Asset);
-        if (command == null)
+        if (!ModelState.IsValid || request.Asset == null)
         {
-            return BadRequest("Invalid asset payload.");
+            return BadRequest(ModelState);
         }
 
         var filesToUpload = MapFiles(request.Files);
-        command = command with
+        var command = request.Asset with
         {
             FilesToUpload = filesToUpload,
-            AttachmentDescription = request.AttachmentDescription
+            AttachmentDescription = request.AttachmentDescription,
+            ContactId = request.ContactId ?? request.Asset.ContactId
         };
 
         var assetId = await _mediator.Send(command);
@@ -84,41 +63,27 @@ public class AssetsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Consumes("application/json")]
-    public async Task<ActionResult<bool>> UpdateAsset(Guid id, 
-        [FromBody] UpdateAssetCommand command)
-    {
-        if (id != command.Id)
-        {
-            return BadRequest("Asset ID mismatch");
-        }
-
-        var result = await _mediator.Send(command);
-        return Ok(result);
-    }
-
-    [HttpPut("{id}")]
     [Consumes("multipart/form-data")]
-    public async Task<ActionResult<bool>> UpdateAssetWithAttachments(
+    public async Task<ActionResult<bool>> UpdateAsset(
         Guid id,
-        [FromForm] AssetMultipartRequest request)
+        [FromForm] UpdateAssetFormRequest request)
     {
-        var command = ParseAsset<UpdateAssetCommand>(request.Asset);
-        if (command == null)
+        if (!ModelState.IsValid || request.Asset == null)
         {
-            return BadRequest("Invalid asset payload.");
+            return BadRequest(ModelState);
         }
 
-        if (id != command.Id)
+        if (id != request.Asset.Id)
         {
             return BadRequest("Asset ID mismatch");
         }
 
         var filesToUpload = MapFiles(request.Files);
-        command = command with
+        var command = request.Asset with
         {
             FilesToUpload = filesToUpload,
-            AttachmentDescription = request.AttachmentDescription
+            AttachmentDescription = request.AttachmentDescription,
+            ContactId = request.ContactId ?? request.Asset.ContactId
         };
 
         var result = await _mediator.Send(command);
@@ -136,9 +101,9 @@ public class AssetsController : ControllerBase
 
     [HttpGet]
     public async Task<ActionResult<PaginatedList<AssetListDto>>> GetAssets(
-        [FromQuery] int pageNumber = 1, 
+        [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
-        [FromQuery] AssetStatuses? status = null, 
+        [FromQuery] AssetStatuses? status = null,
         [FromQuery] Guid? companyId = null,
         [FromQuery] string? searchTerm = null,
         [FromQuery] string? sortBy = null,
@@ -156,7 +121,7 @@ public class AssetsController : ControllerBase
             var tokenCompanyId = _tokenService.GetCompanyId();
             effectiveCompanyId = companyId ?? tokenCompanyId;
         }
-        
+
         var query = new GetAssetListQuery
         {
             PageNumber = pageNumber,
@@ -180,7 +145,7 @@ public class AssetsController : ControllerBase
         // Apply company ID filter from token if not provided
         var tokenCompanyId = _tokenService.GetCompanyId();
         var effectiveCompanyId = companyId ?? tokenCompanyId;
-        
+
         var assets = await _mediator.Send(new GetAssetsByStatusQuery(status, effectiveCompanyId));
         return Ok(assets);
     }
@@ -226,7 +191,7 @@ public class AssetsController : ControllerBase
     /// User Story: "As PC admin, I want to accept \ Reject submitted asset from contributor"
     /// </summary>
     [HttpPost("{id}/pc-admin/accept")]
-    public async Task<ActionResult<bool>> AcceptByPcAdmin(Guid id, 
+    public async Task<ActionResult<bool>> AcceptByPcAdmin(Guid id,
         [FromBody] AcceptAssetByPcAdminCommand command)
     {
         if (id != command.Id)
@@ -243,7 +208,7 @@ public class AssetsController : ControllerBase
     /// User Story: "As PC admin, I want to accept \ Reject submitted asset from contributor"
     /// </summary>
     [HttpPost("{id}/pc-admin/reject")]
-    public async Task<ActionResult<bool>> RejectByPcAdmin(Guid id, 
+    public async Task<ActionResult<bool>> RejectByPcAdmin(Guid id,
         [FromBody] RejectAssetByPcAdminCommand command)
     {
         if (id != command.Id)
@@ -262,7 +227,7 @@ public class AssetsController : ControllerBase
     /// User Story: "As an Infrabase admin, I want to accept \ Reject asset approved by PC admin"
     /// </summary>
     [HttpPost("{id}/infrabase-admin/accept")]
-    public async Task<ActionResult<bool>> AcceptByInfrabaseAdmin(Guid id, 
+    public async Task<ActionResult<bool>> AcceptByInfrabaseAdmin(Guid id,
         [FromBody] CheckAssetByInfrabaseAdminCommand command)
     {
         if (id != command.Id)
@@ -279,7 +244,7 @@ public class AssetsController : ControllerBase
     /// User Story: "As an Infrabase admin, I want to accept \ Reject asset approved by PC admin"
     /// </summary>
     [HttpPost("{id}/infrabase-admin/reject")]
-    public async Task<ActionResult<bool>> RejectByInfrabaseAdmin(Guid id, 
+    public async Task<ActionResult<bool>> RejectByInfrabaseAdmin(Guid id,
         [FromBody] ReturnAssetForCorrectionCommand command)
     {
         if (id != command.Id)
@@ -294,7 +259,7 @@ public class AssetsController : ControllerBase
     // ========== Asset Attachments ==========
 
     [HttpPost("{id}/attachments")]
-    public async Task<ActionResult<Guid>> AddAttachment(Guid id, 
+    public async Task<ActionResult<Guid>> AddAttachment(Guid id,
         [FromBody] AddAssetAttachmentCommand command)
     {
         if (id != command.AssetId)
@@ -319,7 +284,7 @@ public class AssetsController : ControllerBase
     }
 
     [HttpDelete("{id}/attachments/{attachmentId}")]
-    public async Task<ActionResult<bool>> RemoveAttachment(Guid id, Guid attachmentId, 
+    public async Task<ActionResult<bool>> RemoveAttachment(Guid id, Guid attachmentId,
         [FromQuery] Guid userId)
     {
         var result = await _mediator.Send(new RemoveAssetAttachmentCommand(id, attachmentId));
@@ -375,23 +340,6 @@ public class AssetsController : ControllerBase
 
         var result = await _mediator.Send(new GetAssetStatusSummaryQuery(effectiveCompanyId));
         return Ok(result);
-    }
-
-    private static T? ParseAsset<T>(string? assetJson)
-    {
-        if (string.IsNullOrWhiteSpace(assetJson))
-        {
-            return default;
-        }
-
-        try
-        {
-            return JsonSerializer.Deserialize<T>(assetJson, AssetJsonOptions);
-        }
-        catch (JsonException)
-        {
-            return default;
-        }
     }
 
     private static List<FileUploadContent> MapFiles(IEnumerable<IFormFile>? files)

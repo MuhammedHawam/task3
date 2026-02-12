@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using PartnersHub.Synergy.Application.Interfaces;
 using PartnersHub.Synergy.Domain.Common;
@@ -48,5 +49,10 @@ public class UnitOfWork : IUnitOfWork
         }
 
         return result;
+    }
+
+    public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Database.BeginTransactionAsync(cancellationToken);
     }
 }

@@ -198,12 +198,15 @@ public class AssetDashboardController : ControllerBase
             return BadRequest(new { message = "Search term cannot exceed 500 characters" });
         }
 
+        // Apply company ID from token
+        var tokenCompanyId = _tokenService.GetCompanyId();
+
         // NO company filtering for Infrabase Admin - they see all assets
         var query = new GetInfrabaseAdminDashboardQuery(
             pageNumber, 
             pageSize, 
             searchTerm, 
-            statusFilter);
+            statusFilter, tokenCompanyId);
             
         var result = await _mediator.Send(query);
         return Ok(result);

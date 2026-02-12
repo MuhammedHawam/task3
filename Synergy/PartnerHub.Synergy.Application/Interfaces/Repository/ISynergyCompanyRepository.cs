@@ -14,6 +14,7 @@ namespace PartnersHub.Synergy.Application.Interfaces.Repository
         void Update(Domain.Aggregates.SynergyCompanyAggregate.SynergyCompany company);
         Task<PaginatedList<Domain.Aggregates.SynergyCompanyAggregate.SynergyCompany>> Search(int pageSize,
         int pageNumber,
+        bool? isActive = null,
         string? searchTerm = null,
         List<Guid>? sectors = null,
         List<string>? cities = null,

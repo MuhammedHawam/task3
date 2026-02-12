@@ -112,8 +112,8 @@ public class CampaignRequestTermsAndCondition : Entity
         //if (string.IsNullOrWhiteSpace(sharePointLibrary))
         //    return Result<CampaignRequestTermsAndCondition>.Failure("SharePoint library is required");
 
-        if (uploadedBy == Guid.Empty)
-            return Result<CampaignRequestTermsAndCondition>.Failure("Uploaded by user is required");
+        //if (uploadedBy == Guid.Empty)
+        //    return Result<CampaignRequestTermsAndCondition>.Failure("Uploaded by user is required");
 
         var attachment = new CampaignRequestTermsAndCondition(
             CampaignRequestId,

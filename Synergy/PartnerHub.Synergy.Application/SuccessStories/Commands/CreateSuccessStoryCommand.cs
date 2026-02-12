@@ -1,6 +1,8 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using PartnersHub.Synergy.Application.Common.Converters;
+using PartnersHub.Synergy.Application.Models;
 using PartnersHub.Synergy.Domain.Common;
 using System;
 using System.Collections.Generic;
@@ -35,5 +37,12 @@ namespace PartnersHub.Synergy.Application.SuccessStories.Commands
 
         public string? CompanyName { get; set; }
 
+        [JsonIgnore]
+        public List<FileUploadContent>? FilesToUpload { get; set; }
+        public string? AttachmentDescription { get; set; }
+
     }
+
+
+    
 }

@@ -1,15 +1,16 @@
-﻿using MediatR;
+﻿using Azure.Core;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using PartnersHub.InnovationHub.Apis.Controllers.Base;
+using PartnersHub.InnovationHub.Apis.Models;
 using PartnersHub.InnovationHub.Application.Campaign.Commands;
 using PartnersHub.InnovationHub.Application.Campaign.Queries;
 using PartnersHub.InnovationHub.Application.Campaign.Queries.DTOs;
-using PartnersHub.InnovationHub.Application.Challenge.Commands.ChallengeRequest;
-using PartnersHub.InnovationHub.Application.Challenge.Queries.ChallengeRequest;
 using PartnersHub.InnovationHub.Application.Common.Models;
+using PartnersHub.InnovationHub.Application.Models;
 using PartnersHub.InnovationHub.Domain.Common;
 using PartnersHub.InnovationHub.Domain.Enums;
-using System.Globalization;
+
 
 
 namespace PartnersHub.InnovationHub.Apis.Controllers.CampaignRequest;
@@ -25,8 +26,27 @@ public class CampaignRequestController : ApiBaseController<CampaignRequestContro
     }
 
     [HttpPost("Create")]
-    public Task<ActionResult<ApiResponse>> Create([FromBody] CreateCampaignRequestCommand command, CancellationToken cancellationToken)
-         => Execute(command, cancellationToken);
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<ApiResponse>> Create([FromForm] CreateCampaignReqFormRequest request)
+    {
+
+        var filesToUpload = MapFiles(request.Files);
+
+        var command = request.Campaign!;
+
+        command.FilesToUpload = filesToUpload;
+        command.AttachmentDescription = request.AttachmentDescription;
+
+        var requestId = await _mediator.Send(command);
+
+        if (requestId.IsFailure)
+        {
+            return BadRequest(requestId);
+        }
+
+        return Ok(requestId);
+
+    }
 
     [HttpGet("ActiveCampaignList")]
     [ProducesResponseType(typeof(Result<PaginatedList<ActiveCampaignCardDTO>>), StatusCodes.Status200OK)]
@@ -68,8 +88,26 @@ public class CampaignRequestController : ApiBaseController<CampaignRequestContro
                => Execute(new CampaignDetailsQuery { CampaignId = requestId }, cancellationToken);
 
     [HttpPost("CreateCampaign")]
-    public Task<ActionResult<ApiResponse>> CreateCampaign([FromBody] CreateCampaignCommand command, CancellationToken cancellationToken)
-         => Execute(command, cancellationToken);
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<ApiResponse>> CreateCampaign([FromForm] CreateCampaignFormRequest request, CancellationToken cancellationToken)
+    {
+        var filesToUpload = MapFiles(request.Files);
+
+        var command = request.Campaign!;
+
+        command.FilesToUpload = filesToUpload;
+        command.AttachmentDescription = request.AttachmentDescription;
+
+        var requestId = await _mediator.Send(command);
+
+        if (requestId.IsFailure)
+        {
+            return BadRequest(requestId);
+        }
+
+        return Ok(requestId);
+
+    }
 
     [HttpPut("ConvertToDraft")]
     public Task<ActionResult<ApiResponse>> ConvertToDraft([FromBody] ConvertRequestToCampaignDraftCommand command, CancellationToken cancellationToken)
@@ -157,4 +195,24 @@ public async Task<ActionResult<Result<bool>>> RemoveAttachment(
 
     return Ok(result);
 }
+
+
+
+
+    private static List<FileUploadContent> MapFiles(IEnumerable<IFormFile>? files)
+    {
+        if (files == null)
+        {
+            return [];
+        }
+
+        return files
+            .Where(file => file is { Length: > 0 })
+            .Select(file => new FileUploadContent(
+                Path.GetFileName(file.FileName),
+                file.ContentType ?? string.Empty,
+                file.Length,
+                file.OpenReadStream))
+            .ToList();
+    }
 }

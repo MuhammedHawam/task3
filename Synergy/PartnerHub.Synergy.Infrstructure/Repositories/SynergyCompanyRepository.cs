@@ -67,6 +67,7 @@ public class SynergyCompanyRepository : ISynergyCompanyRepository
     }
     public async Task<PaginatedList<SynergyCompany>> Search(int pageSize,
         int pageNumber,
+        bool? isActive = null,
         string? searchTerm = null,
         List<Guid>? sectors = null,
         List<string>? cities = null,
@@ -77,10 +78,18 @@ public class SynergyCompanyRepository : ISynergyCompanyRepository
         IQueryable<SynergyCompany> query = _context.SynergyCompanies;
         if (!string.IsNullOrWhiteSpace(searchTerm))
             query = query.Where(sc => sc.Name.Value.ToLower().Contains(searchTerm.ToLower().Trim()) 
-                || sc.Description.Value.ToLower().Contains(searchTerm.ToLower().Trim()));
+                || sc.Description.Value.ToLower().Contains(searchTerm.ToLower().Trim())
+                || sc.Sectors.Any(s => s.SectorName.ToLower().Contains(searchTerm)));
 
 
         query = query.Include(sc => sc.Sectors);
+
+        if (isActive == true)
+            query = query.Where(e => e.IsActive);
+
+        if (isActive == false)
+            query = query.Where(e => !e.IsActive);
+
 
         if (sectors != null && sectors.Count > 0)
             query = query.Where(sc => sc.Sectors.Any(s => sectors.Contains(s.SectorId)));

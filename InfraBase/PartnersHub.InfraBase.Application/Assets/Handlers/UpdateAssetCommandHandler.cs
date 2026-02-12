@@ -148,6 +148,7 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
             var uploadRequests = await UploadAttachmentsAsync(
                 asset.Id,
                 asset.CompanyId,
+                command.ContactId,
                 command.FilesToUpload,
                 command.AttachmentDescription,
                 cancellationToken);
@@ -277,12 +278,13 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
     private async Task<List<AssetAttachmentRequest>> UploadAttachmentsAsync(
         Guid assetId,
         Guid companyId,
+        Guid contactId,
         IReadOnlyCollection<FileUploadContent> files,
         string? description,
         CancellationToken cancellationToken)
     {
-        var contactId = _tokenService.GetContactId();
-        if (!contactId.HasValue)
+        contactId = _tokenService.GetContactId() ?? contactId;
+        if (contactId == null)
         {
             throw new ValidationException("Contact ID is required to upload attachments.");
         }
@@ -290,7 +292,7 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
         var uploadRequest = new FileUploadRequest(
             assetId.ToString(),
             companyId,
-            contactId.Value,
+            contactId,
             string.IsNullOrWhiteSpace(description) ? "Asset attachment" : description,
             files);
 

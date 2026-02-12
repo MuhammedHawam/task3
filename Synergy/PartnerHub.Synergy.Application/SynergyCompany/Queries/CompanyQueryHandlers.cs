@@ -1,4 +1,5 @@
 using MediatR;
+using PartnersHub.Synergy.Application.Common;
 using PartnersHub.Synergy.Application.Common.Helpers;
 using PartnersHub.Synergy.Application.Dashboard.DTOs;
 using PartnersHub.Synergy.Application.Interfaces.Repository;
@@ -24,18 +25,21 @@ public class GetRegisteredCompaniesQueryHandler : IRequestHandler<GetRegisteredC
 
     public async Task<Result<PaginatedList<RegisteredCompanyCardDto>>> Handle(GetRegisteredCompaniesQuery request, CancellationToken cancellationToken)
     {
-        var companiesPaginatedList = await _companyRepository.Search(request.PageSize, request.PageNumber, 
+        bool? isActive = request.IncludeInactive ? null : true;
+
+
+        var companiesPaginatedList = await _companyRepository.Search(request.PageSize, request.PageNumber, isActive,
             searchTerm: request.SearchTerm, sectors: request.SectorIds,
             cities: request.Cities, countries: request.Countries);
 
         var companyDtos = new List<RegisteredCompanyCardDto>();
         foreach (var company in companiesPaginatedList.Items)
         {
-            // Filter by IsActive status unless IncludeInactive is true (admin access)
-            if (!request.IncludeInactive && !company.IsActive)
-            {
-                continue;
-            }
+            //// Filter by IsActive status unless IncludeInactive is true (admin access)
+            //if (!request.IncludeInactive && !company.IsActive)
+            //{
+            //    continue;
+            //}
 
             var collaborationsCount = await _opportunityRepository.GetDistinctCollaboratedCompaniesCountAsync(company.Id);
             
@@ -136,7 +140,12 @@ public class GetCompanyDetailsQueryHandler : IRequestHandler<GetCompanyDetailsQu
             CreatedAt = o.CreatedAt,
             IsEditByAdmin = o.IsAdminUpdated,
             IsAdmin = o.IsAdminCreated ?? false,
-            CompanyLogo = LogoHelper.ToBase64String(company?.Logo)
+            CompanyLogo = LogoHelper.ToBase64String(company?.Logo),
+            State = (o.StartDate > DateOnly.FromDateTime(DateTime.Now)) ? CollaborationStatusFilter.Upcoming.ToString() :
+                                                                   ((o.StartDate <= DateOnly.FromDateTime(DateTime.Now) && (o.EndDate == null || o.EndDate >= DateOnly.FromDateTime(DateTime.Now))) ?
+                                                                   CollaborationStatusFilter.Active.ToString() : (o.StartDate == null ? CollaborationStatusFilter.Upcoming.ToString() : CollaborationStatusFilter.Closed.ToString()))
+
+
         }).ToList();
 
         var successStories = await _successStoryRepository.GetByCompanyIdAsync(company.Id);
@@ -156,6 +165,7 @@ public class GetCompanyDetailsQueryHandler : IRequestHandler<GetCompanyDetailsQu
                                     .Select(p => new CompanyNameLogoDto
                                     {
                                         Name = companyDict.GetValueOrDefault(p.SynergyCompanyId)?.Name.Value ?? "Unknown",
+                                        Logo = LogoHelper.ToBase64String(companyDict.GetValueOrDefault(p.SynergyCompanyId)?.Logo)
                                     })
                                     .ToList() ?? new List<CompanyNameLogoDto>(),
             PostedBy = company.Name.Value,

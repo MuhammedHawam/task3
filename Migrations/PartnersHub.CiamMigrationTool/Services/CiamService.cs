@@ -24,7 +24,7 @@ public class CiamService : ICiamService {
         _logger = logger;
 
         // Configure HttpClient for CIAM-specific requirements
-        _httpClient.Timeout = TimeSpan.FromSeconds(30);
+        _httpClient.Timeout = TimeSpan.FromSeconds(60);
         _httpClient.DefaultRequestHeaders.Clear();
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "PartnersHub-CIAM-MigrationTool/1.0");
 

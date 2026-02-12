@@ -1,5 +1,7 @@
 ﻿using MediatR;
+using PartnersHub.Synergy.Application.Models;
 using PartnersHub.Synergy.Domain.Common;
+using System.Text.Json.Serialization;
 
 
 namespace PartnersHub.Synergy.Application.Opportunities.Commands;
@@ -29,5 +31,11 @@ public record UpdateOpportunityCommand : IRequest<Result>
     public string? ExpectedOutcomeOther { get; init; }
 
     public bool? IsAdmin { get; init; }
+
+    public List<Guid>? AttachmentIdsToRemove { get; init; }
+
+    [JsonIgnore]
+    public List<FileUploadContent>? FilesToUpload { get; set; }
+    public string? AttachmentDescription { get; set; }
 }
 

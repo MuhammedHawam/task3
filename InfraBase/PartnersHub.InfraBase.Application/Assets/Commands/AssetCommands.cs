@@ -53,7 +53,8 @@ public record CreateAssetCommand : IRequest<Guid>
     [JsonIgnore]
     public List<FileUploadContent>? FilesToUpload { get; init; }
     public string? AttachmentDescription { get; init; }
-
+    [JsonIgnore]
+    public Guid ContactId { get; init; }
     public Guid CompanyId { get; init; }
     public string CompanyName { get; init; }
 }
@@ -95,6 +96,8 @@ public record UpdateAssetCommand : IRequest<bool>
     [JsonIgnore]
     public List<FileUploadContent>? FilesToUpload { get; init; }
     public string? AttachmentDescription { get; init; }
+    [JsonIgnore]
+    public Guid ContactId { get; init; }
 }
 
 public record SaveAssetAsDraftCommand(Guid Id) : IRequest<bool>;

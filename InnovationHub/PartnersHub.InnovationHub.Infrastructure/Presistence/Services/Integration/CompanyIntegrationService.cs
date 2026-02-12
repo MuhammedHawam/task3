@@ -33,7 +33,7 @@ public class CompanyIntegrationService //: ICompanyIntegrationService
 
         // Configure HttpClient
         _httpClient.BaseAddress = new Uri(_baseUrl);
-        _httpClient.Timeout = TimeSpan.FromSeconds(30);
+        _httpClient.Timeout = TimeSpan.FromSeconds(60);
 
         // Add API Key to default headers
         _httpClient.DefaultRequestHeaders.Add("X-API-KEY", _apiKey);

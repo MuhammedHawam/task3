@@ -33,10 +33,10 @@ public class MiddlewareCompanyDto
     public string? Country { get; set; }
     public string? City { get; set; }
     public string? CityAr { get; set; }
-    public Guid? SectorId { get; set; }
+    public string? SectorId { get; set; }
     public string? SectorName { get; set; }
     public string? SectorNameAr { get; set; }
-    public Guid? DivisionId { get; set; }
+    public string? DivisionId { get; set; }
     public string? DivisionName { get; set; }
     public string? DivisionNameAr { get; set; }
     public DateTime? EstablishmentDate { get; set; }

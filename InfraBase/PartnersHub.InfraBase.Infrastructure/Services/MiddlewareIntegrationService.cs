@@ -16,6 +16,7 @@ public class MiddlewareIntegrationService : IMiddlewareIntegrationService
     private readonly ILogger<MiddlewareIntegrationService> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly string _baseUrl;
+    private readonly string _apiKey;
 
     public MiddlewareIntegrationService(
         IHttpClientFactory httpClientFactory,
@@ -28,6 +29,9 @@ public class MiddlewareIntegrationService : IMiddlewareIntegrationService
         _httpContextAccessor = httpContextAccessor;
         _baseUrl = configuration["MiddlewareApi:BaseUrl"] 
             ?? throw new InvalidOperationException("MiddlewareApi:BaseUrl configuration is missing");
+        _apiKey = configuration["MiddlewareApi:ApiKey"] 
+            ?? throw new InvalidOperationException("MiddlewareApi:ApiKey configuration is missing");
+        _httpClient.DefaultRequestHeaders.Add("X-API-KEY", _apiKey);
     }
 
     public async Task<MiddlewareCompany?> GetCompanyByIdAsync(Guid companyId)
@@ -124,8 +128,26 @@ public class MiddlewareIntegrationService : IMiddlewareIntegrationService
             {
                 requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             }
+            HttpResponseMessage response;
 
-            using var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
+            try
+            {
+                response = await _httpClient.SendAsync(requestMessage, cancellationToken);
+            }
+            catch (OperationCanceledException oce) when (cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogWarning(oce, "Upload request was canceled by cancellationToken.");
+                return new FileUploadResult(false, "Upload canceled.", Array.Empty<FileUploadItem>());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "SendAsync failed before receiving response. Endpoint: {Endpoint}",
+                    requestMessage.RequestUri?.ToString());
+
+                return new FileUploadResult(false, $"SendAsync failed: {ex.Message}", Array.Empty<FileUploadItem>());
+            }
+           
             if (!response.IsSuccessStatusCode)
             {
                 var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -218,6 +240,9 @@ public class MiddlewareIntegrationService : IMiddlewareIntegrationService
 
         [JsonPropertyName("data")]
         public PartnerHubFilesData? Data { get; init; }
+
+        [JsonPropertyName("error")]
+        public string? Error { get; init; }
     }
 
     private sealed class PartnerHubFilesData
@@ -229,19 +254,22 @@ public class MiddlewareIntegrationService : IMiddlewareIntegrationService
         public string? Message { get; init; }
 
         [JsonPropertyName("uploadedFiles")]
-        public List<PartnerHubFilesUploadedFile>? UploadedFiles { get; init; }
+        public List<PartnerHubUploadedFile>? UploadedFiles { get; init; }
     }
 
-    private sealed class PartnerHubFilesUploadedFile
+    private sealed class PartnerHubUploadedFile
     {
         [JsonPropertyName("fileName")]
         public string? FileName { get; init; }
+
+        [JsonPropertyName("filePath")]
+        public string? FilePath { get; init; }
 
         [JsonPropertyName("sharePointUrl")]
         public string? SharePointUrl { get; init; }
 
         [JsonPropertyName("fileSize")]
-        public long FileSize { get; init; }
+        public long FileSize { get; init; } // long is safest
 
         [JsonPropertyName("uploaded")]
         public bool Uploaded { get; init; }
@@ -250,6 +278,6 @@ public class MiddlewareIntegrationService : IMiddlewareIntegrationService
         public string? Status { get; init; }
 
         [JsonPropertyName("uploadedOn")]
-        public DateTime UploadedOn { get; init; }
+        public DateTime UploadedOn { get; init; } // handles "...Z" reliably
     }
 }

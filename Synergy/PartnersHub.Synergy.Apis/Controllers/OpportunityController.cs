@@ -1,7 +1,9 @@
-﻿using MediatR;
+﻿using Azure.Core;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PartnersHub.Synergy.Apis.Controllers.Base;
+using PartnersHub.Synergy.Apis.Models;
 using PartnersHub.Synergy.Application.Models;
 using PartnersHub.Synergy.Application.Opportunities.Commands;
 using PartnersHub.Synergy.Application.Opportunities.DTOs;
@@ -76,8 +78,14 @@ namespace PartnersHub.Synergy.Apis.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<ApiResponse<Guid>>> SaveRequestAsDraft([FromBody] CreateOpportunityCommand command)
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ApiResponse<Guid>>> SaveRequestAsDraft([FromForm] CreateOpportunityFormRequest request)
         {
+            var filesToUpload = MapFiles(request.Files);
+            var command = request.Opportunity!;
+            command.FilesToUpload = filesToUpload;
+            command.AttachmentDescription = request.AttachmentDescription;
+
             var requestId = await _mediator.Send(command);
 
             if (requestId.IsFailure)
@@ -255,8 +263,15 @@ namespace PartnersHub.Synergy.Apis.Controllers
         }
 
         [HttpPut("{opportunityId}")]
-        public async Task<ActionResult<Result>> UpdateOpportunity(Guid opportunityId, [FromBody] UpdateOpportunityCommand command)
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<Result>> UpdateOpportunity(Guid opportunityId, [FromForm] UpdateOpportunityFormRequest request)
         {
+
+            var filesToUpload = MapFiles(request.Files);
+            var command = request.Opportunity!;
+            command.FilesToUpload = filesToUpload;
+            command.AttachmentDescription = request.AttachmentDescription;
+
             var updated = command with { OpportunityId = opportunityId };
             var result = await _mediator.Send(updated);
             if (result.IsSuccess)
@@ -295,6 +310,23 @@ namespace PartnersHub.Synergy.Apis.Controllers
                 .Select(s => int.TryParse(s, out var num) ? num : (int?)null)
                 .Where(n => n.HasValue)
                 .Select(n => n!.Value)
+                .ToList();
+        }
+
+        private static List<FileUploadContent> MapFiles(IEnumerable<IFormFile>? files)
+        {
+            if (files == null)
+            {
+                return [];
+            }
+
+            return files
+                .Where(file => file is { Length: > 0 })
+                .Select(file => new FileUploadContent(
+                    Path.GetFileName(file.FileName),
+                    file.ContentType ?? string.Empty,
+                    file.Length,
+                    file.OpenReadStream))
                 .ToList();
         }
 

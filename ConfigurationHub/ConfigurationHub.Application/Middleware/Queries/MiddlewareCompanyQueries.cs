@@ -24,7 +24,7 @@ public record GetMiddlewareCompanyByIdQuery : IRequest<Result<MiddlewareCompanyD
         CompanyId = companyId;
     }
 }
-public record GetMiddlewareCompanyBySectorIdQuery : IRequest<Result<MiddlewareCompanyDto>>
+public record GetMiddlewareCompanyBySectorIdQuery : IRequest<Result<List<MiddlewareCompanyDto>>>
 {
     public Guid SectorId { get; init; }
 

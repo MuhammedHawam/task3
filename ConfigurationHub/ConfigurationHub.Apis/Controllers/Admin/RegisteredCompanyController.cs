@@ -11,7 +11,7 @@ namespace PartnersHub.ConfigurationHub.Apis.Controllers.Admin
     [ApiController]
     [Route("api/admin/registeredcompany")]
     [Authorize]
- 
+
     public class RegisteredCompanyController : ControllerBase
     {
         private readonly IRegisteredCompanyRepository _registeredCompanyRepository ;
@@ -23,9 +23,9 @@ namespace PartnersHub.ConfigurationHub.Apis.Controllers.Admin
 
         [HttpGet]
         [ProducesResponseType(typeof(PaginatedList<RegisteredCompanyListDto>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<PaginatedList<RegisteredCompanyListDto>>> GetAllPermissions(int pageNumber = 1, int pageSize = 10,string searchparam=null)
+        public async Task<ActionResult<PaginatedList<RegisteredCompanyListDto>>> GetAllCompanies(int pageNumber = 1, int pageSize = 10,string? searchTerm = null, string? sortBy = null)
         {
-            var companies = await _registeredCompanyRepository.GetAllAsync(pageSize,pageNumber,searchparam);
+            var companies = await _registeredCompanyRepository.GetAllAsync(pageSize,pageNumber, searchTerm, sortBy);
             return Ok(companies);
         }
 

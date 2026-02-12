@@ -1,7 +1,9 @@
 ﻿using MediatR;
 using PartnersHub.InnovationHub.Application.Challenge.Commands.ChallengeRequest;
+using PartnersHub.InnovationHub.Application.Models;
 using PartnersHub.InnovationHub.Domain.Common;
 using PartnersHub.InnovationHub.Domain.Enums;
+using System.Text.Json.Serialization;
 
 
 namespace PartnersHub.InnovationHub.Application.Campaign.Commands;
@@ -24,7 +26,9 @@ public record CreateCampaignCommand : IRequest<Results<Guid>>
     public List<TermsDto> TermsAndConditions { get; init; }
     public bool? IsDraft { get; init; }
 
-
+    [JsonIgnore]
+    public List<FileUploadContent>? FilesToUpload { get; set; }
+    public string? AttachmentDescription { get; set; }
 }
 
 public record EvaluatorDto(Guid id, string name);

@@ -439,7 +439,7 @@ public class GetInfrabaseAdminDashboardQueryHandler
             request.PageNumber,
             request.PageSize,
             request.StatusFilter,
-            null,
+            request.tokenCompanyId,
             request.SearchTerm,
             null,
             false,

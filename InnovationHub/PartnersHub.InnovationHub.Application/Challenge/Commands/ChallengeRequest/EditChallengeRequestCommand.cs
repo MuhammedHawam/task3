@@ -1,7 +1,9 @@
 ﻿using MediatR;
+using PartnersHub.InnovationHub.Application.Models;
 using PartnersHub.InnovationHub.Domain.Aggregates.ChallengeRequest;
 using PartnersHub.InnovationHub.Domain.Common;
 using PartnersHub.InnovationHub.Domain.Enums;
+using System.Text.Json.Serialization;
 
 
 
@@ -19,6 +21,12 @@ namespace PartnersHub.InnovationHub.Application.Challenge.Commands.ChallengeRequ
         public PriorityLevel PriorityLevel { get; init; }
         public bool IsDraft { get; init; }
         public List<AttachementDto> Attachments { get; init; } = new List<AttachementDto>();
+
+        public List<Guid>? AttachmentIdsToRemove { get; init; }
+
+        [JsonIgnore]
+        public List<FileUploadContent>? FilesToUpload { get; set; }
+        public string? AttachmentDescription { get; set; }
     }
 
 

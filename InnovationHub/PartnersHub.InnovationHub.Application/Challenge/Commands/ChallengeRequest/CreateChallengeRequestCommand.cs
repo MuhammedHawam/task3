@@ -1,7 +1,9 @@
 ﻿using MediatR;
+using PartnersHub.InnovationHub.Application.Models;
 using PartnersHub.InnovationHub.Domain.Aggregates.ChallengeRequest;
 using PartnersHub.InnovationHub.Domain.Common;
 using PartnersHub.InnovationHub.Domain.Enums;
+using System.Text.Json.Serialization;
 
 
 namespace PartnersHub.InnovationHub.Application.Challenge.Commands.ChallengeRequest
@@ -17,6 +19,10 @@ namespace PartnersHub.InnovationHub.Application.Challenge.Commands.ChallengeRequ
         public string SubmitterEmail { get; init; } = string.Empty;
         public PriorityLevel? PriorityLevel { get; init; }
         public bool? IsDraft { get; init; }
+
+        [JsonIgnore]
+        public List<FileUploadContent>? FilesToUpload { get; set; }
+        public string? AttachmentDescription { get; set; }
         //public List<ChallengeRequestAttachment> Attachments { get; init; } = new List<ChallengeRequestAttachment>();
         //public List<Technology> Technologies { get; init; } = new List<Technology>();
     }

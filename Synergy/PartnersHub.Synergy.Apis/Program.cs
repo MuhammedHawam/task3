@@ -173,7 +173,17 @@ builder.Services.AddScoped<IDapperRepository, DapperRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IStaticCompanyPifOwnerInfoProvider, StaticCompanyPifOwnerInfoProvider>();
+builder.Services.AddScoped<IMiddlewareIntegrationService, MiddlewareIntegrationService>();
 
+builder.Services.AddHttpClient("MiddlewareApi", client =>
+{
+    var middlewareBaseUrl = builder.Configuration["MiddlewareApi:BaseUrl"];
+    if (!string.IsNullOrEmpty(middlewareBaseUrl))
+    {
+        client.BaseAddress = new Uri(middlewareBaseUrl);
+        client.Timeout = TimeSpan.FromSeconds(120);
+    }
+});
 
 // Add MediatR
 builder.Services.AddMediatR(cfg => {

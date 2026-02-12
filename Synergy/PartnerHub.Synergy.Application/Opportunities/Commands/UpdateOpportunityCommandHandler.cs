@@ -1,8 +1,13 @@
 ﻿using MediatR;
 using PartnersHub.Synergy.Application.Interfaces;
 using PartnersHub.Synergy.Application.Interfaces.Common;
+using PartnersHub.Synergy.Application.Interfaces.Integration;
 using PartnersHub.Synergy.Application.Interfaces.Repository;
+using PartnersHub.Synergy.Application.Models;
+using PartnersHub.Synergy.Domain.Aggregates.SuccessStoryAggregate;
 using PartnersHub.Synergy.Domain.Common;
+using System.ComponentModel.DataAnnotations;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 
 namespace PartnersHub.Synergy.Application.Opportunities.Commands;
@@ -17,6 +22,7 @@ public class UpdateOpportunityCommandHandler : IRequestHandler<UpdateOpportunity
     private readonly ICollaborationRequirementRepository _collaborationRequirementRepository;
     private readonly ISynergyCompanyRepository _synergyCompanyRepository;
     private readonly IUserService _userService;
+    private readonly IMiddlewareIntegrationService _middlewareService;
 
     public UpdateOpportunityCommandHandler(
         IOpportunityRepository opportunityRepository,
@@ -26,7 +32,9 @@ public class UpdateOpportunityCommandHandler : IRequestHandler<UpdateOpportunity
         IExpectedOutcomesRepository expectedOutcomesRepository,
         ICollaborationRequirementRepository collaborationRequirementRepository,
         ISynergyCompanyRepository synergyCompanyRepository,
-        IUserService userService)
+        IUserService userService,
+        IMiddlewareIntegrationService middlewareService
+        )
     {
         _opportunityRepository = opportunityRepository;
         _unitOfWork = unitOfWork;
@@ -36,6 +44,7 @@ public class UpdateOpportunityCommandHandler : IRequestHandler<UpdateOpportunity
         _collaborationRequirementRepository = collaborationRequirementRepository;
         _synergyCompanyRepository = synergyCompanyRepository;
         _userService = userService;
+        _middlewareService = middlewareService;
     }
 
     public async Task<Result> Handle(UpdateOpportunityCommand request, CancellationToken cancellationToken)
@@ -134,11 +143,114 @@ public class UpdateOpportunityCommandHandler : IRequestHandler<UpdateOpportunity
         if (result.IsFailure)
             return Result.Failure(result.Error);
 
+        if (request.AttachmentIdsToRemove?.Count > 0)
+        {
+            RemoveAttachments(opportunity, request.AttachmentIdsToRemove, _userService.CurrentUserId.ToString());
+        }
+
+        await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            _opportunityRepository.Update(opportunity);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            if (request.FilesToUpload?.Count > 0)
+            {
+                await UploadAttachmentsAsync(
+                opportunity,
+                _userService.CompanyId,
+                _userService.CurrentUserId,
+                request.FilesToUpload,
+                request.AttachmentDescription,
+                cancellationToken);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+
+            await transaction.RollbackAsync(cancellationToken);
+
+
+            return Result.Failure(
+                ex is ValidationException ? ex.Message : "Failed to save Partnership with attachments.");
+        }
+    }
+
+
+
+    private async Task UploadAttachmentsAsync(Domain.Aggregates.OpportunityAggregate.Opportunity opportunity,
+                                           Guid companyId,
+                                           Guid contactId,
+                                           IReadOnlyCollection<FileUploadContent> files,
+                                           string? description,
+                                           CancellationToken cancellationToken)
+    {
+
+
+        var uploadRequest = new FileUploadRequest(
+            opportunity.Id.ToString(),
+            companyId,
+            contactId,
+            string.IsNullOrWhiteSpace(description) ? "opportunity attachment" : description,
+            files);
+
+        var uploadResult = await _middlewareService.UploadFilesAsync(uploadRequest, cancellationToken);
+        if (!uploadResult.Success)
+        {
+            throw new ValidationException(uploadResult.Message ?? "Attachment upload failed.");
+        }
+
+        await MapUploadToAttachmentRequests(uploadResult, files, opportunity, cancellationToken);
+    }
+
+    private async Task MapUploadToAttachmentRequests(FileUploadResult uploadResult,
+                                                     IReadOnlyCollection<FileUploadContent> originalFiles,
+                                                     Domain.Aggregates.OpportunityAggregate.Opportunity opportunity,
+                                                     CancellationToken cancellationToken)
+    {
+
+        var fileLookup = originalFiles
+            .GroupBy(f => f.FileName, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+        foreach (var uploaded in uploadResult.UploadedFiles.Where(f => f.Uploaded))
+        {
+            if (!fileLookup.TryGetValue(uploaded.FileName, out var original))
+            {
+                continue;
+            }
+
+            var size = uploaded.FileSize > 0 ? uploaded.FileSize : original.Length;
+            opportunity.AddAttachment(original.FileName, uploaded.SharePointUrl, size, "");
+
+        }
+
+        // Save changes
         _opportunityRepository.Update(opportunity);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result.Success();
     }
+
+
+    private static void RemoveAttachments(Domain.Aggregates.OpportunityAggregate.Opportunity opportunity, IEnumerable<Guid> attachmentIds, string userId)
+    {
+        foreach (var attachmentId in attachmentIds.Distinct())
+        {
+            if (attachmentId == Guid.Empty)
+            {
+                continue;
+            }
+
+            var removeResult = opportunity.RemoveAttachment(attachmentId);
+            if (removeResult.IsFailure)
+            {
+                throw new ValidationException(removeResult.Error!);
+            }
+        }
+    }
+
 
 }
 

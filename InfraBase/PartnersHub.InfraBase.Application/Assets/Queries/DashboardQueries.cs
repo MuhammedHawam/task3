@@ -46,4 +46,4 @@ public record GetInfrabaseAdminDashboardQuery(
     int PageNumber = 1,
     int PageSize = 10,
     string? SearchTerm = null,
-    AssetStatuses? StatusFilter = null) : IRequest<InfrabaseAdminDashboardDto>;
+    AssetStatuses? StatusFilter = null,Guid? tokenCompanyId = null) : IRequest<InfrabaseAdminDashboardDto>;

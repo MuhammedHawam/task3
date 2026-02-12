@@ -3,18 +3,20 @@ using Microsoft.Extensions.Options;
 using PartnersHub.Synergy.Application.Common.Options;
 using PartnersHub.Synergy.Application.Interfaces;
 using PartnersHub.Synergy.Application.Interfaces.Common;
+using PartnersHub.Synergy.Application.Interfaces.Integration;
 using PartnersHub.Synergy.Application.Interfaces.Repository;
+using PartnersHub.Synergy.Application.Models;
 using PartnersHub.Synergy.Domain.Aggregates.OpportunityAggregate;
 using PartnersHub.Synergy.Domain.Aggregates.Synergy.Lookups;
 using PartnersHub.Synergy.Domain.Aggregates.SynergyCompanyAggregate;
 using PartnersHub.Synergy.Domain.Common;
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 
 namespace PartnersHub.Communities.Application.Communities.Commands;
 
 public class CreateOpportunityCommandHandler : IRequestHandler<CreateOpportunityCommand, Result<Guid>>
 {
-    private readonly IOpportunityRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IOpportunityTypeRepository _opportunityTypeRepository;
     private readonly IThematicAreaRepository _thematicAreaRepository;
@@ -26,6 +28,7 @@ public class CreateOpportunityCommandHandler : IRequestHandler<CreateOpportunity
     private readonly RequestCodeSettings _requestCodeSettings;
     private readonly IUserProfileDataIntegrationService _userProfileDataIntegrationService;
     private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
+    private readonly IMiddlewareIntegrationService _middlewareService;
     public CreateOpportunityCommandHandler(IOpportunityRepository repository, IUnitOfWork unitOfWork,
         ISynergyCompanyRepository synergyCompanyRepository,
         IExpectedOutcomesRepository expectedOutcomesRepository,
@@ -35,7 +38,8 @@ public class CreateOpportunityCommandHandler : IRequestHandler<CreateOpportunity
         IThematicAreaRepository thematicAreaRepository,
         IUserService userService,
         IOptions<RequestCodeSettings> requestCodeSettings
-        , IUserProfileDataIntegrationService userProfileDataIntegrationService
+        , IUserProfileDataIntegrationService userProfileDataIntegrationService,
+        IMiddlewareIntegrationService middlewareService
 
 
 
@@ -51,6 +55,7 @@ public class CreateOpportunityCommandHandler : IRequestHandler<CreateOpportunity
         _userService = userService;
         _requestCodeSettings = requestCodeSettings.Value;
         _userProfileDataIntegrationService = userProfileDataIntegrationService;
+        _middlewareService = middlewareService;
     }
 
     public async Task<Result<Guid>> Handle(CreateOpportunityCommand command, CancellationToken cancellationToken)
@@ -105,10 +110,10 @@ public class CreateOpportunityCommandHandler : IRequestHandler<CreateOpportunity
                 return Result<Guid>.Failure("User data isn't found");
             }
 
-             userEmail = userProfileDataDto?.Email;
+             userEmail = userProfileDataDto?.Email ?? string.Empty;
              userFullName = FormFullName(userProfileDataDto.FirstName, userProfileDataDto.LastName);
-             userMobile = userProfileDataDto?.Mobile;
-             userPosition = userProfileDataDto?.Position?.Name;
+             userMobile = userProfileDataDto?.Mobile ?? string.Empty;
+             userPosition = userProfileDataDto?.Position?.Name ?? string.Empty;
         }
         else
         {
@@ -195,10 +200,39 @@ public class CreateOpportunityCommandHandler : IRequestHandler<CreateOpportunity
         if (command.IsAdmin.HasValue && command.IsAdmin.Value) opportunity.Value.Publish(_userService.CurrentUserId, opportunity.Value.Title.Value, opportunity.Value.CompanyName, opportunity.Value.UserEmail, command.IsAdmin.Value);
 
 
-        await _opportunityRepository.AddAsync(opportunity.Value);
-        await _unitOfWork.SaveChangesAsync();
+       
 
-        return Result<Guid>.Success(opportunity.Value.Id);
+
+        await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            await _opportunityRepository.AddAsync(opportunity.Value);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            if (command.FilesToUpload?.Count > 0)
+            {
+                await UploadAttachmentsAsync(
+                opportunity.Value.Id,
+                command.UserCompanyId ?? _userService.CompanyId,
+                _userService.CurrentUserId,
+                command.FilesToUpload,
+                command.AttachmentDescription,
+                cancellationToken);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+            return Result<Guid>.Success(opportunity.Value.Id);
+        }
+        catch (Exception ex )
+        {
+
+            await transaction.RollbackAsync(cancellationToken);
+
+
+            return Result<Guid>.Failure(
+                ex is ValidationException ? ex.Message : "Failed to save Partnership with attachments.");
+        }
+
+       
     }
     private async Task<Result> ValidateCommand(CreateOpportunityCommand command)
     {
@@ -228,4 +262,61 @@ public class CreateOpportunityCommandHandler : IRequestHandler<CreateOpportunity
     {
         return string.IsNullOrWhiteSpace(firstName) && string.IsNullOrWhiteSpace(lastName) ? "" : firstName == null ? lastName : lastName == null ? firstName : firstName + " " + lastName;
     }
+
+
+    private async Task UploadAttachmentsAsync( Guid opportunityId,
+                                               Guid companyId,
+                                               Guid contactId,
+                                               IReadOnlyCollection<FileUploadContent> files,
+                                               string? description,
+                                               CancellationToken cancellationToken)
+    {
+
+
+        var uploadRequest = new FileUploadRequest(
+            opportunityId.ToString(),
+            companyId,
+            contactId,
+            string.IsNullOrWhiteSpace(description) ? "opportunity attachment" : description,
+            files);
+
+        var uploadResult = await _middlewareService.UploadFilesAsync(uploadRequest, cancellationToken);
+        if (!uploadResult.Success)
+        {
+            throw new ValidationException(uploadResult.Message ?? "Attachment upload failed.");
+        }
+
+        await MapUploadToAttachmentRequests(uploadResult, files, opportunityId, cancellationToken);
+    }
+
+    private async Task MapUploadToAttachmentRequests(FileUploadResult uploadResult,
+                                                     IReadOnlyCollection<FileUploadContent> originalFiles, 
+                                                     Guid opportunityId,
+                                                     CancellationToken cancellationToken)
+    {
+        var opportunity = await _opportunityRepository.GetByIdAsync(opportunityId,asNoTracking: false,s => s.Attachments);
+
+        var fileLookup = originalFiles
+            .GroupBy(f => f.FileName, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+        foreach (var uploaded in uploadResult.UploadedFiles.Where(f => f.Uploaded))
+        {
+            if (!fileLookup.TryGetValue(uploaded.FileName, out var original))
+            {
+                continue;
+            }
+
+            var size = uploaded.FileSize > 0 ? uploaded.FileSize : original.Length;
+            opportunity.AddAttachment(original.FileName, uploaded.SharePointUrl, size, "");
+
+        }
+
+        // Save changes
+        _opportunityRepository.Update(opportunity);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+    }
+
+
 }
