@@ -1,5 +1,6 @@
 using MediatR;
 using PartnersHub.InfraBase.Application.Assets.DTOs;
+using PartnersHub.InfraBase.Application.Assets.Helpers;
 using PartnersHub.InfraBase.Application.Assets.Queries;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Repository;
@@ -70,6 +71,9 @@ public class GetContributorDashboardQueryHandler
             var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
                 ? resolvedCompanyName
                 : asset.CompanyName;
+            var submittedByDisplayName = AssetUserDisplayNameResolver.ResolveSubmittedBy(
+                asset.SubmittedBy,
+                asset.CreatedBy);
 
             assetDtos.Add(new AssetListDto
             {
@@ -81,6 +85,7 @@ public class GetContributorDashboardQueryHandler
                 AssetTypeName = assetTypeName,
                 Status = asset.Status,
                 SubmittedAt = asset.SubmittedAt,
+                SubmittedBy = submittedByDisplayName,
                 TotalCapex = asset.TotalCapex,
                 TotalOpex = asset.TotalOpex,
                 CompanyName = companyName,
@@ -203,6 +208,9 @@ public class GetPcAdminDashboardQueryHandler
             var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
                 ? resolvedCompanyName
                 : asset.CompanyName;
+            var submittedByDisplayName = AssetUserDisplayNameResolver.ResolveSubmittedBy(
+                asset.SubmittedBy,
+                asset.CreatedBy);
 
             assetDtos.Add(new AssetListDto
             {
@@ -214,6 +222,7 @@ public class GetPcAdminDashboardQueryHandler
                 AssetTypeName = assetTypeName,
                 Status = asset.Status,
                 SubmittedAt = asset.SubmittedAt,
+                SubmittedBy = submittedByDisplayName,
                 TotalCapex = asset.TotalCapex,
                 TotalOpex = asset.TotalOpex,
                 CompanyName = companyName,
@@ -337,6 +346,9 @@ public class GetTeamAssetsDashboardQueryHandler
             var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
                 ? resolvedCompanyName
                 : asset.CompanyName;
+            var submittedByDisplayName = AssetUserDisplayNameResolver.ResolveSubmittedBy(
+                asset.SubmittedBy,
+                asset.CreatedBy);
 
             assetDtos.Add(new AssetListDto
             {
@@ -348,6 +360,7 @@ public class GetTeamAssetsDashboardQueryHandler
                 AssetTypeName = assetTypeName,
                 Status = asset.Status,
                 SubmittedAt = asset.SubmittedAt,
+                SubmittedBy = submittedByDisplayName,
                 TotalCapex = asset.TotalCapex,
                 TotalOpex = asset.TotalOpex,
                 CompanyName = companyName,
@@ -475,6 +488,9 @@ public class GetInfrabaseAdminDashboardQueryHandler
             var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
                 ? resolvedCompanyName
                 : asset.CompanyName;
+            var submittedByDisplayName = AssetUserDisplayNameResolver.ResolveSubmittedBy(
+                asset.SubmittedBy,
+                asset.CreatedBy);
 
             assetDtos.Add(new AssetListDto
             {
@@ -490,7 +506,7 @@ public class GetInfrabaseAdminDashboardQueryHandler
                 TotalOpex = asset.TotalOpex,
                 CompanyName = companyName,
                 CreatedAt = asset.CreatedAt,
-                SubmittedBy = asset.CreatedBy
+                SubmittedBy = submittedByDisplayName
             });
         }
 

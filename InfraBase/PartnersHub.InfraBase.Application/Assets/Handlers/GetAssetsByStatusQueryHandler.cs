@@ -1,5 +1,6 @@
 using MediatR;
 using PartnersHub.InfraBase.Application.Assets.DTOs;
+using PartnersHub.InfraBase.Application.Assets.Helpers;
 using PartnersHub.InfraBase.Application.Assets.Queries;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Repository;
@@ -91,6 +92,9 @@ public class GetAssetsByStatusQueryHandler : IRequestHandler<GetAssetsByStatusQu
             var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
                 ? resolvedCompanyName
                 : asset.CompanyName;
+            var submittedByDisplayName = AssetUserDisplayNameResolver.ResolveSubmittedBy(
+                asset.SubmittedBy,
+                asset.CreatedBy);
 
             items.Add(new AssetListDto
             {
@@ -102,7 +106,7 @@ public class GetAssetsByStatusQueryHandler : IRequestHandler<GetAssetsByStatusQu
                 AssetTypeName = assetTypeName,
                 Status = asset.Status,
                 SubmittedAt = asset.SubmittedAt,
-                SubmittedBy = asset.SubmittedBy,
+                SubmittedBy = submittedByDisplayName,
                 TotalCapex = asset.TotalCapex,
                 TotalOpex = asset.TotalOpex,
                 CompanyName = companyName,
