@@ -1,9 +1,10 @@
-﻿using Azure.Core;
+using Azure.Core;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PartnersHub.Synergy.Apis.Controllers.Base;
 using PartnersHub.Synergy.Apis.Models;
+using PartnersHub.Synergy.Application.Interfaces.Integration;
 using PartnersHub.Synergy.Application.Models;
 using PartnersHub.Synergy.Application.Opportunities.Commands;
 using PartnersHub.Synergy.Application.Opportunities.DTOs;
@@ -21,10 +22,14 @@ namespace PartnersHub.Synergy.Apis.Controllers
     public class OpportunityController : ApiBaseController<OpportunityController>
     {
         private readonly IMediator _mediator;
+        private readonly IMiddlewareIntegrationService _middlewareIntegrationService;
 
-        public OpportunityController(IMediator mediator)
+        public OpportunityController(
+            IMediator mediator,
+            IMiddlewareIntegrationService middlewareIntegrationService)
         {
             _mediator = mediator;
+            _middlewareIntegrationService = middlewareIntegrationService;
         }
 
         /// <summary>
@@ -208,6 +213,25 @@ namespace PartnersHub.Synergy.Apis.Controllers
             }
 
             return Ok(result);
+        }
+
+        [HttpGet("attachments/download")]
+        public async Task<ActionResult<DocumentInfo>> DownloadAttachment(
+            [FromQuery] string sourceFilePath,
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(sourceFilePath))
+            {
+                return BadRequest("Document path is required");
+            }
+
+            var document = await _middlewareIntegrationService.DownloadDocumentAsync(sourceFilePath, cancellationToken);
+            if (document == null)
+            {
+                return NotFound("Document not found");
+            }
+
+            return Ok(document);
         }
 
         /// <summary>
