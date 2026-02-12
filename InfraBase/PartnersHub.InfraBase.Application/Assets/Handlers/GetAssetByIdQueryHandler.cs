@@ -1,5 +1,6 @@
 using MediatR;
 using PartnersHub.InfraBase.Application.Assets.DTOs;
+using PartnersHub.InfraBase.Application.Assets.Helpers;
 using PartnersHub.InfraBase.Application.Assets.Queries;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Repository;
@@ -167,7 +168,7 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             IRR = NormalizeOptionalDecimal(asset.IRR),
             IsPifGuaranteesRequired = NormalizeOptionalBool(asset.IsPifGuaranteesRequired),
             Status = asset.Status,
-            SubmittedBy = asset.SubmittedBy,
+            SubmittedBy = AssetUserDisplayNameResolver.ResolveSubmittedBy(asset.SubmittedBy, asset.CreatedBy),
             SubmittedAt = asset.SubmittedAt,
             RejectionReason = asset.RejectionReason?.Value,
             RejectedBy = asset.RejectedBy,
