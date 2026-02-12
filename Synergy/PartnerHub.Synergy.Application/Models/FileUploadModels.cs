@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -36,3 +36,8 @@ public sealed record FileUploadItem(
     bool Uploaded,
     string? Status,
     DateTime UploadedOn);
+
+public sealed record DocumentInfo(
+    string DocumentName,
+    string DocumentContent,
+    string DocumentPath);

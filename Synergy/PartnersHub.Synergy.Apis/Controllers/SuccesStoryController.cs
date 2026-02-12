@@ -1,4 +1,4 @@
-﻿using Azure.Core;
+using Azure.Core;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using PartnersHub.Synergy.Apis.Controllers.Base;
