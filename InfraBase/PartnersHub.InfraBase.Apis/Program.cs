@@ -177,6 +177,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IUserDisplayNameService, UserDisplayNameService>();
 
 var app = builder.Build();
 var culture = new CultureInfo("en-SA");

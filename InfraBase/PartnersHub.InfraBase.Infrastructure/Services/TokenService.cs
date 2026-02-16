@@ -44,6 +44,38 @@ public class TokenService : ITokenService
         return atIndex > 0 ? email.Substring(0, atIndex) : email;
     }
 
+    public string? GetUserDisplayName()
+    {
+        var firstName = GetClaimValue(
+            "First Name",
+            "first name",
+            "FirstName",
+            "firstName",
+            "first_name",
+            ClaimTypes.GivenName);
+        var lastName = GetClaimValue(
+            "Last Name",
+            "last name",
+            "LastName",
+            "lastName",
+            "last_name",
+            "family_name",
+            ClaimTypes.Surname);
+
+        var fullName = BuildFullName(firstName, lastName);
+        if (!string.IsNullOrWhiteSpace(fullName))
+        {
+            return fullName;
+        }
+
+        return GetClaimValue(
+            "FullName",
+            "fullName",
+            "full_name",
+            "name",
+            ClaimTypes.Name);
+    }
+
     public Guid? GetCompanyId()
     {
         var companyIdClaim = _httpContextAccessor.HttpContext?.User?.Claims
@@ -60,7 +92,10 @@ public class TokenService : ITokenService
 
     public Guid? GetContactId()
     {
-        var contactIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("ContactId")?.Value
+        var contactIdClaim = _httpContextAccessor.HttpContext?.Request.Headers["ContactId"].FirstOrDefault()
+            ?? _httpContextAccessor.HttpContext?.Request.Headers["contactId"].FirstOrDefault()
+            ?? _httpContextAccessor.HttpContext?.Request.Headers["contactid"].FirstOrDefault()
+            ?? _httpContextAccessor.HttpContext?.User?.FindFirst("ContactId")?.Value
             ?? _httpContextAccessor.HttpContext?.User?.FindFirst("contactId")?.Value
             ?? _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -141,5 +176,42 @@ public class TokenService : ITokenService
         var normalized = string.Concat(claimType.Where(char.IsLetterOrDigit))
             .ToLowerInvariant();
         return normalized == "companyid";
+    }
+
+    private string? GetClaimValue(params string[] claimTypes)
+    {
+        var claims = _httpContextAccessor.HttpContext?.User?.Claims;
+        if (claims == null)
+        {
+            return null;
+        }
+
+        foreach (var claimType in claimTypes)
+        {
+            var value = claims
+                .FirstOrDefault(claim => string.Equals(claim.Type, claimType, StringComparison.OrdinalIgnoreCase))
+                ?.Value;
+
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value.Trim();
+            }
+        }
+
+        return null;
+    }
+
+    private static string? BuildFullName(string? firstName, string? lastName)
+    {
+        var normalizedFirstName = Normalize(firstName);
+        var normalizedLastName = Normalize(lastName);
+
+        return string.Join(" ", new[] { normalizedFirstName, normalizedLastName }
+            .Where(value => !string.IsNullOrWhiteSpace(value)));
+    }
+
+    private static string? Normalize(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }

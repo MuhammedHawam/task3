@@ -6,6 +6,9 @@ namespace PartnersHub.InfraBase.Application.Common.Interfaces;
 public interface IMiddlewareIntegrationService
 {
     Task<MiddlewareCompany?> GetCompanyByIdAsync(Guid companyId);
+    Task<MiddlewareContactByIdDto?> GetContactByIdAsync(
+        Guid contactId,
+        CancellationToken cancellationToken = default);
     Task<FileUploadResult> UploadFilesAsync(
         FileUploadRequest request,
         CancellationToken cancellationToken = default);
