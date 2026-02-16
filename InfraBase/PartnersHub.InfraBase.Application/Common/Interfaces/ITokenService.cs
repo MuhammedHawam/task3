@@ -4,6 +4,7 @@ public interface ITokenService
 {
     string GetUserEmail();
     string GetUserName(); // Extract username from email (part before @)
+    string? GetUserDisplayName();
     Guid? GetCompanyId();  // Changed to nullable
     Guid? GetContactId();
     string? GetCompanyName();

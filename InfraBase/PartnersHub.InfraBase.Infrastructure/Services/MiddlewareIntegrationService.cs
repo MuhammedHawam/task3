@@ -85,6 +85,65 @@ public class MiddlewareIntegrationService : IMiddlewareIntegrationService
         }
     }
 
+    public async Task<MiddlewareContactByIdDto?> GetContactByIdAsync(
+        Guid contactId,
+        CancellationToken cancellationToken = default)
+    {
+        if (contactId == Guid.Empty)
+        {
+            return null;
+        }
+
+        try
+        {
+            _logger.LogInformation("Fetching contact {ContactId} from middleware", contactId);
+
+            var endpoint = $"{_baseUrl}/contact/get-by-id/{contactId}";
+            using var requestMessage = new HttpRequestMessage(HttpMethod.Get, endpoint);
+
+            var token = GetAuthorizationToken();
+            if (!string.IsNullOrEmpty(token))
+            {
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+            else
+            {
+                _logger.LogWarning("No authorization token found in current request context for contact lookup.");
+            }
+
+            var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "Contact {ContactId} request failed. Status: {StatusCode}, Reason: {ReasonPhrase}",
+                    contactId,
+                    response.StatusCode,
+                    response.ReasonPhrase);
+                return null;
+            }
+
+            var contact = await response.Content.ReadFromJsonAsync<MiddlewareContactByIdDto>(
+                cancellationToken: cancellationToken);
+            if (contact == null)
+            {
+                _logger.LogWarning("Contact {ContactId} response is empty.", contactId);
+                return null;
+            }
+
+            return contact;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogWarning("Contact {ContactId} lookup was canceled.", contactId);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching contact {ContactId}. Exception: {Message}", contactId, ex.Message);
+            return null;
+        }
+    }
+
     public async Task<FileUploadResult> UploadFilesAsync(
         FileUploadRequest request,
         CancellationToken cancellationToken = default)

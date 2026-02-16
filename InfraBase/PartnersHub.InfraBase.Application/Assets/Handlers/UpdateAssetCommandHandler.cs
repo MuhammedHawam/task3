@@ -14,6 +14,7 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
     private readonly IAssetRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITokenService _tokenService;
+    private readonly IUserDisplayNameService _userDisplayNameService;
     private readonly IConfigurationLookupService _lookupService;
     private readonly IMiddlewareIntegrationService _middlewareService;
 
@@ -21,12 +22,14 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
         IAssetRepository repository, 
         IUnitOfWork unitOfWork,
         ITokenService tokenService,
+        IUserDisplayNameService userDisplayNameService,
         IConfigurationLookupService lookupService,
         IMiddlewareIntegrationService middlewareService)
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
         _tokenService = tokenService;
+        _userDisplayNameService = userDisplayNameService;
         _lookupService = lookupService;
         _middlewareService = middlewareService;
     }
@@ -168,8 +171,11 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
                 var nextNumber = await _repository.GetNextAssetNumberAsync(cancellationToken);
                 assetCode = $"Infra-{nextNumber:D6}";
             }
+            var actorDisplayName = await _userDisplayNameService.ResolveDisplayNameAsync(
+                command.ContactId,
+                cancellationToken);
 
-            var checkResult = asset.MarkAsCheckedByInfrabaseAdminOnEdit(userName, assetCode);
+            var checkResult = asset.MarkAsCheckedByInfrabaseAdminOnEdit(actorDisplayName, assetCode);
             if (checkResult.IsFailure)
             {
                 throw new ValidationException(checkResult.Error!);
@@ -278,13 +284,17 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
     private async Task<List<AssetAttachmentRequest>> UploadAttachmentsAsync(
         Guid assetId,
         Guid companyId,
-        Guid contactId,
+        Guid? contactId,
         IReadOnlyCollection<FileUploadContent> files,
         string? description,
         CancellationToken cancellationToken)
     {
-        contactId = _tokenService.GetContactId() ?? contactId;
-        if (contactId == null)
+        var normalizedCommandContactId = contactId.HasValue && contactId.Value != Guid.Empty
+            ? contactId
+            : null;
+        var effectiveContactId = _tokenService.GetContactId() ?? normalizedCommandContactId;
+
+        if (!effectiveContactId.HasValue)
         {
             throw new ValidationException("Contact ID is required to upload attachments.");
         }
@@ -292,7 +302,7 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
         var uploadRequest = new FileUploadRequest(
             assetId.ToString(),
             companyId,
-            contactId,
+            effectiveContactId.Value,
             string.IsNullOrWhiteSpace(description) ? "Asset attachment" : description,
             files);
 

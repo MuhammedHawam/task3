@@ -54,7 +54,7 @@ public record CreateAssetCommand : IRequest<Guid>
     public List<FileUploadContent>? FilesToUpload { get; init; }
     public string? AttachmentDescription { get; init; }
     [JsonIgnore]
-    public Guid ContactId { get; init; }
+    public Guid? ContactId { get; init; }
     public Guid CompanyId { get; init; }
     public string CompanyName { get; init; }
 }
@@ -97,20 +97,20 @@ public record UpdateAssetCommand : IRequest<bool>
     public List<FileUploadContent>? FilesToUpload { get; init; }
     public string? AttachmentDescription { get; init; }
     [JsonIgnore]
-    public Guid ContactId { get; init; }
+    public Guid? ContactId { get; init; }
 }
 
 public record SaveAssetAsDraftCommand(Guid Id) : IRequest<bool>;
 
-public record SubmitAssetCommand(Guid Id,UserType UserType) : IRequest<string>;
+public record SubmitAssetCommand(Guid Id, UserType UserType, Guid? ContactId = null) : IRequest<string>;
 
-public record AcceptAssetByPcAdminCommand(Guid Id) : IRequest<bool>;
+public record AcceptAssetByPcAdminCommand(Guid Id, Guid? ContactId = null) : IRequest<bool>;
 
-public record RejectAssetByPcAdminCommand(Guid Id, string RejectionReason) : IRequest<bool>;
+public record RejectAssetByPcAdminCommand(Guid Id, string RejectionReason, Guid? ContactId = null) : IRequest<bool>;
 
-public record CheckAssetByInfrabaseAdminCommand(Guid Id) : IRequest<bool>;
+public record CheckAssetByInfrabaseAdminCommand(Guid Id, Guid? ContactId = null) : IRequest<bool>;
 
-public record ReturnAssetForCorrectionCommand(Guid Id, string CorrectionReason) : IRequest<bool>;
+public record ReturnAssetForCorrectionCommand(Guid Id, string CorrectionReason, Guid? ContactId = null) : IRequest<bool>;
 
 public record DeleteAssetCommand(Guid Id) : IRequest<bool>;
 
