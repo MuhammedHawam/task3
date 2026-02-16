@@ -31,7 +31,7 @@ public class OpportunityApprovedEventHandler : INotificationHandler<OpportunityA
             
             // Notify PC Representative
             await _notificationService.SendApprovedByAssetManagerNotificationAsync(
-                "Opportunity",
+                "opportunities",
                 notification.OpportunityId,
                 notification.CompanyId,
                 notification.ApprovedBy,
@@ -46,7 +46,7 @@ public class OpportunityApprovedEventHandler : INotificationHandler<OpportunityA
             
             // Notify PC Representative and eligible companies
             await _notificationService.SendPublishedNotificationAsync(
-                "Opportunity",
+                "opportunities",
                 notification.OpportunityId,
                 notification.CompanyId,
                 notification.ApprovedBy,

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PartnersHub.ConfigurationHub.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using PartnersHub.ConfigurationHub.Infrastructure.Persistence;
 namespace PartnersHub.ConfigurationHub.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ConfigurationHubDbContext))]
-    partial class ConfigurationHubDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260215141631_registeredcompanynullablecolumns")]
+    partial class registeredcompanynullablecolumns
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -505,13 +508,6 @@ namespace PartnersHub.ConfigurationHub.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid>("PermissionId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("AssignedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("AssignedDate")
-                        .HasColumnType("datetime2");
 
                     b.HasKey("RoleId", "PermissionId");
 

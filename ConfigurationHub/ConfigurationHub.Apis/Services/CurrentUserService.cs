@@ -12,6 +12,7 @@ namespace PartnersHub.ConfigurationHub.Serices
             _contextAccessor = contextAccessor;
         }
 
+        public string UserName =>( _contextAccessor?.HttpContext?.User.FindFirst("First Name")?.Value +" " + _contextAccessor?.HttpContext?.User.FindFirst("Last Name")?.Value) ?? string.Empty;
         public string UserId => _contextAccessor?.HttpContext?.User.FindFirst("contactId")?.Value ?? Guid.NewGuid().ToString();
         public string RoleId => _contextAccessor?.HttpContext?.User.FindFirst("roleId")?.Value ?? Guid.NewGuid().ToString();
 

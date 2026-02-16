@@ -30,7 +30,7 @@ public class OpportunityUpdatedEventHandler : INotificationHandler<OpportunityUp
 
         // Send notification to PC Company
         await _notificationService.SendUpdatedNotificationAsync(
-            "Opportunity",
+            "opportunities",
             notification.OpportunityId,
             notification.CompanyId,
             notification.OpportunityName,

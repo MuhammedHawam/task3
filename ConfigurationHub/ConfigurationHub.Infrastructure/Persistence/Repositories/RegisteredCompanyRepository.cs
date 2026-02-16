@@ -61,7 +61,7 @@ namespace PartnersHub.ConfigurationHub.Infrastructure.Persistence.Repositories
         }
 
 
-        public async Task<bool> AddAsync(Guid ModuleId,string sectorId,string sectorName,string description,List<RegisteredCompanyDto> companyDtos,CancellationToken cancellationToken)
+        public async Task<bool> AddAsync(Guid ModuleId,string? sectorId,string? sectorName,string description,List<RegisteredCompanyDto> companyDtos,CancellationToken cancellationToken)
         {
             if(_context.RegisteredCompanies.Any(a=> companyDtos.Select(c=>c.Name).Any(co=>co.ToLower() == a.Name.ToLower())))
             {

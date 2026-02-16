@@ -43,9 +43,9 @@ public class InternalUserController : ControllerBase
 
 
     [HttpGet]
-    public async Task<ActionResult<List<LdapUser>>> GetInternalUsersByUsername(string? username = null)
+    public async Task<ActionResult<List<LdapUser>>> GetInternalUsersByUsername(string? username = null, string? useremail = null)
     {
-        var user = await _ldapUserService.GetUsersByUsernameAsync(username);
+        var user = await _ldapUserService.GetUsersByUsernameOREmailAsync(username, useremail);
 
         if (user == null)
             return NotFound(new { message = $"User '{username}' not found in Active Directory" });

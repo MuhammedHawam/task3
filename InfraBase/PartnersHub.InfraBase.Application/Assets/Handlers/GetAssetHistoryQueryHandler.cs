@@ -28,6 +28,8 @@ public class GetAssetHistoryQueryHandler : IRequestHandler<GetAssetHistoryQuery,
             {
                 Id = h.Id,
                 Status = h.Status,
+                StatusDisplayName = h.Status.GetDisplayName(),
+                StatusShortDisplayName = h.Status.GetShortDisplayName(),
                 Action = h.Action,
                 PerformedBy = h.PerformedBy,
                 PerformedAt = h.PerformedAt,

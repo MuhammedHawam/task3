@@ -99,7 +99,7 @@ public class SearchOpportunitiesQueryHandler : IRequestHandler<SearchOpportuniti
                 State = (o.StartDate > DateOnly.FromDateTime(DateTime.Now)) ? CollaborationStatusFilter.Upcoming.ToString() :
                                                                    ((o.StartDate <= DateOnly.FromDateTime(DateTime.Now) && (o.EndDate == null || o.EndDate >= DateOnly.FromDateTime(DateTime.Now))) ?
                                                                    CollaborationStatusFilter.Active.ToString() : (o.StartDate == null ? CollaborationStatusFilter.Upcoming.ToString() : CollaborationStatusFilter.Closed.ToString())),
-                StatusDescription = MapStatusToDisplay(o.Status),
+                StatusDescription = o.EndDate < DateOnly.FromDateTime(DateTime.Now) ? OpportunityStatus.Closed.ToString() :  MapStatusToDisplay(o.Status),
                 CompanyId = o.CompanyId,
                 CompanyName = company?.Name.Value ?? "Unknown Company",
                 CompanyLogo = LogoHelper.ToBase64String(company?.Logo),
@@ -140,7 +140,7 @@ public class SearchOpportunitiesQueryHandler : IRequestHandler<SearchOpportuniti
         return status switch
         {
             OpportunityStatus.PendingReview => "Pending",
-            OpportunityStatus.Pending => "Approved",
+            OpportunityStatus.Pending => "Pending",
             OpportunityStatus.Published => "Published",
             OpportunityStatus.AssetManagerRejected => "Rejected",
             OpportunityStatus.AdminRejected => "Rejected",

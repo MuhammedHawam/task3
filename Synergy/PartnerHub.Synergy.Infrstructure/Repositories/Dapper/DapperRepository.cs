@@ -460,11 +460,12 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
 
             // Query 2: Collaborating Partners
             const string collaboratorsQuery = @"
-        SELECT 
-            sc.Id, sc.Name ,sc.Logo
-        FROM SuccessStorySynergyCompanies ssc
-        JOIN SynergyCompanies sc ON ssc.SynergyCompanyId = sc.Id
-        WHERE ssc.SuccessStoryId = @Id;
+             SELECT 
+              sc.Id, sc.Name ,sc.Logo , sc.Description , sc.HeadquarterCountry as Country , sc.HeadquarterCity as City , sec.SectorName
+              FROM SuccessStorySynergyCompanies ssc
+              JOIN SynergyCompanies sc ON ssc.SynergyCompanyId = sc.Id
+              left join SynergyCompanySectors sec on sec.CompanyId = Sc.Id
+            WHERE ssc.SuccessStoryId = @Id;
     ";
 
             // Query 3: Associated Opportunities (requires joining to the Opportunities table)
@@ -472,7 +473,15 @@ namespace PartnersHub.Synergy.Infrastructure.Repositories.Dapper
         SELECT 
               o.Id, o.Title AS Name , o.Description , o.OpportunityTypeId , t.Name as OpportunityTypeName,
               o.CompanyId , c.Name as CompanyName, c.Logo as CompanyLogo, o.SectorId , o.SectorName , o.StartDate , o.EndDate,
-              o.IsAdminCreated as IsAdmin , o.IsAdminUpdated as IsEditByAdmin , o.Status
+              o.IsAdminCreated as IsAdmin , o.IsAdminUpdated as IsEditByAdmin , o.Status,
+              CASE o.Status
+                         WHEN 1 THEN 'PendingReview'
+                         WHEN 2 THEN 'Pending'
+                         WHEN 3 THEN 'Rejected'
+                         WHEN 4 THEN 'Rejected'
+                         WHEN 5 THEN 'Published'
+                         WHEN 6 THEN 'Closed'
+              END AS StatusDescription
                  FROM SuccessStoryOpportunities sso
                  JOIN Opportunities o ON sso.OpportunityId = o.Id
                  JOIN OpportunityTypes t on t.Id = o.OpportunityTypeId

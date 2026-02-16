@@ -18,7 +18,7 @@ namespace PartnersHub.ConfigurationHub.Application.Common.Interfaces.Persistence
         Task<IEnumerable<LookupDto>> GetAllPermissionLookpAsync();
         Task<IEnumerable<Permission>> GetByModuleIdAsync(Guid moduleId);
 
-        Task<PaginatedList<ModulePermissionsRolesDto>> GetAllAssignedPermissionsRole(int pageSize, int pageIndex, string? searchparam);
+        Task<PaginatedList<ModulePermissionsRolesDto>> GetAllAssignedPermissionsRole(int pageSize, int pageIndex, string? searchparam, string? sortBy = null);
         Task AddAsync(Permission permission);
         Task UpdateAsync(Permission permission);
         Task<bool> DeleteAsync(Guid id);

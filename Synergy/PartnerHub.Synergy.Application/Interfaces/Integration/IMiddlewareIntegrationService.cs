@@ -10,4 +10,5 @@ namespace PartnersHub.Synergy.Application.Interfaces.Integration;
 public interface IMiddlewareIntegrationService
 {
     Task<FileUploadResult> UploadFilesAsync(FileUploadRequest request,CancellationToken cancellationToken = default);
+    Task<DocumentInfo?> DownloadDocumentAsync(string sourceFilePath, CancellationToken cancellationToken = default);
 }

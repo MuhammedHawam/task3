@@ -31,7 +31,7 @@ public class SuccessStoryApprovedEventHandler : INotificationHandler<SuccessStor
             
             // Notify PC Representative
             await _notificationService.SendApprovedByAssetManagerNotificationAsync(
-                "SuccessStory",
+                "success-stories",
                 notification.SuccessStoryId,
                 notification.CompanyId,
                 notification.ApprovedBy,
@@ -46,7 +46,7 @@ public class SuccessStoryApprovedEventHandler : INotificationHandler<SuccessStor
             
             // Notify PC Representative
             await _notificationService.SendPublishedNotificationAsync(
-                "SuccessStory",
+                "success-stories",
                 notification.SuccessStoryId,
                 notification.CompanyId,
                 notification.ApprovedBy,

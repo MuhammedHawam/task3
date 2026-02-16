@@ -10,7 +10,7 @@ public interface IPermissionService
     Task<IEnumerable<Permission>> GetAllPermissionsAsync();
     Task<IEnumerable<LookupDto>> GetAllPermissionsLookupAsync();
     Task<IEnumerable<Permission>> GetPermissionsByModuleAsync(Guid moduleId);
-    Task<PaginatedList<ModulePermissionsRolesDto>> GetAllAssignedPermissionsRole(int pageSize, int pageIndex, string? searchparam);
+    Task<PaginatedList<ModulePermissionsRolesDto>> GetAllAssignedPermissionsRole(int pageSize, int pageIndex, string? searchparam, string? sortBy);
     Task<Permission?> GetPermissionByIdAsync(Guid permissionId);
     Task<bool> UpdatePermissionAsync(Guid permissionId, string name, string description);
     Task<bool> DeletePermissionAsync(Guid permissionId);

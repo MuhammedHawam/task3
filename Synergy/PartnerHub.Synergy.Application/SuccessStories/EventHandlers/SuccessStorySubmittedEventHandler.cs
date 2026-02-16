@@ -30,7 +30,7 @@ public class SuccessStorySubmittedEventHandler : INotificationHandler<SuccessSto
 
         // Send notification to Asset Manager
         await _notificationService.SendSubmittedNotificationAsync(
-            "SuccessStory",
+            "success-stories",
             notification.SuccessStoryId,
             notification.CompanyId,
             notification.SubmittedBy,

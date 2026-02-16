@@ -8,7 +8,8 @@ namespace PartnersHub.ConfigurationHub.Application.Common.Interfaces.Services;
 
     public interface ICurrentUserService
     {
-        string UserId { get; }
-        string RoleId { get; }
+    string UserName { get; }
+    string UserId { get; }
+    string RoleId { get; }
     }
 

@@ -124,6 +124,8 @@ public record AssetHistoryDto
 {
     public Guid Id { get; init; }
     public AssetStatuses Status { get; init; }
+    public string? StatusDisplayName { get; init; }
+    public string? StatusShortDisplayName { get; init; }
     public string Action { get; init; } = string.Empty;
     public string PerformedBy { get; init; } = string.Empty;
     public string? PerformedByName { get; init; }

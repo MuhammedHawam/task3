@@ -30,7 +30,7 @@ public class SuccessStoryUpdatedEventHandler : INotificationHandler<SuccessStory
 
         // Send notification to PC Company
         await _notificationService.SendUpdatedNotificationAsync(
-            "SuccessStory",
+            "success-stories",
             notification.SuccessStoryId,
             notification.CompanyId,
             notification.SuccessStoryName,

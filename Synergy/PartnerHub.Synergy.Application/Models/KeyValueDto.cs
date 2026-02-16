@@ -40,6 +40,18 @@ public class PatnerCompany
     public string? LogoImage { get; set; }
     private byte[]? _logo;
 
+    public string? Description { get; set; }
+
+    // Location
+    public string? Country { get; set; }
+    public string? City { get; set; }
+    public string? CityAr { get; set; }
+
+    // Sector information
+    public Guid? SectorId { get; set; }
+    public string? SectorName { get; set; }
+    public string? SectorNameAr { get; set; }
+
     public PatnerCompany()
     {
 

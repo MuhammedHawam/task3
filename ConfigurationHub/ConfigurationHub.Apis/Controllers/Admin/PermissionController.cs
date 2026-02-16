@@ -56,9 +56,9 @@ public class PermissionController : ControllerBase
     [HttpGet("ModuleAssignedPermission")]
     [ProducesResponseType(typeof(PaginatedList<ModulePermissionsRolesDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PaginatedList<ModulePermissionsRolesDto>>> GetAllAssignedPermissionsRole(int pageSize =10, int pageIndex= 1, string searchparam =null)
+    public async Task<ActionResult<PaginatedList<ModulePermissionsRolesDto>>> GetAllAssignedPermissionsRole(int pageSize =10, int pageIndex= 1, string searchparam =null, string? sortBy = null)
     {
-        var permission = await _permissionService.GetAllAssignedPermissionsRole(pageSize, pageIndex, searchparam);
+        var permission = await _permissionService.GetAllAssignedPermissionsRole(pageSize, pageIndex, searchparam, sortBy);
         return permission == null ? NotFound() : Ok(permission);
     }
 

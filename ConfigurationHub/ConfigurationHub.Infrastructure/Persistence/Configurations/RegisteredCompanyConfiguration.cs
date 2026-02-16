@@ -38,9 +38,11 @@ namespace YourNamespace.Data.Configurations
                    .HasMaxLength(64);
 
             builder.Property(rc => rc.SectorName)
+                .IsRequired(false)
                  .HasMaxLength(250);
 
             builder.Property(rc => rc.Description)
+                .IsRequired(false)
                  .HasMaxLength(500);
         }
     }

@@ -66,16 +66,13 @@ public class UserRoleRepository : IUserRoleRepository
         var query = _context.UserRoles
                             .Include(ur => ur.Role)
                             .Include(ur => ur.Module)
-                            .Where(ur => ur.Role.Name.Contains("admin"))
                             .OrderByDescending(x=>x.AssignedAt)
                             .AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             query = query.Where(x =>
-                x.UserName.Contains(searchTerm) ||
-                x.UserEmail.Contains(searchTerm) ||
-                x.Module.Name.Contains(searchTerm));
+                x.UserName.Contains(searchTerm));
         }
 
         query = sortBy?.ToLower() switch
@@ -88,6 +85,9 @@ public class UserRoleRepository : IUserRoleRepository
 
             "productname:asc" => query.OrderBy(x => x.Module.Name),
             "productname:desc" => query.OrderByDescending(x => x.Module.Name),
+
+            "role:asc" => query.OrderBy(x => x.Role.Name),
+            "role:desc" => query.OrderByDescending(x => x.Role.Name),
 
             "email:asc" => query.OrderBy(x => x.UserEmail),
             "email:desc" => query.OrderByDescending(x => x.UserEmail),

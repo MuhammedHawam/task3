@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PartnersHub.ConfigurationHub.Application.Common.DTOs;
 using PartnersHub.ConfigurationHub.Application.Common.Interfaces.Persistence;
+using PartnersHub.ConfigurationHub.Application.Common.Interfaces.Services;
 using PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission;
 using PartnersHub.ConfigurationHub.Infrastructure.Persistence;
 
@@ -9,10 +10,12 @@ namespace PartnersHub.ConfigurationHub.Infrastructure.Persistence.Repositories;
 public class RolePermissionRepository : IRolePermissionRepository
 {
     private readonly ConfigurationHubDbContext _context;
+    private readonly ICurrentUserService _currentUserService;
 
-    public RolePermissionRepository(ConfigurationHubDbContext context)
+    public RolePermissionRepository(ConfigurationHubDbContext context, ICurrentUserService currentUserService)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
     public async Task<bool> AddAsync(Guid roleId, List<Guid> permissionIds)
@@ -25,7 +28,9 @@ public class RolePermissionRepository : IRolePermissionRepository
             await _context.RolePermissions.AddAsync(new RolePermission
             {
                 RoleId = roleId,
-                PermissionId = id
+                PermissionId = id,
+                AssignedBy = _currentUserService.UserName,
+                AssignedDate = DateTime.Now,
             });
         }
        

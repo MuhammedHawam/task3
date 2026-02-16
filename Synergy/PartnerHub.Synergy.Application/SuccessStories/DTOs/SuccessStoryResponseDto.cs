@@ -95,6 +95,8 @@ namespace PartnersHub.Synergy.Application.SuccessStories.DTOs
         public bool? IsEditByAdmin { get; set; }
 
         public int Status { get; set; }
+
+        public string StatusDescription { get; set; }
     }
 
 }

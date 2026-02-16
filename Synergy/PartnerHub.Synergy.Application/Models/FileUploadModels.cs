@@ -36,3 +36,8 @@ public sealed record FileUploadItem(
     bool Uploaded,
     string? Status,
     DateTime UploadedOn);
+
+public sealed record DocumentInfo(
+    string DocumentName,
+    string DocumentContent,
+    string DocumentPath);

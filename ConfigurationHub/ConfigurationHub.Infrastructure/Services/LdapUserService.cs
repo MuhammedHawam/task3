@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using PartnersHub.ConfigurationHub.Application.Common.Interfaces.Services;
 using PartnersHub.ConfigurationHub.Application.Common.Models;
 using System.DirectoryServices.Protocols;
+using System.Linq;
 using System.Net;
 using System.Text;
 
@@ -66,7 +67,7 @@ public class LdapUserService : ILdapUserService
 
         if (!string.IsNullOrEmpty(username))
         {
-            filter.Append($"(sAMAccountName={username})");
+            filter.Append($"(sAMAccountName=*{username}*)");
         }
 
         if (!string.IsNullOrEmpty(useremail))
@@ -99,19 +100,28 @@ public class LdapUserService : ILdapUserService
     }
 
 
-    public async Task<List<LdapUser>> GetUsersByUsernameAsync(string? username)
+    public async Task<List<LdapUser>> GetUsersByUsernameOREmailAsync(string? username, string? useremail)
     {
         using var connection = CreateConnection();
 
-        // 1. Corrected Filter Logic
-        // Using string.Format to avoid simple injection and fixing parenthesis
-        var filter = string.IsNullOrWhiteSpace(username)
-            ? "(objectClass=user)"
-            : $"(&(objectClass=user)(sAMAccountName=*{username}*))";
+        var filter = new StringBuilder("(&(objectClass=user)");
+
+        if (!string.IsNullOrEmpty(username))
+        {
+            filter.Append($"(sAMAccountName=*{username}*)");
+        }
+
+        if (!string.IsNullOrEmpty(useremail))
+        {
+            filter.Append($"(mail=*{useremail}*)");
+        }
+
+        filter.Append(")");
+        var finalFilter = filter.ToString();
 
         var searchRequest = new SearchRequest(
             _searchBase,
-            filter,
+            finalFilter,
             SearchScope.Subtree,
              // 2. Added "objectGuid" to the requested attributes list
              "cn", "mail", "sAMAccountName", "displayName", "department", "title", "distinguishedName", "objectGuid"

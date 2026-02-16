@@ -46,7 +46,7 @@ public class GetUserSubmissionsQueryHandler : IRequestHandler<GetUserSubmissions
             CollaborationType = o.OpportunityType?.Name ?? "N/A",
             Sector = o.Sector?.Value ?? "N/A",
             Status = o.Status,
-            StatusDescription = MapStatusToDisplay(o.Status),
+            StatusDescription = o.EndDate < DateOnly.FromDateTime(DateTime.Now) ? OpportunityStatus.Closed.ToString() :   MapStatusToDisplay(o.Status),
             EndDate = o.EndDate.ToDateTime(TimeOnly.MinValue)
         }).ToList();
 
@@ -106,7 +106,7 @@ public class GetUserSubmissionsQueryHandler : IRequestHandler<GetUserSubmissions
         return status switch
         {
             OpportunityStatus.PendingReview => "Pending",
-            OpportunityStatus.Pending => "Approved",
+            OpportunityStatus.Pending => "Pending",
             OpportunityStatus.Published => "Published",
             OpportunityStatus.AdminRejected => "Rejected",
             OpportunityStatus.AssetManagerRejected => "Rejected",

@@ -123,7 +123,7 @@ public class GetCompanyDetailsQueryHandler : IRequestHandler<GetCompanyDetailsQu
             Id = o.Id,    
             RequestId = o.RequestId,
             Status = o.Status,  
-            StatusDescription = MapStatusToDisplay(o.Status),
+            StatusDescription = o.EndDate < DateOnly.FromDateTime(DateTime.Now) ? OpportunityStatus.Closed.ToString() : MapStatusToDisplay(o.Status),
             //CompanyId = o.CompanyId,
             CompanyName = company?.Name.Value ?? "Unknown Company",
             OpportunityTypeId = o.OpportunityTypeId,
@@ -221,7 +221,7 @@ public class GetCompanyDetailsQueryHandler : IRequestHandler<GetCompanyDetailsQu
         return status switch
         {
             OpportunityStatus.PendingReview => "Pending",
-            OpportunityStatus.Pending => "Approved",
+            OpportunityStatus.Pending => "Pending",
             OpportunityStatus.Published => "Published",
             OpportunityStatus.AssetManagerRejected => "Rejected",
             OpportunityStatus.AdminRejected => "Rejected",

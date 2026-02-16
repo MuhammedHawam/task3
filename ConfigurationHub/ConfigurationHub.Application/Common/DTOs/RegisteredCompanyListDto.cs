@@ -25,8 +25,8 @@ namespace PartnersHub.ConfigurationHub.Application.Common.DTOs
 
     public class CreateRegisteredCompanyDto
     {
-        public string sectorId {  get; set; }
-        public string sectorName { get; set; }
+        public string? sectorId {  get; set; }
+        public string? sectorName { get; set; }
         public  Guid ModuleId { get; set; }
         public string description { get; set; }
         public List<RegisteredCompanyDto> compaines { get; set; }

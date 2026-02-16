@@ -4,6 +4,7 @@ using PartnersHub.ConfigurationHub.Application.Common.Interfaces.Persistence;
 using PartnersHub.ConfigurationHub.Application.Common.Models;
 using PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission;
 using PartnersHub.ConfigurationHub.Infrastructure.Persistence;
+using System.Linq;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace PartnersHub.ConfigurationHub.Infrastructure.Presistence.Repositories
@@ -50,13 +51,25 @@ namespace PartnersHub.ConfigurationHub.Infrastructure.Presistence.Repositories
             }).ToListAsync();
 
 
-        public async Task<PaginatedList<ModulePermissionsRolesDto>> GetAllAssignedPermissionsRole(int pageSize, int pageIndex, string? searchparam)
+        public async Task<PaginatedList<ModulePermissionsRolesDto>> GetAllAssignedPermissionsRole(int pageSize, int pageIndex, string? searchparam, string? sortBy = null)
         {
             var query = _context.Roles
                 .Include(r => r.Module)
                 .Include(r => r.RolePermissions)
                 .ThenInclude(rp => rp.Permission)
                 .AsQueryable();
+
+
+            query = sortBy?.ToLower() switch
+            {
+                "rolename:asc" => query.OrderBy(x => x.Name),
+                "rolename:desc" => query.OrderByDescending(x => x.Name),
+
+                "productname:asc" => query.OrderBy(x => x.Module.Name),
+                "productname:desc" => query.OrderByDescending(x => x.Module.Name),
+
+                _ => query.OrderByDescending(x => x.Name)
+            };
 
             if (!string.IsNullOrEmpty(searchparam))
             {
@@ -69,7 +82,6 @@ namespace PartnersHub.ConfigurationHub.Infrastructure.Presistence.Repositories
             var totalCount = await query.CountAsync();
 
             var items = await query
-                .OrderBy(r => r.Name) 
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
                 .Select(r => new ModulePermissionsRolesDto
@@ -84,7 +96,11 @@ namespace PartnersHub.ConfigurationHub.Infrastructure.Presistence.Repositories
                             Id = rp.Permission.Id,
                            PermissionName = rp.Permission.Name
                         })
-                        .ToList()
+                        .ToList(),
+                    AssignedDate = r.RolePermissions
+                        .Select(a=>a.AssignedDate).First(),
+                    AssignedBy = r.RolePermissions
+                        .Select(a => a.AssignedBy).First()
                 })
                 .ToListAsync();
 

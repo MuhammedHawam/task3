@@ -30,7 +30,7 @@ public class OpportunitySubmittedEventHandler : INotificationHandler<Opportunity
 
         // Send notification to Asset Manager
         await _notificationService.SendSubmittedNotificationAsync(
-            "Opportunity",
+            "opportunities",
             notification.OpportunityId,
             notification.CompanyId,
             notification.SubmittedBy,

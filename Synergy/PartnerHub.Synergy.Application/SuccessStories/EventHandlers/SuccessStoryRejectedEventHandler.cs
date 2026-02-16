@@ -51,7 +51,7 @@ public class SuccessStoryRejectedEventHandler : INotificationHandler<SuccessStor
 
         // Send notification to PC Representative
         await _notificationService.SendRejectedNotificationAsync(
-            "SuccessStory",
+            "success-stories",
             notification.SuccessStoryId,
             notification.CompanyId,
             notification.RejectionReason,

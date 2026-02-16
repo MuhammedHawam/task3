@@ -118,10 +118,12 @@ public class NotificationService : INotificationService
     {
         _logger.LogInformation("{moduleName} {Id} submitted. Notification sent.", moduleName, Id);
 
+        var assetManager = _synergyCompanyRepository.GetByIdAsync(companyId);
+
         var placeholders = new Dictionary<string, string>
                               {
-                                { "{PC Name}", companyName },
-                                { "{Submission Type}", moduleName },  
+                                { "{PC Name}", assetManager?.Result?.Name.Value ?? string.Empty },
+                                { "{Submission Type}", (moduleName == "opportunities" ? "Partnership" : moduleName) },  
                                 { "{Title}", name },  
                                 { "{Date}", DateTime.UtcNow.ToString("yyyy-MM-dd") },  
                                 { "{BaseURL}", _emailParams.BaseURL },  
@@ -131,7 +133,7 @@ public class NotificationService : INotificationService
 
         var emailBody = LoadTemplate("Submitted.html", placeholders);
 
-        var assetManager = _synergyCompanyRepository.GetByIdAsync(companyId);
+        
 
        var subjectTitle =  moduleName.ToLowerInvariant() switch
                              {
@@ -154,10 +156,12 @@ public class NotificationService : INotificationService
     {
         _logger.LogInformation("{moduleName} {Id} approved. Notification sent.", moduleName, Id);
 
+        var company = _synergyCompanyRepository.GetByIdAsync(companyId);
+
         var placeholders = new Dictionary<string, string>
                          {
-                           { "{PC Name}", companyName },
-                           { "{Submission Type}", moduleName }, 
+                           { "{PC Name}", company?.Result?.Name.Value ?? string.Empty },
+                           { "{Submission Type}", (moduleName == "opportunities" ? "Partnership" : moduleName) }, 
                            { "{Title}", name },
                            { "{BaseURL}", _emailParams.BaseURL },
                            { "{module}", moduleName},
@@ -185,10 +189,12 @@ public class NotificationService : INotificationService
     public async Task SendPublishedNotificationAsync(string moduleName, Guid Id, Guid companyId, Guid publisherId, string name, string? companyName,string? companyEmail, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("{moduleName} {Id} published. Notification sent.", moduleName, Id);
+
+        var company = _synergyCompanyRepository.GetByIdAsync(companyId);
         var placeholders = new Dictionary<string, string>
                             {
-                               { "{PC Name}", companyName },
-                               { "{Submission Type}", moduleName }, 
+                               { "{PC Name}", company?.Result?.Name.Value ?? string.Empty  },
+                               { "{Submission Type}", (moduleName == "opportunities" ? "Partnership" : moduleName) }, 
                                { "{Title}", name },
                                { "{BaseURL}", _emailParams.BaseURL },
                                { "{module}", moduleName},
@@ -217,11 +223,12 @@ public class NotificationService : INotificationService
     {
         _logger.LogInformation("{moduleName} {Id} rejected. Reason: {RejectionReason}.", moduleName, Id, rejectionReason);
 
+        var company = _synergyCompanyRepository.GetByIdAsync(companyId);
 
         var placeholders = new Dictionary<string, string>
                          {
-                           { "{PC Name}", companyName },
-                           { "{Submission Type}", moduleName },
+                           { "{PC Name}", company?.Result?.Name.Value ?? string.Empty },
+                           { "{Submission Type}", (moduleName == "opportunities" ? "Partnership" : moduleName) },
                            { "{Title}", name },
                            { "{Reason}", rejectionReason ?? "—" },
                            { "{BaseURL}", _emailParams.BaseURL },
@@ -252,11 +259,12 @@ public class NotificationService : INotificationService
     {
         _logger.LogInformation("{moduleName} {Id} updated.", moduleName, Id);
 
+        var company = _synergyCompanyRepository.GetByIdAsync(companyId);
 
         var placeholders = new Dictionary<string, string>
                          {
-                           { "{PC Name}", companyName },
-                           { "{Submission Type}", moduleName },
+                           { "{PC Name}", company?.Result?.Name.Value ?? string.Empty },
+                           { "{Submission Type}", (moduleName == "opportunities" ? "Partnership" : moduleName) },
                            { "{Title}", title },
                            { "{BaseURL}", _emailParams.BaseURL },
                            { "{module}", moduleName},

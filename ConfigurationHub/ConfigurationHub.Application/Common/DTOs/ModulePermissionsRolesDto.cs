@@ -10,6 +10,9 @@ namespace PartnersHub.ConfigurationHub.Application.Common.DTOs
     {
         public Guid? ProductId { get; set; }
         public string ProductName { get; set; }
+        public string AssignedBy { get; set; }
+        public DateTime AssignedDate { get; set; }
+
         public Guid RoleId { get; set; }
         public string RoleName { get; set; }
         public List<PermissionDto> Permissions { get; set; }

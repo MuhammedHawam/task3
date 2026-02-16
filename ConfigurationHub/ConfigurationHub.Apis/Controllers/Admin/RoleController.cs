@@ -12,10 +12,12 @@ namespace PartnersHub.ConfigurationHub.Apis.Controllers.Admin;
 public class RoleController : ControllerBase
 {
     private readonly IRoleService _roleService;
+    private readonly ICurrentUserService _currentUserService;
 
-    public RoleController(IRoleService roleService)
+    public RoleController(IRoleService roleService, ICurrentUserService currentUserService)
     {
         _roleService = roleService;
+        _currentUserService = currentUserService;
     }
 
     [HttpGet]
@@ -74,7 +76,7 @@ public class RoleController : ControllerBase
     public async Task<IActionResult> AssignPermissionToRole(Guid roleId, [FromBody] AddRolePermissionsRequest request)
     {
         var success = await _roleService.AssignPermissionToRoleAsync(roleId, request.PermissionsIds);
-        return success ? Ok(new { message = "Permission assigned successfully" }) : BadRequest(new { message = "Permission already assigned" });
+        return success ? Ok(new { message = "Permission assigned successfully" }) : BadRequest(new { message = "This Role Already has Permissions" });
     }
 
 
@@ -102,7 +104,7 @@ public class RoleController : ControllerBase
     [HttpPost("users/{userId}")]
     public async Task<IActionResult> AssignRoleToUser(string userId, [FromBody] AssignRoleRequest request)
     {
-        var assignedBy = User.Identity?.Name ?? "System";
+        var assignedBy = _currentUserService?.UserId ?? "System";
         var success = await _roleService.AssignRoleToUserAsync(userId,request.userName,request.useremail, request.RoleId, request.ModuleId, assignedBy);
 
         return success ? Ok(new { message = "Role assigned successfully" }) : BadRequest(new { message = "User already has this role" });

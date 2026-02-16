@@ -24,7 +24,8 @@ namespace PartnersHub.Synergy.Domain.Common
         Pending = 2,
         AdminRejected = 3,
         AssetManagerRejected = 4,
-        Published = 5
+        Published = 5,
+        Closed = 6
     }
 
     /// <summary>

@@ -41,8 +41,8 @@ public class PermissionService : IPermissionService
     public async Task<IEnumerable<Permission>> GetPermissionsByModuleAsync(Guid moduleId) =>
         await _permissionRepository.GetByModuleIdAsync(moduleId);
 
-    public async Task<PaginatedList<ModulePermissionsRolesDto>> GetAllAssignedPermissionsRole(int pageSize, int pageIndex, string? searchparam) =>
-        await _permissionRepository.GetAllAssignedPermissionsRole(pageSize,pageIndex,searchparam);
+    public async Task<PaginatedList<ModulePermissionsRolesDto>> GetAllAssignedPermissionsRole(int pageSize, int pageIndex, string? searchparam, string? sortBy) =>
+        await _permissionRepository.GetAllAssignedPermissionsRole(pageSize,pageIndex,searchparam, sortBy);
 
 
     public async Task<Permission?> GetPermissionByIdAsync(Guid permissionId) =>

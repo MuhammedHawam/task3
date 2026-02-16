@@ -14,7 +14,7 @@ namespace PartnersHub.ConfigurationHub.Domain.Aggregates.RolesAndPermission
         public string Description { get; set; } = string.Empty;
         public Guid ModuleId { get; set; }
         public Module Module { get; set; }
-        public string SectorId { get; set; }
-        public string SectorName { get; set; }
+        public string? SectorId { get; set; }
+        public string? SectorName { get; set; }
     }
 }

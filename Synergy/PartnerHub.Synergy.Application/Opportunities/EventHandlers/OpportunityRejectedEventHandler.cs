@@ -50,7 +50,7 @@ public class OpportunityRejectedEventHandler : INotificationHandler<OpportunityR
 
         // Send notification to PC Representative
         await _notificationService.SendRejectedNotificationAsync(
-            "Opportunity",
+            "opportunities",
             notification.OpportunityId,
             notification.CompanyId,
             notification.RejectionReason,

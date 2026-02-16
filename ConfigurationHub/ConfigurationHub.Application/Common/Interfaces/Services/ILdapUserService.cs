@@ -11,5 +11,5 @@ public interface ILdapUserService
     Task<PaginatedList<LdapUser>> SearchUsersAsync(string searchTerm, int pageNumber = 1, int pageSize = 20);
     Task<LdapUser?> GetUserByUsernameAsync(string? username, string? useremail);
 
-    Task<List<LdapUser>> GetUsersByUsernameAsync(string? username);
+    Task<List<LdapUser>> GetUsersByUsernameOREmailAsync(string? username =null, string? useremail = null);
 }

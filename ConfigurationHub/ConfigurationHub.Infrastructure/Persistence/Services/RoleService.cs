@@ -121,11 +121,9 @@ public class RoleService : IRoleService
         return await _rolePermissionRepository.GetPermissionsLookupByRoleIdAsync(roleId);
     }
 
-    // User-Role Management
-    public async Task<bool> AssignRoleToUserAsync(string userId,string userName,string useremail, Guid roleId, Guid moduleId, string assignedBy)
+    public async Task<bool> AssignRoleToUserAsync(string userId, string userName, string userEmail, Guid roleId, Guid moduleId, string assignedBy)
     {
-        var exists = await _userRoleRepository.ExistsAsync(userId, roleId, moduleId);
-        if (exists)
+        if (await _userRoleRepository.ExistsAsync(userId, roleId, moduleId))
             return false;
 
         var userRole = new UserRole
@@ -136,24 +134,34 @@ public class RoleService : IRoleService
             AssignedBy = assignedBy,
             AssignedAt = DateTime.UtcNow,
             UserName = userName,
-            UserEmail = useremail,
+            UserEmail = userEmail,
         };
 
-         await _userRoleRepository.AddAsync(userRole);
+        await _userRoleRepository.AddAsync(userRole);
+        var rolePermissions = await _rolePermissionRepository.GetPermissionsByRoleIdAsync(roleId);
 
-        var permissions = await  _rolePermissionRepository.GetPermissionsByRoleIdAsync(roleId);
+        var existingUserPermissions = await _userPermissionRepository.GetByUserIdAsync(userId);
+        var existingPermissionIds = existingUserPermissions
+            .Where(p => p.ModuleId == moduleId)
+            .Select(p => p.PermissionId)
+            .ToHashSet();
 
-        List<UserPermission> users = new List<UserPermission>();
-        foreach ( var permission in permissions)
-        {
-            users.Add(new UserPermission
+        var permissionsToInsert = rolePermissions
+            .Where(rp => !existingPermissionIds.Contains(rp.Id)) // Only add what they don't have
+            .Select(rp => new UserPermission
             {
                 UserId = userId,
-                PermissionId = permission.Id,
-                ModuleId=moduleId,
-            });
+                PermissionId = rp.Id,
+                ModuleId = moduleId
+            })
+            .ToList();
+
+        if (permissionsToInsert.Any())
+        {
+            return await _userPermissionRepository.AddBulkAsync(permissionsToInsert);
         }
-        return await _userPermissionRepository.AddBulkAsync(users);
+
+        return true;
     }
 
     public async Task<bool> RemoveRoleFromUserAsync(string userId, Guid roleId, Guid moduleId)
