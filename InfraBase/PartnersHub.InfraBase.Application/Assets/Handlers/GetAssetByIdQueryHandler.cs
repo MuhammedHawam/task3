@@ -1,6 +1,5 @@
 using MediatR;
 using PartnersHub.InfraBase.Application.Assets.DTOs;
-using PartnersHub.InfraBase.Application.Assets.Helpers;
 using PartnersHub.InfraBase.Application.Assets.Queries;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Repository;
@@ -12,15 +11,18 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
     private readonly IAssetRepository _repository;
     private readonly IConfigurationLookupService _lookupService;
     private readonly IMiddlewareIntegrationService _middlewareService;
+    private readonly IAssetSubmittedByResolver _assetSubmittedByResolver;
 
     public GetAssetByIdQueryHandler(
         IAssetRepository repository,
         IConfigurationLookupService lookupService,
-        IMiddlewareIntegrationService middlewareService)
+        IMiddlewareIntegrationService middlewareService,
+        IAssetSubmittedByResolver assetSubmittedByResolver)
     {
         _repository = repository;
         _lookupService = lookupService;
         _middlewareService = middlewareService;
+        _assetSubmittedByResolver = assetSubmittedByResolver;
     }
 
     public async Task<AssetDto?> Handle(GetAssetByIdQuery query,
@@ -125,6 +127,11 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             // ignore and fall back to stored name
         }
 
+        var submittedByDisplayName = await _assetSubmittedByResolver.ResolveAsync(
+            asset.SubmittedBy,
+            asset.CreatedBy,
+            cancellationToken);
+
         return new AssetDto
         {
             Id = asset.Id,
@@ -168,7 +175,7 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             IRR = NormalizeOptionalDecimal(asset.IRR),
             IsPifGuaranteesRequired = NormalizeOptionalBool(asset.IsPifGuaranteesRequired),
             Status = asset.Status,
-            SubmittedBy = AssetUserDisplayNameResolver.ResolveSubmittedBy(asset.SubmittedBy, asset.CreatedBy),
+            SubmittedBy = submittedByDisplayName,
             SubmittedAt = asset.SubmittedAt,
             RejectionReason = asset.RejectionReason?.Value,
             RejectedBy = asset.RejectedBy,
