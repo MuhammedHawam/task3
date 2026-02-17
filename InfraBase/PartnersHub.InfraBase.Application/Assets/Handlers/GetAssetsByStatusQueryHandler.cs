@@ -1,6 +1,5 @@
 using MediatR;
 using PartnersHub.InfraBase.Application.Assets.DTOs;
-using PartnersHub.InfraBase.Application.Assets.Helpers;
 using PartnersHub.InfraBase.Application.Assets.Queries;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Repository;
@@ -14,17 +13,20 @@ public class GetAssetsByStatusQueryHandler : IRequestHandler<GetAssetsByStatusQu
     private readonly IConfigurationLookupService _lookupService;
     private readonly IMiddlewareIntegrationService _middlewareService;
     private readonly ITokenService _tokenService;
+    private readonly IAssetSubmittedByResolver _assetSubmittedByResolver;
 
     public GetAssetsByStatusQueryHandler(
         IAssetRepository repository,
         IConfigurationLookupService lookupService,
         IMiddlewareIntegrationService middlewareService,
-        ITokenService tokenService)
+        ITokenService tokenService,
+        IAssetSubmittedByResolver assetSubmittedByResolver)
     {
         _repository = repository;
         _lookupService = lookupService;
         _middlewareService = middlewareService;
         _tokenService = tokenService;
+        _assetSubmittedByResolver = assetSubmittedByResolver;
     }
 
     public async Task<List<AssetListDto>> Handle(GetAssetsByStatusQuery query,
@@ -72,6 +74,9 @@ public class GetAssetsByStatusQueryHandler : IRequestHandler<GetAssetsByStatusQu
         var companyNamesById = await LoadCompanyNamesAsync(
             paginatedAssets.Items.Select(a => a.CompanyId).Distinct(),
             cancellationToken);
+        var submittedByNamesByAssetId = await _assetSubmittedByResolver.ResolveForAssetsAsync(
+            paginatedAssets.Items,
+            cancellationToken);
 
         foreach (var asset in paginatedAssets.Items)
         {
@@ -92,9 +97,7 @@ public class GetAssetsByStatusQueryHandler : IRequestHandler<GetAssetsByStatusQu
             var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
                 ? resolvedCompanyName
                 : asset.CompanyName;
-            var submittedByDisplayName = AssetUserDisplayNameResolver.ResolveSubmittedBy(
-                asset.SubmittedBy,
-                asset.CreatedBy);
+            submittedByNamesByAssetId.TryGetValue(asset.Id, out var submittedByDisplayName);
 
             items.Add(new AssetListDto
             {

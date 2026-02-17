@@ -36,8 +36,8 @@ public class GetAssetSummaryQueryHandler : IRequestHandler<GetAssetSummaryQuery,
             RejectedAssets = statusCounts.GetValueOrDefault(AssetStatuses.RejectedByPcAdmin, 0) +
                              statusCounts.GetValueOrDefault(AssetStatuses.RejectedByInfrabase, 0),
             CheckedAssets = statusCounts.GetValueOrDefault(AssetStatuses.AcceptedByInfrabase, 0),
-            ReturnedForCorrectionAssets = statusCounts.GetValueOrDefault(
-                AssetStatuses.RejectedByInfrabase, 0)
+            ReturnedForCorrectionAssets = statusCounts.GetValueOrDefault(AssetStatuses.RejectedByPcAdmin, 0) +
+                                          statusCounts.GetValueOrDefault(AssetStatuses.RejectedByInfrabase, 0)
         };
     }
 }

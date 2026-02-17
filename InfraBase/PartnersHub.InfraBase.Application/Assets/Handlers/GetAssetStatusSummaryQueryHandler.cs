@@ -29,13 +29,33 @@ public class GetAssetStatusSummaryQueryHandler
             requestingUser,
             cancellationToken);
 
-        var groupedCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        foreach (var status in Enum.GetValues<AssetStatuses>())
+        var groupedCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
-            var displayName = status.GetDisplayName();
-            var count = statusCounts.GetValueOrDefault(status, 0);
+            // "Pending" currently represents Draft in the UI.
+            ["Pending"] = statusCounts.GetValueOrDefault(AssetStatuses.Draft, 0),
+            ["Pending PC Admin"] = statusCounts.GetValueOrDefault(AssetStatuses.Submitted, 0),
+            ["Pending PIF Review"] = statusCounts.GetValueOrDefault(AssetStatuses.AcceptedByPcAdmin, 0),
+            ["Completed"] = statusCounts.GetValueOrDefault(AssetStatuses.AcceptedByInfrabase, 0),
+            // Returned must include both rejection statuses.
+            ["Returned"] = statusCounts.GetValueOrDefault(AssetStatuses.RejectedByPcAdmin, 0) +
+                           statusCounts.GetValueOrDefault(AssetStatuses.RejectedByInfrabase, 0)
+        };
 
-            groupedCounts[displayName] = groupedCounts.GetValueOrDefault(displayName, 0) + count;
+        var handledStatuses = new HashSet<AssetStatuses>
+        {
+            AssetStatuses.Draft,
+            AssetStatuses.Submitted,
+            AssetStatuses.AcceptedByPcAdmin,
+            AssetStatuses.AcceptedByInfrabase,
+            AssetStatuses.RejectedByPcAdmin,
+            AssetStatuses.RejectedByInfrabase
+        };
+
+        // Keep forward compatibility if new statuses are added later.
+        foreach (var kvp in statusCounts.Where(kvp => !handledStatuses.Contains(kvp.Key)))
+        {
+            var displayName = kvp.Key.GetDisplayName();
+            groupedCounts[displayName] = groupedCounts.GetValueOrDefault(displayName, 0) + kvp.Value;
         }
 
         var orderedDisplayNames = new[]

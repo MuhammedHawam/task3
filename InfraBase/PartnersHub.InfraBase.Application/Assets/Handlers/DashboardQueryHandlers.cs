@@ -1,6 +1,5 @@
 using MediatR;
 using PartnersHub.InfraBase.Application.Assets.DTOs;
-using PartnersHub.InfraBase.Application.Assets.Helpers;
 using PartnersHub.InfraBase.Application.Assets.Queries;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Interfaces.Repository;
@@ -16,15 +15,18 @@ public class GetContributorDashboardQueryHandler
     private readonly IAssetRepository _repository;
     private readonly IConfigurationLookupService _lookupService;
     private readonly IMiddlewareIntegrationService _middlewareService;
+    private readonly IAssetSubmittedByResolver _assetSubmittedByResolver;
 
     public GetContributorDashboardQueryHandler(
         IAssetRepository repository,
         IConfigurationLookupService lookupService,
-        IMiddlewareIntegrationService middlewareService)
+        IMiddlewareIntegrationService middlewareService,
+        IAssetSubmittedByResolver assetSubmittedByResolver)
     {
         _repository = repository;
         _lookupService = lookupService;
         _middlewareService = middlewareService;
+        _assetSubmittedByResolver = assetSubmittedByResolver;
     }
 
     public async Task<ContributorDashboardDto> Handle(
@@ -47,6 +49,9 @@ public class GetContributorDashboardQueryHandler
 
         var companyNamesById = await LoadCompanyNamesAsync(
             paginatedAssets.Items.Select(a => a.CompanyId).Distinct(),
+            cancellationToken);
+        var submittedByNamesByAssetId = await _assetSubmittedByResolver.ResolveForAssetsAsync(
+            paginatedAssets.Items,
             cancellationToken);
 
         foreach (var asset in paginatedAssets.Items)
@@ -71,9 +76,7 @@ public class GetContributorDashboardQueryHandler
             var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
                 ? resolvedCompanyName
                 : asset.CompanyName;
-            var submittedByDisplayName = AssetUserDisplayNameResolver.ResolveSubmittedBy(
-                asset.SubmittedBy,
-                asset.CreatedBy);
+            submittedByNamesByAssetId.TryGetValue(asset.Id, out var submittedByDisplayName);
 
             assetDtos.Add(new AssetListDto
             {
@@ -153,15 +156,18 @@ public class GetPcAdminDashboardQueryHandler
     private readonly IAssetRepository _repository;
     private readonly IConfigurationLookupService _lookupService;
     private readonly IMiddlewareIntegrationService _middlewareService;
+    private readonly IAssetSubmittedByResolver _assetSubmittedByResolver;
 
     public GetPcAdminDashboardQueryHandler(
         IAssetRepository repository,
         IConfigurationLookupService lookupService,
-        IMiddlewareIntegrationService middlewareService)
+        IMiddlewareIntegrationService middlewareService,
+        IAssetSubmittedByResolver assetSubmittedByResolver)
     {
         _repository = repository;
         _lookupService = lookupService;
         _middlewareService = middlewareService;
+        _assetSubmittedByResolver = assetSubmittedByResolver;
     }
 
     public async Task<PcAdminDashboardDto> Handle(
@@ -184,6 +190,9 @@ public class GetPcAdminDashboardQueryHandler
 
         var companyNamesById = await LoadCompanyNamesAsync(
             paginatedAssets.Items.Select(a => a.CompanyId).Distinct(),
+            cancellationToken);
+        var submittedByNamesByAssetId = await _assetSubmittedByResolver.ResolveForAssetsAsync(
+            paginatedAssets.Items,
             cancellationToken);
 
         foreach (var asset in paginatedAssets.Items)
@@ -208,9 +217,7 @@ public class GetPcAdminDashboardQueryHandler
             var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
                 ? resolvedCompanyName
                 : asset.CompanyName;
-            var submittedByDisplayName = AssetUserDisplayNameResolver.ResolveSubmittedBy(
-                asset.SubmittedBy,
-                asset.CreatedBy);
+            submittedByNamesByAssetId.TryGetValue(asset.Id, out var submittedByDisplayName);
 
             assetDtos.Add(new AssetListDto
             {
@@ -289,15 +296,18 @@ public class GetTeamAssetsDashboardQueryHandler
     private readonly IAssetRepository _repository;
     private readonly IConfigurationLookupService _lookupService;
     private readonly IMiddlewareIntegrationService _middlewareService;
+    private readonly IAssetSubmittedByResolver _assetSubmittedByResolver;
 
     public GetTeamAssetsDashboardQueryHandler(
         IAssetRepository repository,
         IConfigurationLookupService lookupService,
-        IMiddlewareIntegrationService middlewareService)
+        IMiddlewareIntegrationService middlewareService,
+        IAssetSubmittedByResolver assetSubmittedByResolver)
     {
         _repository = repository;
         _lookupService = lookupService;
         _middlewareService = middlewareService;
+        _assetSubmittedByResolver = assetSubmittedByResolver;
     }
 
     public async Task<TeamAssetsDashboardDto> Handle(
@@ -323,6 +333,9 @@ public class GetTeamAssetsDashboardQueryHandler
         var companyNamesById = await LoadCompanyNamesAsync(
             paginatedAssets.Items.Select(a => a.CompanyId).Distinct(),
             cancellationToken);
+        var submittedByNamesByAssetId = await _assetSubmittedByResolver.ResolveForAssetsAsync(
+            paginatedAssets.Items,
+            cancellationToken);
 
         foreach (var asset in paginatedAssets.Items)
         {
@@ -346,9 +359,7 @@ public class GetTeamAssetsDashboardQueryHandler
             var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
                 ? resolvedCompanyName
                 : asset.CompanyName;
-            var submittedByDisplayName = AssetUserDisplayNameResolver.ResolveSubmittedBy(
-                asset.SubmittedBy,
-                asset.CreatedBy);
+            submittedByNamesByAssetId.TryGetValue(asset.Id, out var submittedByDisplayName);
 
             assetDtos.Add(new AssetListDto
             {
@@ -427,17 +438,20 @@ public class GetInfrabaseAdminDashboardQueryHandler
     private readonly IConfigurationLookupService _lookupService;
     private readonly IMiddlewareIntegrationService _middlewareService;
     private readonly ITokenService _tokenService;
+    private readonly IAssetSubmittedByResolver _assetSubmittedByResolver;
 
     public GetInfrabaseAdminDashboardQueryHandler(
         IAssetRepository repository,
         IConfigurationLookupService lookupService,
         IMiddlewareIntegrationService middlewareService,
-        ITokenService tokenService)
+        ITokenService tokenService,
+        IAssetSubmittedByResolver assetSubmittedByResolver)
     {
         _repository = repository;
         _lookupService = lookupService;
         _middlewareService = middlewareService;
         _tokenService = tokenService;
+        _assetSubmittedByResolver = assetSubmittedByResolver;
     }
 
     public async Task<InfrabaseAdminDashboardDto> Handle(
@@ -465,6 +479,9 @@ public class GetInfrabaseAdminDashboardQueryHandler
         var companyNamesById = await LoadCompanyNamesAsync(
             paginatedAssets.Items.Select(a => a.CompanyId).Distinct(),
             cancellationToken);
+        var submittedByNamesByAssetId = await _assetSubmittedByResolver.ResolveForAssetsAsync(
+            paginatedAssets.Items,
+            cancellationToken);
 
         foreach (var asset in paginatedAssets.Items)
         {
@@ -488,9 +505,7 @@ public class GetInfrabaseAdminDashboardQueryHandler
             var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
                 ? resolvedCompanyName
                 : asset.CompanyName;
-            var submittedByDisplayName = AssetUserDisplayNameResolver.ResolveSubmittedBy(
-                asset.SubmittedBy,
-                asset.CreatedBy);
+            submittedByNamesByAssetId.TryGetValue(asset.Id, out var submittedByDisplayName);
 
             assetDtos.Add(new AssetListDto
             {
@@ -520,7 +535,9 @@ public class GetInfrabaseAdminDashboardQueryHandler
                 AcceptedByPcAdmin = statusCounts.GetValueOrDefault(AssetStatuses.AcceptedByPcAdmin, 0),
                 RejectedByPcAdmin = statusCounts.GetValueOrDefault(AssetStatuses.RejectedByPcAdmin, 0),
                 AcceptedByInfrabase = statusCounts.GetValueOrDefault(AssetStatuses.AcceptedByInfrabase, 0),
-                RejectedByInfrabase = statusCounts.GetValueOrDefault(AssetStatuses.RejectedByInfrabase, 0)
+                RejectedByInfrabase = statusCounts.GetValueOrDefault(AssetStatuses.RejectedByInfrabase, 0),
+                ReturnForCorrection = statusCounts.GetValueOrDefault(AssetStatuses.RejectedByPcAdmin, 0) +
+                                      statusCounts.GetValueOrDefault(AssetStatuses.RejectedByInfrabase, 0)
             },
             Assets = new PaginatedList<AssetListDto>(
                 assetDtos,

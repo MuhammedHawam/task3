@@ -125,4 +125,5 @@ public record InfrabaseAdminStatusCardsDto
     public int RejectedByPcAdmin { get; init; }
     public int AcceptedByInfrabase { get; init; }
     public int RejectedByInfrabase { get; init; }
+    public int ReturnForCorrection { get; init; }
 }
