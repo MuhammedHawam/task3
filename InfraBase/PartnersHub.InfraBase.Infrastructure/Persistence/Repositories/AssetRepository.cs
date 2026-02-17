@@ -92,10 +92,7 @@ public class AssetRepository : IAssetRepository
             .Include(a => a.OpexDetails)
             .AsQueryable();
 
-        if (status.HasValue)
-        {
-            query = query.Where(a => a.Status == status.Value);
-        }
+        query = ApplyStatusFilter(query, status);
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
@@ -133,10 +130,7 @@ public class AssetRepository : IAssetRepository
             .Include(a => a.OpexDetails)
             .AsQueryable();
 
-        if (status.HasValue)
-        {
-            query = query.Where(a => a.Status == status.Value);
-        }
+        query = ApplyStatusFilter(query, status);
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
@@ -247,10 +241,7 @@ public class AssetRepository : IAssetRepository
             .Include(a => a.OpexDetails)
             .AsQueryable();
 
-        if (status.HasValue)
-        {
-            query = query.Where(a => a.Status == status.Value);
-        }
+        query = ApplyStatusFilter(query, status);
 
         if (companyId.HasValue)
         {
@@ -284,6 +275,29 @@ public class AssetRepository : IAssetRepository
         }
 
         return query.Where(a => a.Status != AssetStatuses.Draft || a.CreatedBy == requestingUser);
+    }
+
+    private static IQueryable<Asset> ApplyStatusFilter(IQueryable<Asset> query, AssetStatuses? status)
+    {
+        if (!status.HasValue)
+        {
+            return query;
+        }
+
+        if (IsReturnedStatus(status.Value))
+        {
+            return query.Where(a =>
+                a.Status == AssetStatuses.RejectedByPcAdmin ||
+                a.Status == AssetStatuses.RejectedByInfrabase);
+        }
+
+        return query.Where(a => a.Status == status.Value);
+    }
+
+    private static bool IsReturnedStatus(AssetStatuses status)
+    {
+        return status == AssetStatuses.RejectedByPcAdmin ||
+               status == AssetStatuses.RejectedByInfrabase;
     }
 
     private IQueryable<Asset> ApplySorting(IQueryable<Asset> query, string? sortBy, bool sortDescending)

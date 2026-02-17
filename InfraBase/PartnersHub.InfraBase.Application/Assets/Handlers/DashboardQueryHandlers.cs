@@ -535,7 +535,9 @@ public class GetInfrabaseAdminDashboardQueryHandler
                 AcceptedByPcAdmin = statusCounts.GetValueOrDefault(AssetStatuses.AcceptedByPcAdmin, 0),
                 RejectedByPcAdmin = statusCounts.GetValueOrDefault(AssetStatuses.RejectedByPcAdmin, 0),
                 AcceptedByInfrabase = statusCounts.GetValueOrDefault(AssetStatuses.AcceptedByInfrabase, 0),
-                RejectedByInfrabase = statusCounts.GetValueOrDefault(AssetStatuses.RejectedByInfrabase, 0)
+                RejectedByInfrabase = statusCounts.GetValueOrDefault(AssetStatuses.RejectedByInfrabase, 0),
+                ReturnForCorrection = statusCounts.GetValueOrDefault(AssetStatuses.RejectedByPcAdmin, 0) +
+                                      statusCounts.GetValueOrDefault(AssetStatuses.RejectedByInfrabase, 0)
             },
             Assets = new PaginatedList<AssetListDto>(
                 assetDtos,
