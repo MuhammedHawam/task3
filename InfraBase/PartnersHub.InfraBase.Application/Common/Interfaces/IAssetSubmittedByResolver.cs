@@ -9,7 +9,15 @@ public interface IAssetSubmittedByResolver
         string? createdBy,
         CancellationToken cancellationToken = default);
 
+    Task<string?> ResolveUserValueAsync(
+        string? userValue,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyDictionary<Guid, string?>> ResolveForAssetsAsync(
         IEnumerable<Asset> assets,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyDictionary<string, string?>> ResolveUserValuesAsync(
+        IEnumerable<string?> userValues,
         CancellationToken cancellationToken = default);
 }

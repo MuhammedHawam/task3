@@ -100,7 +100,7 @@ public record UpdateAssetCommand : IRequest<bool>
     public Guid? ContactId { get; init; }
 }
 
-public record SaveAssetAsDraftCommand(Guid Id) : IRequest<bool>;
+public record SaveAssetAsDraftCommand(Guid Id, Guid? ContactId = null) : IRequest<bool>;
 
 public record SubmitAssetCommand(Guid Id, UserType UserType, Guid? ContactId = null) : IRequest<string>;
 
