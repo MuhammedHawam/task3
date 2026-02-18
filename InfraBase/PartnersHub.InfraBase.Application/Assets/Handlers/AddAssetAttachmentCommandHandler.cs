@@ -10,21 +10,22 @@ public class AddAssetAttachmentCommandHandler : IRequestHandler<AddAssetAttachme
 {
     private readonly IAssetRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ITokenService _tokenService;
+    private readonly IUserDisplayNameService _userDisplayNameService;
 
     public AddAssetAttachmentCommandHandler(
         IAssetRepository repository, 
         IUnitOfWork unitOfWork,
-        ITokenService tokenService)
+        IUserDisplayNameService userDisplayNameService)
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
-        _tokenService = tokenService;
+        _userDisplayNameService = userDisplayNameService;
     }
 
     public async Task<Guid> Handle(AddAssetAttachmentCommand command, CancellationToken cancellationToken)
     {
-        var userName = _tokenService.GetUserName(); // Use username for readable history
+        var actorDisplayName = await _userDisplayNameService.ResolveDisplayNameAsync(
+            cancellationToken: cancellationToken);
 
         var asset = await _repository.GetByIdAsync(command.AssetId, cancellationToken);
         
@@ -38,7 +39,7 @@ public class AddAssetAttachmentCommandHandler : IRequestHandler<AddAssetAttachme
             command.FileSizeInBytes, 
             command.ContentType, 
             command.SharePointUrl, 
-            userName);
+            actorDisplayName);
 
         if (attachmentResult.IsFailure)
         {

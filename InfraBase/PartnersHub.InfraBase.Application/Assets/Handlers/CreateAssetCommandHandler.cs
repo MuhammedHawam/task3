@@ -37,7 +37,10 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
 
     public async Task<Guid> Handle(CreateAssetCommand command, CancellationToken cancellationToken)
     {
-        var userName = _tokenService.GetUserName(); // Use username for readable history
+        var creatorIdentifier = _tokenService.GetUserName();
+        var actorDisplayName = await _userDisplayNameService.ResolveDisplayNameAsync(
+            command.ContactId,
+            cancellationToken);
         var companyId = ResolveCompanyId(command);
 
         ValidateYearRows(command.CapexDetails.Select(x => x.Year), "CAPEX");
@@ -98,7 +101,7 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
             command.IsRevenueGenerating, 
             command.IRR, 
             command.IsPifGuaranteesRequired, 
-            userName, // Use username for history
+            creatorIdentifier,
             companyId,
             companyName);
 
@@ -111,7 +114,7 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
 
         foreach (var capex in command.CapexDetails)
         {
-            var capexResult = asset.AddCapexDetail(capex.Year, capex.Amount, userName);
+            var capexResult = asset.AddCapexDetail(capex.Year, capex.Amount, actorDisplayName);
             if (capexResult.IsFailure)
             {
                 throw new ValidationException(capexResult.Error!);
@@ -120,7 +123,7 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
 
         foreach (var opex in command.OpexDetails)
         {
-            var opexResult = asset.AddOpexDetail(opex.Year, opex.Amount, userName);
+            var opexResult = asset.AddOpexDetail(opex.Year, opex.Amount, actorDisplayName);
             if (opexResult.IsFailure)
             {
                 throw new ValidationException(opexResult.Error!);
@@ -129,7 +132,7 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
 
         if (command.CapexEntryMode.HasValue)
         {
-            var modeResult = asset.SetCapexEntryMode(command.CapexEntryMode.Value, userName);
+            var modeResult = asset.SetCapexEntryMode(command.CapexEntryMode.Value, actorDisplayName);
             if (modeResult.IsFailure)
             {
                 throw new ValidationException(modeResult.Error!);
@@ -138,7 +141,7 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
 
         if (command.OpexEntryMode.HasValue)
         {
-            var modeResult = asset.SetOpexEntryMode(command.OpexEntryMode.Value, userName);
+            var modeResult = asset.SetOpexEntryMode(command.OpexEntryMode.Value, actorDisplayName);
             if (modeResult.IsFailure)
             {
                 throw new ValidationException(modeResult.Error!);
@@ -154,12 +157,12 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
                 command.FilesToUpload,
                 command.AttachmentDescription,
                 cancellationToken);
-            AddAttachments(asset, uploadRequests, userName);
+            AddAttachments(asset, uploadRequests, actorDisplayName);
         }
 
         if (command.Attachments?.Count > 0)
         {
-            AddAttachments(asset, command.Attachments, userName);
+            AddAttachments(asset, command.Attachments, actorDisplayName);
         }
 
         // InfraBase Admin: assets created by InfraBase admin should be marked as checked immediately.
@@ -167,9 +170,6 @@ public class CreateAssetCommandHandler : IRequestHandler<CreateAssetCommand, Gui
         {
             var nextNumber = await _repository.GetNextAssetNumberAsync(cancellationToken);
             var assetCode = $"Infra-{nextNumber:D6}";
-            var actorDisplayName = await _userDisplayNameService.ResolveDisplayNameAsync(
-                command.ContactId,
-                cancellationToken);
 
             var checkResult = asset.MarkAsCheckedByInfrabaseAdminOnCreate(actorDisplayName, assetCode);
             if (checkResult.IsFailure)

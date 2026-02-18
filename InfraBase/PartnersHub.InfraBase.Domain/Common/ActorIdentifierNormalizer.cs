@@ -10,6 +10,8 @@ internal static class ActorIdentifierNormalizer
     internal static string NormalizeAuditActor(string? primaryValue, params string?[] fallbackValues)
     {
         var candidates = new[] { primaryValue }.Concat(fallbackValues ?? Array.Empty<string?>());
+        string? firstGuidCandidate = null;
+
         foreach (var candidate in candidates)
         {
             var normalized = Normalize(candidate);
@@ -20,10 +22,16 @@ internal static class ActorIdentifierNormalizer
 
             if (Guid.TryParse(normalized, out _))
             {
+                firstGuidCandidate ??= normalized;
                 continue;
             }
 
             return normalized;
+        }
+
+        if (!string.IsNullOrWhiteSpace(firstGuidCandidate))
+        {
+            return firstGuidCandidate;
         }
 
         return DefaultActor;
