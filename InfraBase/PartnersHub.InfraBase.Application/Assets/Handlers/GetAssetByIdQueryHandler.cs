@@ -131,6 +131,33 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
             asset.SubmittedBy,
             asset.CreatedBy,
             cancellationToken);
+        var historyPerformedByNames = await _assetSubmittedByResolver.ResolveUserValuesAsync(
+            asset.History.Select(h => h.PerformedBy),
+            cancellationToken);
+
+        var history = asset.History.Select(h =>
+        {
+            var normalizedPerformedBy = string.IsNullOrWhiteSpace(h.PerformedBy)
+                ? null
+                : h.PerformedBy.Trim();
+            var resolvedPerformedBy = normalizedPerformedBy != null &&
+                                      historyPerformedByNames.TryGetValue(normalizedPerformedBy, out var displayName)
+                ? displayName
+                : normalizedPerformedBy;
+
+            return new AssetHistoryDto
+            {
+                Id = h.Id,
+                Status = h.Status,
+                StatusDisplayName = h.Status.GetDisplayName(),
+                StatusShortDisplayName = h.Status.GetShortDisplayName(),
+                Action = h.Action,
+                PerformedBy = resolvedPerformedBy ?? h.PerformedBy,
+                PerformedByName = resolvedPerformedBy,
+                PerformedAt = h.PerformedAt,
+                Comments = h.Comments
+            };
+        }).OrderBy(h => h.PerformedAt).ToList();
 
         return new AssetDto
         {
@@ -200,17 +227,7 @@ public class GetAssetByIdQueryHandler : IRequestHandler<GetAssetByIdQuery, Asset
                 Year = o.Year,
                 Amount = o.Amount
             }).ToList(),
-            History = asset.History.Select(h => new AssetHistoryDto
-            {
-                Id = h.Id,
-                Status = h.Status,
-                StatusDisplayName = h.Status.GetDisplayName(),
-                StatusShortDisplayName = h.Status.GetShortDisplayName(),
-                Action = h.Action,
-                PerformedBy = h.PerformedBy,
-                PerformedAt = h.PerformedAt,
-                Comments = h.Comments
-            }).OrderBy(h => h.PerformedAt).ToList(),
+            History = history,
             Attachments = asset.GetAttachments().Select(a => new AssetAttachmentDto
             {
                 Id = a.Id,

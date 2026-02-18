@@ -22,12 +22,12 @@ public abstract class AggregateRoot : Entity {
     }
 
     protected void MarkAsCreated(string userId) {
-        CreatedBy = userId;
+        CreatedBy = ActorIdentifierNormalizer.NormalizeStoredActor(userId);
         CreatedAt = DateTime.Now;
     }
 
     protected void MarkAsUpdated(string userId) {
-        UpdatedBy = userId;
+        UpdatedBy = ActorIdentifierNormalizer.NormalizeAuditActor(userId, UpdatedBy, CreatedBy);
         UpdatedAt = DateTime.Now;
     }
 }

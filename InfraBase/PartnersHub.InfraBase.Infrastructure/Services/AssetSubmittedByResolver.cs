@@ -49,6 +49,34 @@ public class AssetSubmittedByResolver : IAssetSubmittedByResolver
         return normalizedSubmittedBy ?? normalizedCreatedBy;
     }
 
+    public async Task<string?> ResolveUserValueAsync(
+        string? userValue,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedUserValue = Normalize(userValue);
+        if (string.IsNullOrWhiteSpace(normalizedUserValue))
+        {
+            return null;
+        }
+
+        if (IsHumanReadable(normalizedUserValue))
+        {
+            return normalizedUserValue;
+        }
+
+        var contactId = ParseContactId(normalizedUserValue);
+        if (contactId.HasValue)
+        {
+            var contactDisplayName = await GetContactDisplayNameAsync(contactId.Value, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(contactDisplayName))
+            {
+                return contactDisplayName;
+            }
+        }
+
+        return normalizedUserValue;
+    }
+
     public async Task<IReadOnlyDictionary<Guid, string?>> ResolveForAssetsAsync(
         IEnumerable<Asset> assets,
         CancellationToken cancellationToken = default)
@@ -64,6 +92,38 @@ public class AssetSubmittedByResolver : IAssetSubmittedByResolver
             {
                 var displayName = await ResolveAsync(asset.SubmittedBy, asset.CreatedBy, cancellationToken);
                 results[asset.Id] = displayName;
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        });
+
+        await Task.WhenAll(tasks);
+        return results;
+    }
+
+    public async Task<IReadOnlyDictionary<string, string?>> ResolveUserValuesAsync(
+        IEnumerable<string?> userValues,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedValues = userValues
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => value!.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        const int maxConcurrency = 8;
+        using var semaphore = new SemaphoreSlim(maxConcurrency, maxConcurrency);
+
+        var results = new ConcurrentDictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        var tasks = normalizedValues.Select(async value =>
+        {
+            await semaphore.WaitAsync(cancellationToken);
+            try
+            {
+                var resolvedValue = await ResolveUserValueAsync(value, cancellationToken);
+                results[value] = resolvedValue;
             }
             finally
             {

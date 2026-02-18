@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using PartnersHub.InfraBase.Application.Common.Helpers;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Services;
 using PartnersHub.InfraBase.Domain.Events;
@@ -147,12 +148,26 @@ public class AssetAcceptedByPcAdminEventHandler : INotificationHandler<AssetAcce
 
     private async Task SendInAppNotification(AssetAcceptedByPcAdminEvent notification, CancellationToken cancellationToken)
     {
+        var approverName = ResolveActorDisplayName(notification.AcceptedBy, "PC Admin");
         await _notificationService.CreateInAppNotificationAsync(
             userId: notification.CreatedBy,
             title: "Asset Accepted by PC Admin",
-            message: $"Asset {notification.AssetCode} has been accepted by PC Admin.",
+            message: $"Asset {notification.AssetCode} has been accepted by {approverName}.",
             link: $"/assets/{notification.AssetId}",
             notificationType: "AssetApproval",
             cancellationToken: cancellationToken);
+    }
+
+    private static string ResolveActorDisplayName(string? actorValue, string fallbackRoleName)
+    {
+        var normalized = actorValue?.Trim();
+        if (string.IsNullOrWhiteSpace(normalized) || Guid.TryParse(normalized, out _))
+        {
+            return fallbackRoleName;
+        }
+
+        return normalized.Contains('@')
+            ? EmailHelper.ExtractNameFromEmail(normalized)
+            : normalized;
     }
 }

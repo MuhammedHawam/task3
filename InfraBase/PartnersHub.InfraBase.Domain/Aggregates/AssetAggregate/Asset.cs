@@ -107,12 +107,11 @@ public class Asset : AggregateRoot
         IRR = irr;
         IsPifGuaranteesRequired = isPifGuaranteesRequired;
         Status = AssetStatuses.Draft;
-        CreatedBy = createdBy;
-        CreatedAt = DateTime.Now;
+        MarkAsCreated(createdBy);
         CompanyId = companyId;
         CompanyName = companyName;
 
-        AddHistory("Created", createdBy, "Asset created as draft");
+        AddHistory("Created", CreatedBy ?? createdBy, "Asset created as draft");
     }
 
     public static Result<Asset> Create(string assetName, string locationCity,
@@ -365,8 +364,7 @@ public class Asset : AggregateRoot
         {
             var capex = new AssetCapex(Id, year, amount);
             _capexDetails.Add(capex);
-            UpdatedBy = userId;
-            UpdatedAt = DateTime.Now;
+            SetUpdatedBy(userId);
             AddHistory("CAPEX Added", userId, $"CAPEX for year {year} added with amount {amount:C}");
             return Result<bool>.Success(true);
         }
@@ -391,8 +389,7 @@ public class Asset : AggregateRoot
             return result;
         }
 
-        UpdatedBy = userId;
-        UpdatedAt = DateTime.Now;
+        SetUpdatedBy(userId);
         AddHistory("CAPEX Updated", userId, $"CAPEX for year {year} updated",
             "Amount", oldAmount.ToString("C"), amount.ToString("C"));
         return Result<bool>.Success(true);
@@ -407,8 +404,7 @@ public class Asset : AggregateRoot
         }
 
         _capexDetails.Remove(capex);
-        UpdatedBy = userId;
-        UpdatedAt = DateTime.Now;
+        SetUpdatedBy(userId);
         AddHistory("CAPEX Removed", userId, $"CAPEX for year {year} removed");
         return Result<bool>.Success(true);
     }
@@ -429,8 +425,7 @@ public class Asset : AggregateRoot
         {
             var opex = new AssetOpex(Id, year, amount);
             _opexDetails.Add(opex);
-            UpdatedBy = userId;
-            UpdatedAt = DateTime.Now;
+            SetUpdatedBy(userId);
             AddHistory("OPEX Added", userId, $"OPEX for year {year} added with amount {amount:C}");
             return Result<bool>.Success(true);
         }
@@ -455,8 +450,7 @@ public class Asset : AggregateRoot
             return result;
         }
 
-        UpdatedBy = userId;
-        UpdatedAt = DateTime.Now;
+        SetUpdatedBy(userId);
         AddHistory("OPEX Updated", userId, $"OPEX for year {year} updated",
             "Amount", oldAmount.ToString("C"), amount.ToString("C"));
         return Result<bool>.Success(true);
@@ -471,8 +465,7 @@ public class Asset : AggregateRoot
         }
 
         _opexDetails.Remove(opex);
-        UpdatedBy = userId;
-        UpdatedAt = DateTime.Now;
+        SetUpdatedBy(userId);
         AddHistory("OPEX Removed", userId, $"OPEX for year {year} removed");
         return Result<bool>.Success(true);
     }
@@ -485,8 +478,7 @@ public class Asset : AggregateRoot
             return Result<bool>.Failure("Only draft, rejected, or returned for correction assets can be saved as draft");
         }
 
-        UpdatedBy = userId;
-        UpdatedAt = DateTime.Now;
+        SetUpdatedBy(userId);
         AddHistory("Saved as Draft", userId, "Asset saved as draft");
         return Result<bool>.Success(true);
     }
@@ -504,8 +496,7 @@ public class Asset : AggregateRoot
         }
 
         CapexEntryMode = mode;
-        UpdatedBy = userId;
-        UpdatedAt = DateTime.Now;
+        SetUpdatedBy(userId);
         AddHistory("CAPEX Entry Mode Updated", userId, $"CAPEX entry mode changed to {mode}");
         return Result<bool>.Success(true);
     }
@@ -523,8 +514,7 @@ public class Asset : AggregateRoot
         }
 
         OpexEntryMode = mode;
-        UpdatedBy = userId;
-        UpdatedAt = DateTime.Now;
+        SetUpdatedBy(userId);
         AddHistory("OPEX Entry Mode Updated", userId, $"OPEX entry mode changed to {mode}");
         return Result<bool>.Success(true);
     }
@@ -559,10 +549,8 @@ public class Asset : AggregateRoot
 
         var previousStatus = Status;
         Status = isPcAdmin ? AssetStatuses.AcceptedByPcAdmin : AssetStatuses.Submitted;
-        SubmittedBy = userId;
-        SubmittedAt = DateTime.Now;
-        UpdatedBy = userId;
-        UpdatedAt = DateTime.Now;
+        SetSubmittedBy(userId);
+        SetUpdatedBy(userId);
         RejectionReason = null;
         RejectedBy = null;
         RejectedAt = null;
@@ -576,8 +564,25 @@ public class Asset : AggregateRoot
                 ? "Asset submitted for PC Admin approval"
                 : "Asset resubmitted after addressing rejection reasons";
 
-        AddHistory(action, userId ?? "Admin", comments);
-        AddDomainEvent(new AssetSubmittedEvent(Id, AssetCode, userId ?? "Admin", CompanyId, CreatedBy ?? userId ?? "Admin", !isPcAdmin));
+        var submittedByActor = SubmittedBy ?? ActorIdentifierNormalizer.DefaultActor;
+        if (Guid.TryParse(submittedByActor, out _))
+        {
+            submittedByActor = ActorIdentifierNormalizer.DefaultActor;
+        }
+
+        var creatorActor = ActorIdentifierNormalizer.NormalizeStoredActor(CreatedBy, submittedByActor);
+        if (Guid.TryParse(creatorActor, out _))
+        {
+            creatorActor = submittedByActor;
+        }
+        AddHistory(action, submittedByActor, comments);
+        AddDomainEvent(new AssetSubmittedEvent(
+            Id,
+            AssetCode,
+            submittedByActor,
+            CompanyId,
+            creatorActor,
+            !isPcAdmin));
         return Result<bool>.Success(true);
     }
     /// <summary>
@@ -599,27 +604,23 @@ public class Asset : AggregateRoot
         AssignAssetCode(assetCode);
 
         Status = AssetStatuses.AcceptedByInfrabase;
-        ApprovedBy = userId;
-        ApprovedAt = DateTime.Now;
-
-        SubmittedBy = userId;
-        SubmittedAt = DateTime.Now;
-
-        UpdatedBy = userId;
-        UpdatedAt = DateTime.Now;
+        SetApprovedBy(userId);
+        SetSubmittedBy(userId);
+        SetUpdatedBy(userId);
 
         RejectionReason = null;
         RejectedBy = null;
         RejectedAt = null;
 
-        AddHistory("Checked by Infrabase Admin", !string.IsNullOrWhiteSpace(userId) ? userId : "Admin",
+        var checkedByActor = ApprovedBy ?? ActorIdentifierNormalizer.DefaultActor;
+        AddHistory("Checked by Infrabase Admin", checkedByActor,
             "Asset created by Infrabase Admin and marked as checked");
 
         AddDomainEvent(new AssetCheckedByInfrabaseAdminEvent(
             Id,
             AssetCode!,
-            !string.IsNullOrWhiteSpace(userId) ? userId : "Admin",
-            CreatedBy ?? userId ?? "Admin",
+            checkedByActor,
+            CreatedBy ?? checkedByActor,
             CompanyId));
 
         return Result<bool>.Success(true);
@@ -643,30 +644,28 @@ public class Asset : AggregateRoot
         }
 
         Status = AssetStatuses.AcceptedByInfrabase;
-        ApprovedBy = userId;
-        ApprovedAt = DateTime.Now;
+        SetApprovedBy(userId);
 
         if (string.IsNullOrWhiteSpace(SubmittedBy))
         {
-            SubmittedBy = userId;
-            SubmittedAt = DateTime.Now;
+            SetSubmittedBy(userId);
         }
 
-        UpdatedBy = userId;
-        UpdatedAt = DateTime.Now;
+        SetUpdatedBy(userId);
 
         RejectionReason = null;
         RejectedBy = null;
         RejectedAt = null;
 
-        AddHistory("Checked by Infrabase Admin", !string.IsNullOrWhiteSpace(userId) ? userId : "Admin",
+        var checkedByActor = ApprovedBy ?? ActorIdentifierNormalizer.DefaultActor;
+        AddHistory("Checked by Infrabase Admin", checkedByActor,
             "Asset updated and marked as checked");
 
         AddDomainEvent(new AssetCheckedByInfrabaseAdminEvent(
             Id,
             AssetCode!,
-            !string.IsNullOrWhiteSpace(userId) ? userId : "Admin",
-            CreatedBy ?? userId ?? "Admin",
+            checkedByActor,
+            CreatedBy ?? checkedByActor,
             CompanyId));
 
         return Result<bool>.Success(true);
@@ -685,12 +684,16 @@ public class Asset : AggregateRoot
         }
 
         Status = AssetStatuses.AcceptedByPcAdmin;
-        ApprovedBy = userId;
-        ApprovedAt = DateTime.Now;
-        UpdatedBy = userId;
-        UpdatedAt = DateTime.Now;
-        AddHistory("Accepted by PC Admin", userId, "Asset accepted and forwarded to Infrabase admin");
-        AddDomainEvent(new AssetAcceptedByPcAdminEvent(Id, AssetCode, userId ?? "Admin", CreatedBy ?? userId ?? "Admin", CompanyId));
+        SetApprovedBy(userId);
+        SetUpdatedBy(userId);
+        var approvedByActor = ApprovedBy ?? ActorIdentifierNormalizer.DefaultActor;
+        AddHistory("Accepted by PC Admin", approvedByActor, "Asset accepted and forwarded to Infrabase admin");
+        AddDomainEvent(new AssetAcceptedByPcAdminEvent(
+            Id,
+            AssetCode,
+            approvedByActor,
+            CreatedBy ?? approvedByActor,
+            CompanyId));
         return Result<bool>.Success(true);
     }
 
@@ -714,12 +717,16 @@ public class Asset : AggregateRoot
 
         Status = AssetStatuses.RejectedByPcAdmin;
         RejectionReason = rejectionReasonResult.Value;
-        RejectedBy = userId;
-        RejectedAt = DateTime.Now;
-        UpdatedBy = userId;
-        UpdatedAt = DateTime.Now;
-        AddHistory("Rejected by PC Admin", !string.IsNullOrWhiteSpace(userId) ? userId: "Admin", rejectionReason);
-        AddDomainEvent(new AssetRejectedByPcAdminEvent(Id, AssetCode, rejectionReason, !string.IsNullOrWhiteSpace(userId) ? userId : "Admin", CreatedBy ?? userId ?? "Admin"));
+        SetRejectedBy(userId);
+        SetUpdatedBy(userId);
+        var rejectedByActor = RejectedBy ?? ActorIdentifierNormalizer.DefaultActor;
+        AddHistory("Rejected by PC Admin", rejectedByActor, rejectionReason);
+        AddDomainEvent(new AssetRejectedByPcAdminEvent(
+            Id,
+            AssetCode,
+            rejectionReason,
+            rejectedByActor,
+            CreatedBy ?? rejectedByActor));
         return Result<bool>.Success(true);
     }
 
@@ -736,12 +743,16 @@ public class Asset : AggregateRoot
         }
 
         Status = AssetStatuses.AcceptedByInfrabase;
-        ApprovedBy = userId;
-        ApprovedAt = DateTime.Now;
-        UpdatedBy = userId;
-        UpdatedAt = DateTime.Now;
-        AddHistory("Checked by Infrabase Admin", !string.IsNullOrWhiteSpace(userId) ? userId : "Admin", "Asset checked and approved - Final approval");
-        AddDomainEvent(new AssetCheckedByInfrabaseAdminEvent(Id, AssetCode, !string.IsNullOrWhiteSpace(userId) ? userId : "Admin", CreatedBy ?? userId ?? "Admin", CompanyId));
+        SetApprovedBy(userId);
+        SetUpdatedBy(userId);
+        var approvedByActor = ApprovedBy ?? ActorIdentifierNormalizer.DefaultActor;
+        AddHistory("Checked by Infrabase Admin", approvedByActor, "Asset checked and approved - Final approval");
+        AddDomainEvent(new AssetCheckedByInfrabaseAdminEvent(
+            Id,
+            AssetCode,
+            approvedByActor,
+            CreatedBy ?? approvedByActor,
+            CompanyId));
         return Result<bool>.Success(true);
     }
 
@@ -765,12 +776,17 @@ public class Asset : AggregateRoot
 
         Status = AssetStatuses.RejectedByInfrabase;
         RejectionReason = rejectionReasonResult.Value;
-        RejectedBy = userId;
-        RejectedAt = DateTime.Now;
-        UpdatedBy = userId;
-        UpdatedAt = DateTime.Now;
-        AddHistory("Returned for Correction by Infrabase Admin", userId ?? "Admin", correctionReason);
-        AddDomainEvent(new AssetReturnedForCorrectionByInfrabaseAdminEvent(Id, AssetCode, correctionReason, userId ?? "Admin", CreatedBy ?? userId ?? "Admin", CompanyId));
+        SetRejectedBy(userId);
+        SetUpdatedBy(userId);
+        var rejectedByActor = RejectedBy ?? ActorIdentifierNormalizer.DefaultActor;
+        AddHistory("Returned for Correction by Infrabase Admin", rejectedByActor, correctionReason);
+        AddDomainEvent(new AssetReturnedForCorrectionByInfrabaseAdminEvent(
+            Id,
+            AssetCode,
+            correctionReason,
+            rejectedByActor,
+            CreatedBy ?? rejectedByActor,
+            CompanyId));
         return Result<bool>.Success(true);
     }
 
@@ -1233,8 +1249,7 @@ public class Asset : AggregateRoot
 
         if (changes.Any())
         {
-            UpdatedBy = userId;
-            UpdatedAt = DateTime.Now;
+            SetUpdatedBy(userId);
             AddHistory("Updated", userId, "Asset information updated",
                 string.Join(", ", changes), string.Join(", ", oldValues), string.Join(", ", newValues));
         }
@@ -1256,8 +1271,7 @@ public class Asset : AggregateRoot
                 contentType, sharePointUrl, uploadedBy);
 
             _attachments.Add(attachment);
-            UpdatedBy = uploadedBy;
-            UpdatedAt = DateTime.Now;
+            SetUpdatedBy(uploadedBy);
             AddHistory("Attachment Added", uploadedBy,
                 $"Attachment '{fileName}' ({fileSizeInBytes / 1024:N0} KB) uploaded");
             return Result<AssetAttachment>.Success(attachment);
@@ -1287,7 +1301,7 @@ public class Asset : AggregateRoot
             return result;
         }
 
-        UpdatedAt = DateTime.Now;
+        SetUpdatedBy(deletedBy);
         AddHistory("Attachment Removed", deletedBy, $"Attachment '{attachment.Metadata.FileName}' removed");
         return Result<bool>.Success(true);
     }
@@ -1302,10 +1316,65 @@ public class Asset : AggregateRoot
         return _attachments.FirstOrDefault(a => a.Id == attachmentId && !a.IsDeleted);
     }
 
+    private void SetSubmittedBy(string? userId)
+    {
+        SubmittedBy = ActorIdentifierNormalizer.NormalizeAuditActor(
+            userId,
+            SubmittedBy,
+            UpdatedBy,
+            ApprovedBy,
+            RejectedBy,
+            CreatedBy);
+        SubmittedAt = DateTime.Now;
+    }
+
+    private void SetApprovedBy(string? userId)
+    {
+        ApprovedBy = ActorIdentifierNormalizer.NormalizeAuditActor(
+            userId,
+            ApprovedBy,
+            SubmittedBy,
+            UpdatedBy,
+            RejectedBy,
+            CreatedBy);
+        ApprovedAt = DateTime.Now;
+    }
+
+    private void SetRejectedBy(string? userId)
+    {
+        RejectedBy = ActorIdentifierNormalizer.NormalizeAuditActor(
+            userId,
+            RejectedBy,
+            SubmittedBy,
+            ApprovedBy,
+            UpdatedBy,
+            CreatedBy);
+        RejectedAt = DateTime.Now;
+    }
+
+    private void SetUpdatedBy(string? userId)
+    {
+        UpdatedBy = ActorIdentifierNormalizer.NormalizeAuditActor(
+            userId,
+            UpdatedBy,
+            SubmittedBy,
+            ApprovedBy,
+            RejectedBy,
+            CreatedBy);
+        UpdatedAt = DateTime.Now;
+    }
+
     private void AddHistory(string action, string performedBy, string? comments = null,
         string? fieldsChanged = null, string? oldValues = null, string? newValues = null)
     {
-        var history = new AssetHistory(Id, Status, action, performedBy, comments,
+        var actor = ActorIdentifierNormalizer.NormalizeAuditActor(
+            performedBy,
+            UpdatedBy,
+            SubmittedBy,
+            ApprovedBy,
+            RejectedBy,
+            CreatedBy);
+        var history = new AssetHistory(Id, Status, action, actor, comments,
             fieldsChanged, oldValues, newValues);
         _history.Add(history);
     }

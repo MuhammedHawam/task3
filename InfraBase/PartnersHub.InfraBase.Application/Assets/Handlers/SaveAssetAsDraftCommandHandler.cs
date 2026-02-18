@@ -10,21 +10,23 @@ public class SaveAssetAsDraftCommandHandler : IRequestHandler<SaveAssetAsDraftCo
 {
     private readonly IAssetRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ITokenService _tokenService;
+    private readonly IUserDisplayNameService _userDisplayNameService;
 
     public SaveAssetAsDraftCommandHandler(
         IAssetRepository repository, 
         IUnitOfWork unitOfWork,
-        ITokenService tokenService)
+        IUserDisplayNameService userDisplayNameService)
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
-        _tokenService = tokenService;
+        _userDisplayNameService = userDisplayNameService;
     }
 
     public async Task<bool> Handle(SaveAssetAsDraftCommand command, CancellationToken cancellationToken)
     {
-        var userName = _tokenService.GetUserName(); // Use username for readable history
+        var actorDisplayName = await _userDisplayNameService.ResolveDisplayNameAsync(
+            command.ContactId,
+            cancellationToken: cancellationToken);
 
         var asset = await _repository.GetByIdAsync(command.Id, cancellationToken);
         if (asset == null)
@@ -32,7 +34,7 @@ public class SaveAssetAsDraftCommandHandler : IRequestHandler<SaveAssetAsDraftCo
             throw new NotFoundException("Asset", command.Id);
         }
 
-        var result = asset.SaveAsDraft(userName);
+        var result = asset.SaveAsDraft(actorDisplayName);
         if (result.IsFailure)
         {
             throw new ValidationException(result.Error!);

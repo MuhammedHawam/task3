@@ -36,7 +36,9 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
 
     public async Task<bool> Handle(UpdateAssetCommand command, CancellationToken cancellationToken)
     {
-        var userName = _tokenService.GetUserName(); // Use username for readable history
+        var actorDisplayName = await _userDisplayNameService.ResolveDisplayNameAsync(
+            command.ContactId,
+            cancellationToken);
 
         var asset = await _repository.GetByIdWithDetailsAsync(command.Id, cancellationToken);
         
@@ -95,7 +97,7 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
             command.IsRevenueGenerating, 
             command.IRR, 
             command.IsPifGuaranteesRequired, 
-            userName);
+            actorDisplayName);
 
         if (updateResult.IsFailure)
         {
@@ -120,12 +122,12 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
             }
         }
 
-        UpdateCapexDetails(asset, command, userName);
-        UpdateOpexDetails(asset, command, userName);
+        UpdateCapexDetails(asset, command, actorDisplayName);
+        UpdateOpexDetails(asset, command, actorDisplayName);
 
         if (command.CapexEntryMode.HasValue)
         {
-            var modeResult = asset.SetCapexEntryMode(command.CapexEntryMode.Value, userName);
+            var modeResult = asset.SetCapexEntryMode(command.CapexEntryMode.Value, actorDisplayName);
             if (modeResult.IsFailure)
             {
                 throw new ValidationException(modeResult.Error!);
@@ -134,7 +136,7 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
 
         if (command.OpexEntryMode.HasValue)
         {
-            var modeResult = asset.SetOpexEntryMode(command.OpexEntryMode.Value, userName);
+            var modeResult = asset.SetOpexEntryMode(command.OpexEntryMode.Value, actorDisplayName);
             if (modeResult.IsFailure)
             {
                 throw new ValidationException(modeResult.Error!);
@@ -143,7 +145,7 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
 
         if (command.AttachmentIdsToRemove?.Count > 0)
         {
-            RemoveAttachments(asset, command.AttachmentIdsToRemove, userName);
+            RemoveAttachments(asset, command.AttachmentIdsToRemove, actorDisplayName);
         }
 
         if (command.FilesToUpload?.Count > 0)
@@ -155,12 +157,12 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
                 command.FilesToUpload,
                 command.AttachmentDescription,
                 cancellationToken);
-            AddAttachments(asset, uploadRequests, userName);
+            AddAttachments(asset, uploadRequests, actorDisplayName);
         }
 
         if (command.AttachmentsToAdd?.Count > 0)
         {
-            AddAttachments(asset, command.AttachmentsToAdd, userName);
+            AddAttachments(asset, command.AttachmentsToAdd, actorDisplayName);
         }
 
         if (_tokenService.IsInfrabaseAdmin())
@@ -171,10 +173,6 @@ public class UpdateAssetCommandHandler : IRequestHandler<UpdateAssetCommand, boo
                 var nextNumber = await _repository.GetNextAssetNumberAsync(cancellationToken);
                 assetCode = $"Infra-{nextNumber:D6}";
             }
-            var actorDisplayName = await _userDisplayNameService.ResolveDisplayNameAsync(
-                command.ContactId,
-                cancellationToken);
-
             var checkResult = asset.MarkAsCheckedByInfrabaseAdminOnEdit(actorDisplayName, assetCode);
             if (checkResult.IsFailure)
             {

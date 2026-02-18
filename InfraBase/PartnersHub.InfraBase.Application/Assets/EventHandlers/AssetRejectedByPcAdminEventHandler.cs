@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
+using PartnersHub.InfraBase.Application.Common.Helpers;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Services;
 using PartnersHub.InfraBase.Domain.Events;
@@ -76,12 +77,26 @@ public class AssetRejectedByPcAdminEventHandler : INotificationHandler<AssetReje
 
     private async Task SendInAppNotification(AssetRejectedByPcAdminEvent notification, CancellationToken cancellationToken)
     {
+        var rejectorName = ResolveActorDisplayName(notification.RejectedBy, "PC Admin");
         await _notificationService.CreateInAppNotificationAsync(
             userId: notification.CreatedBy,
             title: "Asset Rejected by PC Admin",
-            message: $"Asset {notification.AssetCode} was rejected. Reason: {notification.RejectionReason}",
+            message: $"Asset {notification.AssetCode} was rejected by {rejectorName}. Reason: {notification.RejectionReason}",
             link: $"/assets/{notification.AssetId}",
             notificationType: "AssetRejection",
             cancellationToken: cancellationToken);
+    }
+
+    private static string ResolveActorDisplayName(string? actorValue, string fallbackRoleName)
+    {
+        var normalized = actorValue?.Trim();
+        if (string.IsNullOrWhiteSpace(normalized) || Guid.TryParse(normalized, out _))
+        {
+            return fallbackRoleName;
+        }
+
+        return normalized.Contains('@')
+            ? EmailHelper.ExtractNameFromEmail(normalized)
+            : normalized;
     }
 }

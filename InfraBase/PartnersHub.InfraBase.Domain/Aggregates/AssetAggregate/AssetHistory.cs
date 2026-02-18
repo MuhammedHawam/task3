@@ -34,7 +34,7 @@ public class AssetHistory : Entity
         AssetId = assetId;
         Status = status;
         Action = action;
-        PerformedBy = performedBy;
+        PerformedBy = ActorIdentifierNormalizer.NormalizeAuditActor(performedBy);
         PerformedAt = DateTime.Now;
         Comments = comments;
         FieldsChanged = fieldsChanged;

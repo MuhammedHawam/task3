@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
+using PartnersHub.InfraBase.Application.Common.Helpers;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Services;
 using PartnersHub.InfraBase.Domain.Events;
@@ -130,10 +131,11 @@ public class AssetReturnedForCorrectionEventHandler : INotificationHandler<Asset
 
     private async Task SendInAppNotificationToContributor(AssetReturnedForCorrectionByInfrabaseAdminEvent notification, CancellationToken cancellationToken)
     {
+        var returnedByName = ResolveActorDisplayName(notification.ReturnedBy, "Infrabase Admin");
         await _notificationService.CreateInAppNotificationAsync(
             userId: notification.CreatedBy,
             title: "Asset Returned for Correction",
-            message: $"Asset {notification.AssetCode} needs corrections. Reason: {notification.CorrectionReason}",
+            message: $"Asset {notification.AssetCode} was returned by {returnedByName}. Reason: {notification.CorrectionReason}",
             link: $"/assets/{notification.AssetId}",
             notificationType: "AssetCorrection",
             cancellationToken: cancellationToken);
@@ -141,12 +143,26 @@ public class AssetReturnedForCorrectionEventHandler : INotificationHandler<Asset
 
     private async Task SendInAppNotificationToPcAdmin(AssetReturnedForCorrectionByInfrabaseAdminEvent notification, string pcAdminEmail, CancellationToken cancellationToken)
     {
+        var returnedByName = ResolveActorDisplayName(notification.ReturnedBy, "Infrabase Admin");
         await _notificationService.CreateInAppNotificationAsync(
             userId: pcAdminEmail,
             title: "Asset Returned for Correction",
-            message: $"Asset {notification.AssetCode} needs corrections. Reason: {notification.CorrectionReason}",
+            message: $"Asset {notification.AssetCode} was returned by {returnedByName}. Reason: {notification.CorrectionReason}",
             link: $"/assets/{notification.AssetId}",
             notificationType: "AssetCorrection",
             cancellationToken: cancellationToken);
+    }
+
+    private static string ResolveActorDisplayName(string? actorValue, string fallbackRoleName)
+    {
+        var normalized = actorValue?.Trim();
+        if (string.IsNullOrWhiteSpace(normalized) || Guid.TryParse(normalized, out _))
+        {
+            return fallbackRoleName;
+        }
+
+        return normalized.Contains('@')
+            ? EmailHelper.ExtractNameFromEmail(normalized)
+            : normalized;
     }
 }
