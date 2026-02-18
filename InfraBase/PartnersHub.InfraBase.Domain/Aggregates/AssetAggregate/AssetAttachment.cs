@@ -33,7 +33,7 @@ public class AssetAttachment : Entity
         AssetId = assetId;
         Metadata = metadataResult.Value!;
         SharePointUrl = sharePointUrl;
-        UploadedBy = uploadedBy;
+        UploadedBy = ActorIdentifierNormalizer.NormalizeAuditActor(uploadedBy);
         UploadedAt = DateTime.Now;
         IsDeleted = false;
     }
@@ -46,7 +46,7 @@ public class AssetAttachment : Entity
         }
 
         IsDeleted = true;
-        DeletedBy = deletedBy;
+        DeletedBy = ActorIdentifierNormalizer.NormalizeAuditActor(deletedBy, UploadedBy);
         DeletedAt = DateTime.Now;
 
         return Result<bool>.Success(true);
