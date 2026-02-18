@@ -52,8 +52,7 @@ public class AssetSubmittedEventHandler : INotificationHandler<AssetSubmittedEve
 
             var pcAdminEmail = company.Representative.Email;
             
-            // Extract creator name from email (part before @) or use email
-            var creatorName = EmailHelper.ExtractNameFromEmail(notification.CreatedBy);
+            var creatorName = ResolveCreatorName(notification);
             
             // Build email body with HTML
             var emailBody = _emailTemplateService.BuildAssetSubmittedEmail(creatorName, notification.AssetId);
@@ -84,7 +83,7 @@ public class AssetSubmittedEventHandler : INotificationHandler<AssetSubmittedEve
                 var company = await _middlewareService.GetCompanyByIdAsync(notification.CompanyId);
                 if (company?.Representative != null && !string.IsNullOrWhiteSpace(company.Representative.Email))
                 {
-                    var creatorName = EmailHelper.ExtractNameFromEmail(notification.CreatedBy);
+                    var creatorName = ResolveCreatorName(notification);
                     await SendInAppNotificationToPcAdmin(notification, company.Representative.Email, creatorName, cancellationToken);
                 }
             }
@@ -106,5 +105,24 @@ public class AssetSubmittedEventHandler : INotificationHandler<AssetSubmittedEve
             link: $"/assets/{notification.AssetId}",
             notificationType: "AssetSubmission",
             cancellationToken: cancellationToken);
+    }
+
+    private static string ResolveCreatorName(AssetSubmittedEvent notification)
+    {
+        var submittedBy = notification.SubmittedBy?.Trim();
+        if (!string.IsNullOrWhiteSpace(submittedBy) && !Guid.TryParse(submittedBy, out _))
+        {
+            return submittedBy;
+        }
+
+        var createdBy = notification.CreatedBy?.Trim();
+        if (string.IsNullOrWhiteSpace(createdBy))
+        {
+            return "User";
+        }
+
+        return Guid.TryParse(createdBy, out _)
+            ? "User"
+            : EmailHelper.ExtractNameFromEmail(createdBy);
     }
 }

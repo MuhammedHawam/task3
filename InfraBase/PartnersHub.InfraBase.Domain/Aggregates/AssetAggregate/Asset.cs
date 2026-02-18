@@ -565,13 +565,23 @@ public class Asset : AggregateRoot
                 : "Asset resubmitted after addressing rejection reasons";
 
         var submittedByActor = SubmittedBy ?? ActorIdentifierNormalizer.DefaultActor;
+        if (Guid.TryParse(submittedByActor, out _))
+        {
+            submittedByActor = ActorIdentifierNormalizer.DefaultActor;
+        }
+
+        var creatorActor = ActorIdentifierNormalizer.NormalizeStoredActor(CreatedBy, submittedByActor);
+        if (Guid.TryParse(creatorActor, out _))
+        {
+            creatorActor = submittedByActor;
+        }
         AddHistory(action, submittedByActor, comments);
         AddDomainEvent(new AssetSubmittedEvent(
             Id,
             AssetCode,
             submittedByActor,
             CompanyId,
-            CreatedBy ?? submittedByActor,
+            creatorActor,
             !isPcAdmin));
         return Result<bool>.Success(true);
     }
