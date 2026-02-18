@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
+using PartnersHub.InfraBase.Application.Common.Helpers;
 using PartnersHub.InfraBase.Application.Common.Interfaces;
 using PartnersHub.InfraBase.Application.Common.Services;
 using PartnersHub.InfraBase.Domain.Events;
@@ -130,10 +131,11 @@ public class AssetCheckedByInfrabaseAdminEventHandler : INotificationHandler<Ass
 
     private async Task SendInAppNotificationToContributor(AssetCheckedByInfrabaseAdminEvent notification, CancellationToken cancellationToken)
     {
+        var checkerName = ResolveActorDisplayName(notification.CheckedBy, "Infrabase Admin");
         await _notificationService.CreateInAppNotificationAsync(
             userId: notification.CreatedBy,
             title: "Asset Approved",
-            message: $"Asset {notification.AssetCode} has been approved by Infrabase Admin.",
+            message: $"Asset {notification.AssetCode} has been approved by {checkerName}.",
             link: $"/assets/{notification.AssetId}",
             notificationType: "AssetFinalApproval",
             cancellationToken: cancellationToken);
@@ -141,12 +143,26 @@ public class AssetCheckedByInfrabaseAdminEventHandler : INotificationHandler<Ass
 
     private async Task SendInAppNotificationToPcAdmin(AssetCheckedByInfrabaseAdminEvent notification, string pcAdminEmail, CancellationToken cancellationToken)
     {
+        var checkerName = ResolveActorDisplayName(notification.CheckedBy, "Infrabase Admin");
         await _notificationService.CreateInAppNotificationAsync(
             userId: pcAdminEmail,
             title: "Asset Approved",
-            message: $"Asset {notification.AssetCode} has been approved by Infrabase Admin.",
+            message: $"Asset {notification.AssetCode} has been approved by {checkerName}.",
             link: $"/assets/{notification.AssetId}",
             notificationType: "AssetFinalApproval",
             cancellationToken: cancellationToken);
+    }
+
+    private static string ResolveActorDisplayName(string? actorValue, string fallbackRoleName)
+    {
+        var normalized = actorValue?.Trim();
+        if (string.IsNullOrWhiteSpace(normalized) || Guid.TryParse(normalized, out _))
+        {
+            return fallbackRoleName;
+        }
+
+        return normalized.Contains('@')
+            ? EmailHelper.ExtractNameFromEmail(normalized)
+            : normalized;
     }
 }
