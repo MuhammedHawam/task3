@@ -33,6 +33,9 @@ public class LdapUserService : ILdapUserService
 
     public async Task<PaginatedList<LdapUser>> SearchUsersAsync(string searchTerm, int pageNumber = 1, int pageSize = 20)
     {
+        pageNumber = Math.Max(1, pageNumber);
+        pageSize = pageSize <= 0 ? 20 : pageSize;
+
         using var connection = CreateConnection();
         
         var filter = string.IsNullOrWhiteSpace(searchTerm)
@@ -55,8 +58,12 @@ public class LdapUserService : ILdapUserService
         }
 
         _logger.LogInformation("Found {Count} users matching search term: {SearchTerm}", users.Count, searchTerm);
-        
-        return await Task.FromResult(PaginatedList<LdapUser>.Create(users, users.Count, pageNumber, pageSize));
+
+        var totalCount = users.Count;
+        var skip = (pageNumber - 1) * pageSize;
+        var pagedUsers = users.Skip(skip).Take(pageSize).ToList();
+
+        return await Task.FromResult(PaginatedList<LdapUser>.Create(pagedUsers, totalCount, pageNumber, pageSize));
     }
 
     public async Task<LdapUser?> GetUserByUsernameAsync(string? username,string? useremail)

@@ -159,19 +159,9 @@ public class MiddlewareIntegrationService : IMiddlewareIntegrationService
             var endpoint = $"{_baseUrl}/PartnerHubFiles/upload-request-files";
             using var form = new MultipartFormDataContent();
 
-            var streams = new List<MemoryStream>();
-
             foreach (var file in files)
             {
-                var originalStream = file.OpenReadStream();
-
-                var memoryStream = new MemoryStream();
-                await originalStream.CopyToAsync(memoryStream, cancellationToken);
-                memoryStream.Position = 0;
-
-                streams.Add(memoryStream);
-
-                var fileContent = new StreamContent(memoryStream);
+                var fileContent = new StreamContent(file.OpenReadStream());
 
                 var contentType = string.IsNullOrWhiteSpace(file.ContentType)
                     ? "application/octet-stream"

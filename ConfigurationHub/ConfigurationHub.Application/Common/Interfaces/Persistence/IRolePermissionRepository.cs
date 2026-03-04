@@ -12,4 +12,5 @@ public interface IRolePermissionRepository
     Task<IEnumerable<Role>> GetRolesByPermissionIdAsync(Guid permissionId);
     Task<bool> ExistsAsync(Guid roleId, Guid permissionId);
     Task<bool> UpdateBulkAsync(Guid roleId, List<Guid> permissionId);
+    Task<IReadOnlyCollection<string>> GetPermissionNamesByUserIdAsync(string userId);
 }
