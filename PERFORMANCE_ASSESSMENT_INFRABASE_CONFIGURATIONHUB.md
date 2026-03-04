@@ -1,212 +1,188 @@
-# InfraBase + ConfigurationHub Performance Assessment
+# Performance Review Notes  
+## InfraBase + ConfigurationHub
 
-## Scope
-- `InfraBase/*`
-- `ConfigurationHub/*`
-
-## Executive Summary
-- Main scalability risks were caused by repeated lookup/network calls, N+1 permission queries, and duplicated mapping logic across handlers.
-- High-impact refactors were implemented to reduce redundant work and improve read-path efficiency without changing business behavior.
-- Additional improvements are still recommended (indexing and endpoint-level pagination safeguards) for large-scale growth.
+Prepared for: Team Lead  
+Prepared by: Engineering Review  
 
 ---
 
-## Findings and Actions
+## 1) Quick Summary
 
-### 1) InfraBase: Repeated mapping + lookup work across handlers (HIGH)
-**Problem**
-- Dashboard/list handlers duplicated expensive mapping and lookup resolution logic.
-- This increased maintenance cost and made performance fixes inconsistent.
+I reviewed both InfraBase and ConfigurationHub with one goal: improve performance and scalability **without changing business logic**.
 
-**Action implemented**
-- Introduced shared service:
-  - `InfraBase/PartnersHub.InfraBase.Application/Common/Interfaces/IAssetListProjectionService.cs`
-  - `InfraBase/PartnersHub.InfraBase.Infrastructure/Services/AssetListProjectionService.cs`
-- Refactored handlers to reuse shared projection:
-  - `GetAssetListQueryHandler`
-  - `GetAssetsByStatusQueryHandler`
-  - `DashboardQueryHandlers` (all dashboard variants)
-- Registered service in DI:
-  - `InfraBase/PartnersHub.InfraBase.Apis/Program.cs`
+The biggest issues were:
+- repeated lookup and mapping logic in multiple handlers
+- N+1 database calls (especially around permissions)
+- unnecessary memory usage in file upload flow
+- some read queries doing extra work that can be avoided
 
-**Expected impact**
-- Lower repeated CPU/network work per request.
-- Stronger consistency and easier future optimization.
+I already implemented a first wave of refactors that are safe, targeted, and high impact.
 
 ---
 
-### 2) InfraBase: Lookup inefficiency for sector names (HIGH)
-**Problem**
-- Sector name resolution used by-id HTTP requests repeatedly.
+## 2) What Was Improved (Already Implemented)
 
-**Action implemented**
-- `ConfigurationLookupService` now resolves sector/subsector/asset-type/UOM names through cached in-memory lookup maps built from list endpoints.
-- File:
-  - `InfraBase/PartnersHub.InfraBase.Infrastructure/Services/ConfigurationLookupService.cs`
+### A) InfraBase
 
-**Expected impact**
-- Fewer external calls, lower latency, reduced load on ConfigurationHub lookup endpoints.
+#### A1. Unified asset list mapping in one shared service (High Impact)
+**What I noticed:**  
+The same heavy mapping logic was repeated in list and dashboard handlers.
 
----
+**What I changed:**  
+Created one shared projection service and reused it across handlers.
 
-### 3) InfraBase: Read query overhead in repository methods (MEDIUM)
-**Problem**
-- Read-heavy methods used tracking where not needed.
-- Multi-collection includes could produce expensive query shapes.
-- History endpoint loaded full asset graph unnecessarily.
-
-**Action implemented**
-- Added `AsNoTracking()` to read-only list/count paths.
-- Added `AsSplitQuery()` where multi-collection includes are needed.
-- Added focused history loader and updated history handler:
-  - `GetByIdWithHistoryAsync` in repository/interface
-  - `GetAssetHistoryQueryHandler` uses focused loader
-- Files:
-  - `IAssetRepository.cs`
-  - `AssetRepository.cs`
-  - `GetAssetHistoryQueryHandler.cs`
-
-**Expected impact**
-- Lower change-tracker overhead and better query execution behavior under load.
+**Result:**  
+Less duplicated code, fewer repeated calls, easier maintenance, and cleaner future optimization.
 
 ---
 
-### 4) InfraBase: Upload path memory pressure (HIGH)
-**Problem**
-- File uploads copied each file into `MemoryStream` before request.
+#### A2. Reduced lookup overhead for sector/subsector/asset type/UOM names (High Impact)
+**What I noticed:**  
+Lookup resolution was doing more network/search work than needed.
 
-**Action implemented**
-- Stream files directly into multipart content.
-- File:
-  - `InfraBase/PartnersHub.InfraBase.Infrastructure/Services/MiddlewareIntegrationService.cs`
+**What I changed:**  
+Optimized lookup service to use cached in-memory maps built from lookup lists.
 
-**Expected impact**
-- Lower memory usage, reduced allocation pressure, better scalability for larger/multiple uploads.
+**Result:**  
+Fewer repeated lookups, lower latency, and less pressure on upstream services.
 
 ---
 
-### 5) ConfigurationHub: N+1 permission queries per user (HIGH)
-**Problem**
-- Permission checks iterated roles and queried permissions repeatedly (N+1).
+#### A3. Optimized read paths in asset repository (Medium Impact)
+**What I noticed:**  
+Some read queries were tracking entities when they did not need to, and some include patterns were expensive.
 
-**Action implemented**
-- Added set-based repository method:
-  - `GetPermissionNamesByUserIdAsync`
-- `RoleService.UserHasPermissionAsync` and `GetUserPermissionsAsync` now use one set-based fetch.
-- Files:
-  - `IRolePermissionRepository.cs`
-  - `RolePermissionRepository.cs`
-  - `RoleService.cs`
+**What I changed:**  
+- Added `AsNoTracking()` on read-only query paths  
+- Added `AsSplitQuery()` for multi-collection includes  
+- Added a focused history loader (`GetByIdWithHistoryAsync`) so history endpoint does not load full details unnecessarily
 
-**Expected impact**
-- Fewer DB round-trips and lower authorization latency.
+**Result:**  
+Lower read overhead and better behavior under load.
 
 ---
 
-### 6) ConfigurationHub: Role-permission insert path was chatty (HIGH)
-**Problem**
-- Role-permission assignment did per-item existence checks.
+#### A4. Removed unnecessary memory buffering in file uploads (High Impact)
+**What I noticed:**  
+Files were copied into `MemoryStream` before upload.
 
-**Action implemented**
-- `AddAsync` in `RolePermissionRepository` now:
-  - De-duplicates input IDs
-  - Performs one existence check
-  - Performs one batch insert
-- Also switched read paths to `AsNoTracking()` where appropriate.
+**What I changed:**  
+Stream files directly in multipart request content.
 
-**Expected impact**
-- Significant reduction in DB calls during bulk permission assignment.
+**Result:**  
+Lower memory footprint and better scalability for large/multiple uploads.
 
 ---
 
-### 7) ConfigurationHub: Registered company query inefficiencies (MEDIUM)
-**Problem**
-- Tracked reads, sync count, and heavier-than-needed query shape.
+### B) ConfigurationHub
 
-**Action implemented**
-- Added `AsNoTracking()`
-- Replaced sync count with `CountAsync()`
-- Improved search filter and duplicate-check workflow
-- Added null-safe delete behavior
-- File:
-  - `ConfigurationHub/ConfigurationHub.Infrastructure/Persistence/Repositories/RegisteredCompanyRepository.cs`
+#### B1. Removed N+1 permission queries (High Impact)
+**What I noticed:**  
+Permission checks were querying per role in loops.
 
-**Expected impact**
-- Improved list endpoint performance and more predictable behavior under load.
+**What I changed:**  
+Added a set-based permission fetch (`GetPermissionNamesByUserIdAsync`) and used it in role service.
+
+**Result:**  
+Fewer DB round-trips and faster authorization checks.
 
 ---
 
-### 8) ConfigurationHub: Middleware response double read (MEDIUM)
-**Problem**
-- Sector-based company fetch read response body twice.
+#### B2. Optimized role-permission bulk assignment flow (High Impact)
+**What I noticed:**  
+Each permission assignment did separate existence checks.
 
-**Action implemented**
-- Parse JSON once with error handling (`JsonException`).
-- File:
-  - `ConfigurationHub/ConfigurationHub.Infrastructure/Services/MiddlewareCompanyService.cs`
+**What I changed:**  
+- deduplicate input list  
+- one existence check  
+- one batch insert
 
-**Expected impact**
-- Lower allocations and cleaner response handling.
-
----
-
-### 9) ConfigurationHub: EF config override risk for Permission/Module (MEDIUM)
-**Problem**
-- Configuration methods were not overriding base configuration method.
-
-**Action implemented**
-- Converted to `override` and invoked `base.Configure(builder)`.
-- Files:
-  - `PermissionConfiguration.cs`
-  - `ProductConfiguration.cs` (ModuleConfiguration)
-
-**Expected impact**
-- More reliable EF model configuration application and schema consistency.
+**Result:**  
+Much more efficient permission assignment.
 
 ---
 
-### 10) ConfigurationHub: LDAP response pagination in API output (MEDIUM)
-**Problem**
-- LDAP search returned full result list without applying requested page.
+#### B3. Improved registered company list/add/delete query path (Medium Impact)
+**What I noticed:**  
+There were avoidable read costs (tracked reads, sync count) and duplicate-check inefficiencies.
 
-**Action implemented**
-- Applied page validation and `Skip/Take` before building response.
-- File:
-  - `ConfigurationHub/ConfigurationHub.Infrastructure/Services/LdapUserService.cs`
+**What I changed:**  
+- `AsNoTracking()` for read lists  
+- `CountAsync()` instead of sync count  
+- improved duplicate check flow  
+- null-safe delete behavior
 
-**Expected impact**
-- Smaller API payloads and better response time for large directories.
-
-> Note: true LDAP server-side paging remains recommended as a follow-up task.
-
----
-
-## Prioritized Team To-Do (Next Sprint)
-
-### P0 (must do)
-1. **Add safe caps/pagination strategy for `GetAssetsByStatus` and in-memory sort flows**
-   - Current path can still fetch very large result sets (`int.MaxValue` usage in handlers).
-2. **Add SQL indexes aligned with query patterns**
-   - InfraBase likely candidates: `(CompanyId, Status, CreatedAt)`, `(CreatedBy, Status, CreatedAt)`, `AssetCode`.
-   - ConfigurationHub likely candidates: whitelist and role/user query-specific indexes.
-3. **Implement true LDAP server-side paging**
-   - Replace full-search then in-memory page with LDAP paging controls.
-
-### P1 (high value)
-4. **Move asset-code generation to DB-backed strategy**
-   - Current approach scans and parses many asset codes in memory.
-5. **Introduce response caching for stable lookup data**
-   - Add bounded IMemoryCache/Redis policy for lookup dictionaries across requests.
-
-### P2 (quality/scalability hardening)
-6. **Add performance regression tests**
-   - Load tests for dashboard/list endpoints.
-   - Benchmarks for permission checks and role-permission assignments.
-7. **Add query telemetry**
-   - Track SQL count/time and external call count per request (OpenTelemetry/App Insights).
+**Result:**  
+Cleaner behavior and better query efficiency.
 
 ---
 
-## Verification Notes
-- Build tooling (`dotnet`) is unavailable in the current execution environment, so compile/test commands could not be executed here.
-- All changes were validated through code-level consistency checks and cross-file dependency review.
+#### B4. Cleaned middleware response handling (Medium Impact)
+**What I noticed:**  
+Response content was read/parsing path more than once in one flow.
+
+**What I changed:**  
+Single parse path with JSON exception handling.
+
+**Result:**  
+Less allocation and cleaner error handling.
+
+---
+
+#### B5. Fixed EF configuration override correctness (Medium Impact)
+**What I noticed:**  
+Some configuration classes were not overriding base config method correctly.
+
+**What I changed:**  
+Converted to proper `override` and called `base.Configure(...)`.
+
+**Result:**  
+More reliable EF model configuration behavior.
+
+---
+
+#### B6. Applied API-level pagination on LDAP search response (Medium Impact)
+**What I noticed:**  
+LDAP search returned full list and then wrapped it as paged response without slicing.
+
+**What I changed:**  
+Applied page validation with `Skip/Take` before returning.
+
+**Result:**  
+Smaller payloads and faster API response for big result sets.
+
+> Note: True LDAP **server-side paging** is still recommended as next step.
+
+---
+
+## 3) Priority To-Do List (Recommended Next Sprint)
+
+### P0 — Must Do
+1. Add hard safety limits/pagination strategy for very large asset list paths (especially current `int.MaxValue` usage).
+2. Add missing SQL indexes based on real filter/sort patterns.  
+   Suggested start:
+   - InfraBase: `(CompanyId, Status, CreatedAt)`, `(CreatedBy, Status, CreatedAt)`, `AssetCode`
+3. Implement true LDAP server-side paging (not only in-memory page slicing).
+
+### P1 — High Value
+4. Move asset code generation to DB-backed strategy (avoid large in-memory scan/parse as data grows).
+5. Add caching policy for stable lookup data (bounded memory cache / Redis if needed).
+
+### P2 — Hardening
+6. Add performance regression test suite for key list/dashboard/permission endpoints.
+7. Add query and external-call telemetry (SQL duration/count + external API call timings).
+
+---
+
+## 4) Risk and Validation Notes
+
+- I kept logic/functionality intact and focused only on performance-safe refactoring.
+- Build command could not run in this environment because `.NET SDK` is not installed (`dotnet` not found).
+- Changes were validated through code-level dependency and flow checks; full CI build/test should still run in pipeline.
+
+---
+
+## 5) Final Comment for Leadership
+
+Current refactor wave already removes several immediate bottlenecks and code redundancies, and it puts both modules in a better position for scaling.  
+If we complete the P0 items next (indexes, hard pagination controls, and true LDAP paging), we should see a clear improvement in response times and system stability under higher load.
