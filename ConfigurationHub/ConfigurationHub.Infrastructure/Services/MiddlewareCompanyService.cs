@@ -6,6 +6,7 @@ using PartnersHub.ConfigurationHub.Application.Middleware.DTOs;
 using PartnersHub.ConfigurationHub.Application.Middleware.Interfaces;
 using System.Net.Http.Json;
 using System.Reflection.Metadata;
+using System.Text.Json;
 
 namespace PartnersHub.ConfigurationHub.Infrastructure.Services;
 
@@ -210,18 +211,20 @@ public class MiddlewareCompanyService : IMiddlewareCompanyService
                 return new List<MiddlewareCompanyDto>();
             }
 
-            var body = await response.Content.ReadAsStringAsync();
-
-            if (string.IsNullOrWhiteSpace(body) || body.Trim().Equals("null", StringComparison.OrdinalIgnoreCase))
+            MiddlewareWrappedResponse<List<MiddlewareCompanyDto>>? wrappedResponse;
+            try
             {
-                _logger.LogWarning("Middleware returned empty body for Sector {SectorId}", sectorId);
-                return new List<MiddlewareCompanyDto>(); // or return null (your choice)
+                wrappedResponse = await response.Content
+                    .ReadFromJsonAsync<MiddlewareWrappedResponse<List<MiddlewareCompanyDto>>>();
             }
-            var wrappedResponse =
-                await response.Content.ReadFromJsonAsync<MiddlewareWrappedResponse<List<MiddlewareCompanyDto>>>();
+            catch (JsonException ex)
+            {
+                _logger.LogWarning(ex, "Middleware returned invalid JSON body for Sector {SectorId}", sectorId);
+                return new List<MiddlewareCompanyDto>();
+            }
 
             var companies = wrappedResponse?.Data;
-            if (!companies!.Any())
+            if (companies == null || companies.Count == 0)
             {
                 _logger.LogWarning("Company with Sector {SectorId} returned null data from middleware", sectorId);
                 return new List<MiddlewareCompanyDto>();

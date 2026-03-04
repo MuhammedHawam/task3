@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PartnersHub.ConfigurationHub.Application.Common.DTOs;
 using PartnersHub.ConfigurationHub.Application.Common.Interfaces;
 using PartnersHub.ConfigurationHub.Application.Common.Interfaces.Services;
@@ -12,8 +12,7 @@ namespace PartnersHub.ConfigurationHub.Infrastructure.Persistence.Repositories
         public async Task<PaginatedList<RegisteredCompanyListDto>> GetAllAsync(int pageSize, int pageIndex, string? searchparam, string? sortBy = null)
         {
             var query = _context.RegisteredCompanies
-                .Include(r=>r.Module)
-                .OrderBy(r => r.CreatedAt)
+                .AsNoTracking()
                 .AsQueryable();
 
 
@@ -35,12 +34,13 @@ namespace PartnersHub.ConfigurationHub.Infrastructure.Persistence.Repositories
             };
             if (!string.IsNullOrEmpty(searchparam))
             {
+                var searchPattern = $"%{searchparam.Trim()}%";
                 query = query.Where(r =>
-                    r.Name.Contains(searchparam) ||
-                    r.Module.Name.Contains(searchparam));
+                    EF.Functions.Like(r.Name, searchPattern) ||
+                    EF.Functions.Like(r.Module.Name, searchPattern));
             }
 
-            var totalCount =  query.Count();
+            var totalCount = await query.CountAsync();
 
             var items = await query
                 .Skip((pageIndex - 1) * pageSize)
@@ -63,13 +63,35 @@ namespace PartnersHub.ConfigurationHub.Infrastructure.Persistence.Repositories
 
         public async Task<bool> AddAsync(Guid ModuleId,string? sectorId,string? sectorName,string description,List<RegisteredCompanyDto> companyDtos,CancellationToken cancellationToken)
         {
-            if(_context.RegisteredCompanies.Any(a=> companyDtos.Select(c=>c.Name).Any(co=>co.ToLower() == a.Name.ToLower())))
+            var normalizedRequestedNames = companyDtos
+                .Select(company => company.Name?.Trim())
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Select(name => name!)
+                .ToList();
+
+            var distinctRequestedNames = normalizedRequestedNames
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (distinctRequestedNames.Count != normalizedRequestedNames.Count)
             {
                 throw new ArgumentException("Company Already Registered");
             }
-            foreach (var companyDto in companyDtos)
+
+            var normalizedNameSet = distinctRequestedNames
+                .Select(name => name.ToLower())
+                .ToList();
+
+            var companyAlreadyExists = await _context.RegisteredCompanies
+                .AsNoTracking()
+                .AnyAsync(company => normalizedNameSet.Contains(company.Name.ToLower()), cancellationToken);
+
+            if (companyAlreadyExists)
             {
-               await _context.RegisteredCompanies.AddAsync(new RegisteredCompany
+                throw new ArgumentException("Company Already Registered");
+            }
+
+            var companies = companyDtos.Select(companyDto => new RegisteredCompany
                 {
                     ModuleId = ModuleId,
                     Name = companyDto.Name,
@@ -79,8 +101,10 @@ namespace PartnersHub.ConfigurationHub.Infrastructure.Persistence.Repositories
                     Description = description,
                     CreatedBy = _currentUser.UserId ?? "N/A",
                     CreatedAt = DateTime.Now,
-                }, cancellationToken);
-            }
+                })
+                .ToList();
+
+            await _context.RegisteredCompanies.AddRangeAsync(companies, cancellationToken);
 
             return await _context.SaveChangesAsync(cancellationToken) >0 ;
         }
@@ -89,6 +113,10 @@ namespace PartnersHub.ConfigurationHub.Infrastructure.Persistence.Repositories
         public async Task<bool> DeleteAsync(Guid companyId,CancellationToken cancellationToken)
         {
             var company = await _context.RegisteredCompanies.FirstOrDefaultAsync(a=>a.Id == companyId);
+            if (company == null)
+            {
+                return false;
+            }
 
             _context.RegisteredCompanies.Remove(company);
 

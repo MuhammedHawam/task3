@@ -193,33 +193,13 @@ public class RoleService : IRoleService
 
     public async Task<bool> UserHasPermissionAsync(string userId, string permissionName)
     {
-        var userRoles = await _userRoleRepository.GetByUserIdAsync(userId);
-        
-        foreach (var userRole in userRoles)
-        {
-            var permissions = await _rolePermissionRepository.GetPermissionsByRoleIdAsync(userRole.RoleId);
-            if (permissions.Any(p => p.Name.Equals(permissionName, StringComparison.OrdinalIgnoreCase)))
-                return true;
-        }
-
-        return false;
+        var permissionNames = await _rolePermissionRepository.GetPermissionNamesByUserIdAsync(userId);
+        return permissionNames.Any(name => name.Equals(permissionName, StringComparison.OrdinalIgnoreCase));
     }
 
     public async Task<IEnumerable<string>> GetUserPermissionsAsync(string userId)
     {
-        var userRoles = await _userRoleRepository.GetByUserIdAsync(userId);
-        var allPermissions = new HashSet<string>();
-
-        foreach (var userRole in userRoles)
-        {
-            var permissions = await _rolePermissionRepository.GetPermissionsByRoleIdAsync(userRole.RoleId);
-            foreach (var permission in permissions)
-            {
-                allPermissions.Add(permission.Name);
-            }
-        }
-
-        return allPermissions;
+        return await _rolePermissionRepository.GetPermissionNamesByUserIdAsync(userId);
     }
 
     public async Task<bool> UpdateRolePermissionsAsync(Guid roleId, List<Guid> permissionId)
