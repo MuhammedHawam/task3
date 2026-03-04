@@ -179,6 +179,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IUserDisplayNameService, UserDisplayNameService>();
 builder.Services.AddScoped<IAssetSubmittedByResolver, AssetSubmittedByResolver>();
+builder.Services.AddScoped<IAssetListProjectionService, AssetListProjectionService>();
 
 var app = builder.Build();
 var culture = new CultureInfo("en-SA");

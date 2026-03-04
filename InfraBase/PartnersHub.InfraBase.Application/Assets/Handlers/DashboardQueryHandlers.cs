@@ -13,20 +13,14 @@ public class GetContributorDashboardQueryHandler
     : IRequestHandler<GetContributorDashboardQuery, ContributorDashboardDto>
 {
     private readonly IAssetRepository _repository;
-    private readonly IConfigurationLookupService _lookupService;
-    private readonly IMiddlewareIntegrationService _middlewareService;
-    private readonly IAssetSubmittedByResolver _assetSubmittedByResolver;
+    private readonly IAssetListProjectionService _assetListProjectionService;
 
     public GetContributorDashboardQueryHandler(
         IAssetRepository repository,
-        IConfigurationLookupService lookupService,
-        IMiddlewareIntegrationService middlewareService,
-        IAssetSubmittedByResolver assetSubmittedByResolver)
+        IAssetListProjectionService assetListProjectionService)
     {
         _repository = repository;
-        _lookupService = lookupService;
-        _middlewareService = middlewareService;
-        _assetSubmittedByResolver = assetSubmittedByResolver;
+        _assetListProjectionService = assetListProjectionService;
     }
 
     public async Task<ContributorDashboardDto> Handle(
@@ -45,56 +39,10 @@ public class GetContributorDashboardQueryHandler
             request.SearchTerm,
             cancellationToken);
 
-        var assetDtos = new List<AssetListDto>();
-
-        var companyNamesById = await LoadCompanyNamesAsync(
-            paginatedAssets.Items.Select(a => a.CompanyId).Distinct(),
-            cancellationToken);
-        var submittedByNamesByAssetId = await _assetSubmittedByResolver.ResolveForAssetsAsync(
+        var assetDtos = await _assetListProjectionService.MapAsync(
             paginatedAssets.Items,
+            includeOtherValuesForSectorAndSubSector: false,
             cancellationToken);
-
-        foreach (var asset in paginatedAssets.Items)
-        {
-            var sectorName = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty
-                ? await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)
-                : null;
-            sectorName = string.IsNullOrWhiteSpace(sectorName) ? "N/A" : sectorName;
-
-            var subSectorName = asset.SubSectorId.HasValue && asset.SubSectorId.Value != Guid.Empty
-                ? await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)
-                : null;
-            subSectorName = string.IsNullOrWhiteSpace(subSectorName) ? "N/A" : subSectorName;
-
-            var assetTypeName = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty
-                ? await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)
-                : null;
-            assetTypeName = string.IsNullOrWhiteSpace(assetTypeName)
-                ? (asset.AssetTypeOther ?? "N/A")
-                : assetTypeName;
-
-            var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
-                ? resolvedCompanyName
-                : asset.CompanyName;
-            submittedByNamesByAssetId.TryGetValue(asset.Id, out var submittedByDisplayName);
-
-            assetDtos.Add(new AssetListDto
-            {
-                Id = asset.Id,
-                AssetCode = asset.AssetCode,
-                AssetName = asset.AssetName.Value,
-                SectorName = sectorName,
-                SubSectorName = subSectorName,
-                AssetTypeName = assetTypeName,
-                Status = asset.Status,
-                SubmittedAt = asset.SubmittedAt,
-                SubmittedBy = submittedByDisplayName,
-                TotalCapex = asset.TotalCapex,
-                TotalOpex = asset.TotalOpex,
-                CompanyName = companyName,
-                CreatedAt = asset.CreatedAt
-            });
-        }
 
         return new ContributorDashboardDto
         {
@@ -116,58 +64,20 @@ public class GetContributorDashboardQueryHandler
                 request.PageSize)
         };
     }
-
-    private async Task<IReadOnlyDictionary<Guid, string>> LoadCompanyNamesAsync(
-        IEnumerable<Guid> companyIds,
-        CancellationToken cancellationToken)
-    {
-        const int maxConcurrency = 8;
-        using var semaphore = new SemaphoreSlim(maxConcurrency, maxConcurrency);
-        var dict = new System.Collections.Concurrent.ConcurrentDictionary<Guid, string>();
-
-        var tasks = companyIds.Select(async companyId =>
-        {
-            if (companyId == Guid.Empty)
-                return;
-
-            await semaphore.WaitAsync(cancellationToken);
-            try
-            {
-                var company = await _middlewareService.GetCompanyByIdAsync(companyId);
-                if (!string.IsNullOrWhiteSpace(company?.Name))
-                {
-                    dict.TryAdd(companyId, company.Name);
-                }
-            }
-            finally
-            {
-                semaphore.Release();
-            }
-        });
-
-        await Task.WhenAll(tasks);
-        return dict;
-    }
 }
 
 public class GetPcAdminDashboardQueryHandler
     : IRequestHandler<GetPcAdminDashboardQuery, PcAdminDashboardDto>
 {
     private readonly IAssetRepository _repository;
-    private readonly IConfigurationLookupService _lookupService;
-    private readonly IMiddlewareIntegrationService _middlewareService;
-    private readonly IAssetSubmittedByResolver _assetSubmittedByResolver;
+    private readonly IAssetListProjectionService _assetListProjectionService;
 
     public GetPcAdminDashboardQueryHandler(
         IAssetRepository repository,
-        IConfigurationLookupService lookupService,
-        IMiddlewareIntegrationService middlewareService,
-        IAssetSubmittedByResolver assetSubmittedByResolver)
+        IAssetListProjectionService assetListProjectionService)
     {
         _repository = repository;
-        _lookupService = lookupService;
-        _middlewareService = middlewareService;
-        _assetSubmittedByResolver = assetSubmittedByResolver;
+        _assetListProjectionService = assetListProjectionService;
     }
 
     public async Task<PcAdminDashboardDto> Handle(
@@ -186,56 +96,10 @@ public class GetPcAdminDashboardQueryHandler
             request.SearchTerm,
             cancellationToken);
 
-        var assetDtos = new List<AssetListDto>();
-
-        var companyNamesById = await LoadCompanyNamesAsync(
-            paginatedAssets.Items.Select(a => a.CompanyId).Distinct(),
-            cancellationToken);
-        var submittedByNamesByAssetId = await _assetSubmittedByResolver.ResolveForAssetsAsync(
+        var assetDtos = await _assetListProjectionService.MapAsync(
             paginatedAssets.Items,
+            includeOtherValuesForSectorAndSubSector: false,
             cancellationToken);
-
-        foreach (var asset in paginatedAssets.Items)
-        {
-            var sectorName = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty
-                ? await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)
-                : null;
-            sectorName = string.IsNullOrWhiteSpace(sectorName) ? "N/A" : sectorName;
-
-            var subSectorName = asset.SubSectorId.HasValue && asset.SubSectorId.Value != Guid.Empty
-                ? await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)
-                : null;
-            subSectorName = string.IsNullOrWhiteSpace(subSectorName) ? "N/A" : subSectorName;
-
-            var assetTypeName = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty
-                ? await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)
-                : null;
-            assetTypeName = string.IsNullOrWhiteSpace(assetTypeName)
-                ? (asset.AssetTypeOther ?? "N/A")
-                : assetTypeName;
-
-            var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
-                ? resolvedCompanyName
-                : asset.CompanyName;
-            submittedByNamesByAssetId.TryGetValue(asset.Id, out var submittedByDisplayName);
-
-            assetDtos.Add(new AssetListDto
-            {
-                Id = asset.Id,
-                AssetCode = asset.AssetCode,
-                AssetName = asset.AssetName.Value,
-                SectorName = sectorName,
-                SubSectorName = subSectorName,
-                AssetTypeName = assetTypeName,
-                Status = asset.Status,
-                SubmittedAt = asset.SubmittedAt,
-                SubmittedBy = submittedByDisplayName,
-                TotalCapex = asset.TotalCapex,
-                TotalOpex = asset.TotalOpex,
-                CompanyName = companyName,
-                CreatedAt = asset.CreatedAt
-            });
-        }
 
         return new PcAdminDashboardDto
         {
@@ -256,58 +120,20 @@ public class GetPcAdminDashboardQueryHandler
                 request.PageSize)
         };
     }
-
-    private async Task<IReadOnlyDictionary<Guid, string>> LoadCompanyNamesAsync(
-        IEnumerable<Guid> companyIds,
-        CancellationToken cancellationToken)
-    {
-        const int maxConcurrency = 8;
-        using var semaphore = new SemaphoreSlim(maxConcurrency, maxConcurrency);
-        var dict = new System.Collections.Concurrent.ConcurrentDictionary<Guid, string>();
-
-        var tasks = companyIds.Select(async companyId =>
-        {
-            if (companyId == Guid.Empty)
-                return;
-
-            await semaphore.WaitAsync(cancellationToken);
-            try
-            {
-                var company = await _middlewareService.GetCompanyByIdAsync(companyId);
-                if (!string.IsNullOrWhiteSpace(company?.Name))
-                {
-                    dict.TryAdd(companyId, company.Name);
-                }
-            }
-            finally
-            {
-                semaphore.Release();
-            }
-        });
-
-        await Task.WhenAll(tasks);
-        return dict;
-    }
 }
 
 public class GetTeamAssetsDashboardQueryHandler
     : IRequestHandler<GetTeamAssetsDashboardQuery, TeamAssetsDashboardDto>
 {
     private readonly IAssetRepository _repository;
-    private readonly IConfigurationLookupService _lookupService;
-    private readonly IMiddlewareIntegrationService _middlewareService;
-    private readonly IAssetSubmittedByResolver _assetSubmittedByResolver;
+    private readonly IAssetListProjectionService _assetListProjectionService;
 
     public GetTeamAssetsDashboardQueryHandler(
         IAssetRepository repository,
-        IConfigurationLookupService lookupService,
-        IMiddlewareIntegrationService middlewareService,
-        IAssetSubmittedByResolver assetSubmittedByResolver)
+        IAssetListProjectionService assetListProjectionService)
     {
         _repository = repository;
-        _lookupService = lookupService;
-        _middlewareService = middlewareService;
-        _assetSubmittedByResolver = assetSubmittedByResolver;
+        _assetListProjectionService = assetListProjectionService;
     }
 
     public async Task<TeamAssetsDashboardDto> Handle(
@@ -328,56 +154,10 @@ public class GetTeamAssetsDashboardQueryHandler
             request.SearchTerm,
             cancellationToken);
 
-        var assetDtos = new List<AssetListDto>();
-
-        var companyNamesById = await LoadCompanyNamesAsync(
-            paginatedAssets.Items.Select(a => a.CompanyId).Distinct(),
-            cancellationToken);
-        var submittedByNamesByAssetId = await _assetSubmittedByResolver.ResolveForAssetsAsync(
+        var assetDtos = await _assetListProjectionService.MapAsync(
             paginatedAssets.Items,
+            includeOtherValuesForSectorAndSubSector: false,
             cancellationToken);
-
-        foreach (var asset in paginatedAssets.Items)
-        {
-            var sectorName = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty
-                ? await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)
-                : null;
-            sectorName = string.IsNullOrWhiteSpace(sectorName) ? "N/A" : sectorName;
-
-            var subSectorName = asset.SubSectorId.HasValue && asset.SubSectorId.Value != Guid.Empty
-                ? await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)
-                : null;
-            subSectorName = string.IsNullOrWhiteSpace(subSectorName) ? "N/A" : subSectorName;
-
-            var assetTypeName = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty
-                ? await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)
-                : null;
-            assetTypeName = string.IsNullOrWhiteSpace(assetTypeName)
-                ? (asset.AssetTypeOther ?? "N/A")
-                : assetTypeName;
-
-            var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
-                ? resolvedCompanyName
-                : asset.CompanyName;
-            submittedByNamesByAssetId.TryGetValue(asset.Id, out var submittedByDisplayName);
-
-            assetDtos.Add(new AssetListDto
-            {
-                Id = asset.Id,
-                AssetCode = asset.AssetCode,
-                AssetName = asset.AssetName.Value,
-                SectorName = sectorName,
-                SubSectorName = subSectorName,
-                AssetTypeName = assetTypeName,
-                Status = asset.Status,
-                SubmittedAt = asset.SubmittedAt,
-                SubmittedBy = submittedByDisplayName,
-                TotalCapex = asset.TotalCapex,
-                TotalOpex = asset.TotalOpex,
-                CompanyName = companyName,
-                CreatedAt = asset.CreatedAt
-            });
-        }
 
         return new TeamAssetsDashboardDto
         {
@@ -397,38 +177,6 @@ public class GetTeamAssetsDashboardQueryHandler
                 request.PageSize)
         };
     }
-
-    private async Task<IReadOnlyDictionary<Guid, string>> LoadCompanyNamesAsync(
-        IEnumerable<Guid> companyIds,
-        CancellationToken cancellationToken)
-    {
-        const int maxConcurrency = 8;
-        using var semaphore = new SemaphoreSlim(maxConcurrency, maxConcurrency);
-        var dict = new System.Collections.Concurrent.ConcurrentDictionary<Guid, string>();
-
-        var tasks = companyIds.Select(async companyId =>
-        {
-            if (companyId == Guid.Empty)
-                return;
-
-            await semaphore.WaitAsync(cancellationToken);
-            try
-            {
-                var company = await _middlewareService.GetCompanyByIdAsync(companyId);
-                if (!string.IsNullOrWhiteSpace(company?.Name))
-                {
-                    dict.TryAdd(companyId, company.Name);
-                }
-            }
-            finally
-            {
-                semaphore.Release();
-            }
-        });
-
-        await Task.WhenAll(tasks);
-        return dict;
-    }
 }
 
 public class GetInfrabaseAdminDashboardQueryHandler
@@ -436,22 +184,19 @@ public class GetInfrabaseAdminDashboardQueryHandler
 {
     private readonly IAssetRepository _repository;
     private readonly IConfigurationLookupService _lookupService;
-    private readonly IMiddlewareIntegrationService _middlewareService;
     private readonly ITokenService _tokenService;
-    private readonly IAssetSubmittedByResolver _assetSubmittedByResolver;
+    private readonly IAssetListProjectionService _assetListProjectionService;
 
     public GetInfrabaseAdminDashboardQueryHandler(
         IAssetRepository repository,
         IConfigurationLookupService lookupService,
-        IMiddlewareIntegrationService middlewareService,
         ITokenService tokenService,
-        IAssetSubmittedByResolver assetSubmittedByResolver)
+        IAssetListProjectionService assetListProjectionService)
     {
         _repository = repository;
         _lookupService = lookupService;
-        _middlewareService = middlewareService;
         _tokenService = tokenService;
-        _assetSubmittedByResolver = assetSubmittedByResolver;
+        _assetListProjectionService = assetListProjectionService;
     }
 
     public async Task<InfrabaseAdminDashboardDto> Handle(
@@ -474,56 +219,10 @@ public class GetInfrabaseAdminDashboardQueryHandler
             requestingUser,
             cancellationToken);
 
-        var assetDtos = new List<AssetListDto>();
-
-        var companyNamesById = await LoadCompanyNamesAsync(
-            paginatedAssets.Items.Select(a => a.CompanyId).Distinct(),
-            cancellationToken);
-        var submittedByNamesByAssetId = await _assetSubmittedByResolver.ResolveForAssetsAsync(
+        var assetDtos = await _assetListProjectionService.MapAsync(
             paginatedAssets.Items,
+            includeOtherValuesForSectorAndSubSector: false,
             cancellationToken);
-
-        foreach (var asset in paginatedAssets.Items)
-        {
-            var sectorName = asset.SectorId.HasValue && asset.SectorId.Value != Guid.Empty
-                ? await _lookupService.GetSectorNameAsync(asset.SectorId.Value, cancellationToken)
-                : null;
-            sectorName = string.IsNullOrWhiteSpace(sectorName) ? "N/A" : sectorName;
-
-            var subSectorName = asset.SubSectorId.HasValue && asset.SubSectorId.Value != Guid.Empty
-                ? await _lookupService.GetSubSectorNameAsync(asset.SubSectorId.Value, cancellationToken)
-                : null;
-            subSectorName = string.IsNullOrWhiteSpace(subSectorName) ? "N/A" : subSectorName;
-
-            var assetTypeName = asset.AssetTypeId.HasValue && asset.AssetTypeId.Value != Guid.Empty
-                ? await _lookupService.GetAssetTypeNameAsync(asset.AssetTypeId.Value, cancellationToken)
-                : null;
-            assetTypeName = string.IsNullOrWhiteSpace(assetTypeName)
-                ? (asset.AssetTypeOther ?? "N/A")
-                : assetTypeName;
-
-            var companyName = companyNamesById.TryGetValue(asset.CompanyId, out var resolvedCompanyName)
-                ? resolvedCompanyName
-                : asset.CompanyName;
-            submittedByNamesByAssetId.TryGetValue(asset.Id, out var submittedByDisplayName);
-
-            assetDtos.Add(new AssetListDto
-            {
-                Id = asset.Id,
-                AssetCode = asset.AssetCode,
-                AssetName = asset.AssetName.Value,
-                SectorName = sectorName,
-                SubSectorName = subSectorName,
-                AssetTypeName = assetTypeName,
-                Status = asset.Status,
-                SubmittedAt = asset.SubmittedAt,
-                TotalCapex = asset.TotalCapex,
-                TotalOpex = asset.TotalOpex,
-                CompanyName = companyName,
-                CreatedAt = asset.CreatedAt,
-                SubmittedBy = submittedByDisplayName
-            });
-        }
 
         return new InfrabaseAdminDashboardDto
         {
@@ -545,38 +244,6 @@ public class GetInfrabaseAdminDashboardQueryHandler
                 request.PageNumber,
                 request.PageSize)
         };
-    }
-
-    private async Task<IReadOnlyDictionary<Guid, string>> LoadCompanyNamesAsync(
-        IEnumerable<Guid> companyIds,
-        CancellationToken cancellationToken)
-    {
-        const int maxConcurrency = 8;
-        using var semaphore = new SemaphoreSlim(maxConcurrency, maxConcurrency);
-        var dict = new System.Collections.Concurrent.ConcurrentDictionary<Guid, string>();
-
-        var tasks = companyIds.Select(async companyId =>
-        {
-            if (companyId == Guid.Empty)
-                return;
-
-            await semaphore.WaitAsync(cancellationToken);
-            try
-            {
-                var company = await _middlewareService.GetCompanyByIdAsync(companyId);
-                if (!string.IsNullOrWhiteSpace(company?.Name))
-                {
-                    dict.TryAdd(companyId, company.Name);
-                }
-            }
-            finally
-            {
-                semaphore.Release();
-            }
-        });
-
-        await Task.WhenAll(tasks);
-        return dict;
     }
     private async Task<IReadOnlyCollection<Guid>?> GetAssetTypeIdsForSearchAsync(
        string? searchTerm,

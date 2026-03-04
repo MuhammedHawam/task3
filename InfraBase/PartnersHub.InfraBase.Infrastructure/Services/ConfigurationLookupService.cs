@@ -13,6 +13,10 @@ public class ConfigurationLookupService : IConfigurationLookupService
     private Task<List<LookupDto>?>? _subSectorsTask;
     private Task<List<LookupDto>?>? _assetTypesTask;
     private Task<List<LookupDto>?>? _uomsTask;
+    private Task<IReadOnlyDictionary<Guid, LookupDto>>? _sectorsByIdTask;
+    private Task<IReadOnlyDictionary<Guid, LookupDto>>? _subSectorsByIdTask;
+    private Task<IReadOnlyDictionary<Guid, LookupDto>>? _assetTypesByIdTask;
+    private Task<IReadOnlyDictionary<Guid, LookupDto>>? _uomsByIdTask;
 
     public ConfigurationLookupService(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
     {
@@ -22,24 +26,22 @@ public class ConfigurationLookupService : IConfigurationLookupService
 
     public async Task<string?> GetSectorNameAsync(Guid sectorId, CancellationToken cancellationToken = default)
     {
-        // ConfigurationHub: GET api/lookups/sectors/{id}
-        var dto = await GetAsync<LookupDto>($"api/lookups/sectors/{sectorId}", cancellationToken);
+        var sectorsById = await GetSectorsByIdAsync(cancellationToken);
+        sectorsById.TryGetValue(sectorId, out var dto);
         return dto?.NameEn ?? dto?.NameAr;
     }
 
     public async Task<string?> GetSubSectorNameAsync(Guid subSectorId, CancellationToken cancellationToken = default)
     {
-        // No by-id endpoint; fetch all and find
-        var list = await GetSubSectorsAsync(cancellationToken);
-        var dto = list?.FirstOrDefault(x => x.Id == subSectorId);
+        var subSectorsById = await GetSubSectorsByIdAsync(cancellationToken);
+        subSectorsById.TryGetValue(subSectorId, out var dto);
         return dto?.NameEn ?? dto?.NameAr;
     }
 
     public async Task<string?> GetAssetTypeNameAsync(Guid assetTypeId, CancellationToken cancellationToken = default)
     {
-        // No by-id endpoint; fetch all and find
-        var list = await GetAssetTypesInternalAsync(cancellationToken);
-        var dto = list?.FirstOrDefault(x => x.Id == assetTypeId);
+        var assetTypesById = await GetAssetTypesByIdAsync(cancellationToken);
+        assetTypesById.TryGetValue(assetTypeId, out var dto);
         return dto?.NameEn ?? dto?.NameAr;
     }
 
@@ -100,9 +102,8 @@ public class ConfigurationLookupService : IConfigurationLookupService
 
     public async Task<string?> GetUomNameAsync(Guid uomId, CancellationToken cancellationToken = default)
     {
-        // No by-id endpoint; fetch all and find
-        var list = await GetUomsAsync(cancellationToken);
-        var dto = list?.FirstOrDefault(x => x.Id == uomId);
+        var uomsById = await GetUomsByIdAsync(cancellationToken);
+        uomsById.TryGetValue(uomId, out var dto);
         return dto?.NameEn ?? dto?.NameAr;
     }
 
@@ -145,6 +146,18 @@ public class ConfigurationLookupService : IConfigurationLookupService
     private Task<List<LookupDto>?> GetUomsAsync(CancellationToken cancellationToken)
         => _uomsTask ??= GetAsync<List<LookupDto>>("api/lookups/uoms", cancellationToken);
 
+    private Task<IReadOnlyDictionary<Guid, LookupDto>> GetSectorsByIdAsync(CancellationToken cancellationToken)
+        => _sectorsByIdTask ??= BuildLookupByIdMapAsync(GetSectorsAsync(cancellationToken));
+
+    private Task<IReadOnlyDictionary<Guid, LookupDto>> GetSubSectorsByIdAsync(CancellationToken cancellationToken)
+        => _subSectorsByIdTask ??= BuildLookupByIdMapAsync(GetSubSectorsAsync(cancellationToken));
+
+    private Task<IReadOnlyDictionary<Guid, LookupDto>> GetAssetTypesByIdAsync(CancellationToken cancellationToken)
+        => _assetTypesByIdTask ??= BuildLookupByIdMapAsync(GetAssetTypesInternalAsync(cancellationToken));
+
+    private Task<IReadOnlyDictionary<Guid, LookupDto>> GetUomsByIdAsync(CancellationToken cancellationToken)
+        => _uomsByIdTask ??= BuildLookupByIdMapAsync(GetUomsAsync(cancellationToken));
+
     private async Task<T?> GetAsync<T>(string url, CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
@@ -169,6 +182,21 @@ public class ConfigurationLookupService : IConfigurationLookupService
             return default;
         }
         return await response.Content.ReadFromJsonAsync<T>(cancellationToken: cancellationToken);
+    }
+
+    private static async Task<IReadOnlyDictionary<Guid, LookupDto>> BuildLookupByIdMapAsync(
+        Task<List<LookupDto>?> listTask)
+    {
+        var list = await listTask;
+        if (list == null || list.Count == 0)
+        {
+            return new Dictionary<Guid, LookupDto>();
+        }
+
+        return list
+            .Where(dto => dto.Id != Guid.Empty)
+            .GroupBy(dto => dto.Id)
+            .ToDictionary(group => group.Key, group => group.Last());
     }
 
     private static bool IsOtherLookup(LookupDto dto)

@@ -33,6 +33,7 @@ public class AssetRepository : IAssetRepository
             .Include(a => a.OpexDetails)
             .Include(a => a.History)
             .Include(a => a.Attachments)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
 
@@ -42,6 +43,7 @@ public class AssetRepository : IAssetRepository
         return await _context.Assets
             .Include(a => a.CapexDetails)
             .Include(a => a.OpexDetails)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
 
@@ -50,6 +52,15 @@ public class AssetRepository : IAssetRepository
     {
         return await _context.Assets
             .Include(a => a.Attachments)
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+    }
+
+    public async Task<Asset?> GetByIdWithHistoryAsync(Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Assets
+            .AsNoTracking()
+            .Include(a => a.History)
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
     public async Task<PaginatedList<Asset>> GetPagedAsync(
@@ -87,9 +98,11 @@ public class AssetRepository : IAssetRepository
         CancellationToken cancellationToken = default)
     {
         var query = _context.Assets
+            .AsNoTracking()
             .Where(a => a.CreatedBy == userId.ToString())
             .Include(a => a.CapexDetails)
             .Include(a => a.OpexDetails)
+            .AsSplitQuery()
             .AsQueryable();
 
         query = ApplyStatusFilter(query, status);
@@ -124,10 +137,12 @@ public class AssetRepository : IAssetRepository
         CancellationToken cancellationToken = default)
     {
         var query = _context.Assets
+            .AsNoTracking()
             .Where(a => a.CompanyId == companyId && a.CreatedBy != excludeUserId.ToString())
             .Where(a => a.Status != AssetStatuses.Draft)
             .Include(a => a.CapexDetails)
             .Include(a => a.OpexDetails)
+            .AsSplitQuery()
             .AsQueryable();
 
         query = ApplyStatusFilter(query, status);
@@ -157,7 +172,9 @@ public class AssetRepository : IAssetRepository
         string? requestingUser = null,
         CancellationToken cancellationToken = default)
     {
-        var query = _context.Assets.AsQueryable();
+        var query = _context.Assets
+            .AsNoTracking()
+            .AsQueryable();
 
         if (companyId.HasValue)
         {
@@ -177,6 +194,7 @@ public class AssetRepository : IAssetRepository
         CancellationToken cancellationToken = default)
     {
         return await _context.Assets
+            .AsNoTracking()
             .Where(a => a.CreatedBy == userId.ToString())
             .GroupBy(a => a.Status)
             .Select(g => new { Status = g.Key, Count = g.Count() })
@@ -189,6 +207,7 @@ public class AssetRepository : IAssetRepository
         CancellationToken cancellationToken = default)
     {
         return await _context.Assets
+            .AsNoTracking()
             .Where(a => a.CompanyId == companyId && a.CreatedBy != excludeUserId.ToString())
             .Where(a => a.Status != AssetStatuses.Draft)
             .GroupBy(a => a.Status)
@@ -237,8 +256,10 @@ public class AssetRepository : IAssetRepository
         string? requestingUser = null)
     {
         var query = _context.Assets
+            .AsNoTracking()
             .Include(a => a.CapexDetails)
             .Include(a => a.OpexDetails)
+            .AsSplitQuery()
             .AsQueryable();
 
         query = ApplyStatusFilter(query, status);

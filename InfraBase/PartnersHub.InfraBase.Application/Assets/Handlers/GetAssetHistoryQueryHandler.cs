@@ -17,7 +17,7 @@ public class GetAssetHistoryQueryHandler : IRequestHandler<GetAssetHistoryQuery,
     public async Task<List<AssetHistoryDto>> Handle(GetAssetHistoryQuery query, 
         CancellationToken cancellationToken)
     {
-        var asset = await _repository.GetByIdWithDetailsAsync(query.AssetId, cancellationToken);
+        var asset = await _repository.GetByIdWithHistoryAsync(query.AssetId, cancellationToken);
         
         if (asset == null)
             return new List<AssetHistoryDto>();
